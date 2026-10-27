@@ -1,0 +1,5 @@
+# Sourced by build-ghostty.sh. Bump only as its own change, with notes in PLAN.md.
+GHOSTTY_REF=v1.4.0
+GHOSTTY_COMMIT=83fb95624b0439ee660c2679b43b38c8b63769cd
+# Ghostty requires the same Zig major.minor and patch >= this (build.zig.zon minimum_zig_version).
+ZIG_VERSION=0.17.0
