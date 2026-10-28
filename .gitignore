@@ -13,3 +13,7 @@ xcuserdata/
 
 # Local agent settings
 .claude/settings.local.json
+
+# Agent handoffs are local coordination, not history (AGENTS.md › Handoffs)
+docs/handoffs/*
+!docs/handoffs/README.md

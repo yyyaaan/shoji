@@ -2,7 +2,7 @@
 
 ## Status
 
-- **Last session (initial-sprint):** spike to a usable v0: SwiftTerm panes, Claude hooks → status cards, layouts with drag splits, CI + release workflow, keyboard shortcuts with a ⌘/ sheet, app-wide zoom. PLAN switched from milestones to the task list below. 25 Swift Testing tests pass.
+- **Last session (initial-sprint):** spike to a usable v0 (SwiftTerm panes, Claude hooks → status cards, layouts with drag splits, CI + release workflow, shortcuts with a ⌘/ sheet, app-wide zoom), shelf without group titles, then the Hachi integration from the design handoff (needs-you portrait, Icon Composer app icon; checked at 75/100/200%, counts 1/999, all statuses, every icon appearance, 16 pt). Handoffs are now local-only (gitignored). 25 Swift Testing tests pass.
 - **Next up:** top of **Tasks › Now**.
 - **Blockers:** none
 
@@ -47,6 +47,8 @@ _Agents: update this section at the end of every session (what changed, what's n
 - **Agents editing `.pbxproj` break projects.** Use XcodeGen.
 - **No paid Apple Developer account yet:** builds are ad-hoc signed and not notarized. A downloaded DMG is quarantined; first launch needs Privacy & Security › Open Anyway (or `xattr -dr com.apple.quarantine`). Locally built apps aren't quarantined.
 - **Ad-hoc signatures change every build**, so macOS privacy grants (TCC, e.g. Files & Folders prompts that child CLIs trigger in Shoji's name) reset after each update.
+- **Icon Composer documents:** XcodeGen adds `AppIcon.icon` as one `wrapper.icon` file, and actool compiles it to `AppIcon.icns` + `Assets.car` with `ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon`. Check renders with `ictool <file>.icon --export-image --platform macOS --rendition Default|Dark|ClearLight|TintedDark …`; in `icon.json`, `groups` and `layers` list front to back.
+- **Visual checks of SwiftUI views without touching the live app:** render them with `ImageRenderer` from a throwaway test (the test host has the asset catalog). Glass renders flat there, so confirm glass ordering in the running app.
 - **CI runs on the `xcode-27` runner label** (public preview) to match local Xcode 27.1; `macos-26` only has Xcode 26. Move to the GA label once it exists.
 
 ## Vision
@@ -159,7 +161,6 @@ Priorities shift with the user's wishes; reorder freely. Keep items one line, sm
 - [ ] Drag to reorder cards within a group
 - [ ] macOS notification for needs-you while Shoji is in the background
 - [ ] Codex `notify` and resume (decide the notify override first, see Open questions)
-- [ ] Hachi: needs-you portrait on agent cards and the app icon (design signed off; spec in `docs/design/hachi/README.md`)
 
 ### Later
 - [ ] Hub view: Threads | Hub switch, agent cards sorted by attention with the last 3 lines, task cards with Restart / Stop / Open, totals pills, open folder in Zed
@@ -177,6 +178,7 @@ Priorities shift with the user's wishes; reorder freely. Keep items one line, sm
 - Status: `shoji-hook` → socket → `ThreadStore`, per-launch Claude hooks, terminal title / bell / exit; working / needs you / done / idle with elapsed time and needs-you count; resume id captured
 - Shelf and panes: Agents | Tasks shelf, click a card to open it, 1 / 2 / 2×2 layouts, maximize / minimize, drag splits
 - Keyboard and zoom: one `Shortcut` catalog for menus and the ⌘/ sheet, app-wide zoom ⌘+ / ⌘− / ⌘0
+- Hachi: vector portrait on needs-you agent cards (zoom-aware, behind the count badge) and a layered Icon Composer app icon
 
 ## Terminal checklist
 

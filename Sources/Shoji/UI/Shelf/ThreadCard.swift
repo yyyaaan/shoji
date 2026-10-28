@@ -36,6 +36,13 @@ struct ThreadCard: View {
         .padding(.vertical, 12 * zoom)
         .frame(width: (thread.group == .agent ? 196 : 168) * zoom, height: 104 * zoom, alignment: .topLeading)
         // Overlays must precede the glass: inside a GlassEffectContainer the glass draws over later ones.
+        .overlay(alignment: .topTrailing) {
+            if needsYou, thread.group == .agent {
+                HachiPortrait(size: 32 * zoom)
+                    .padding(.top, 6 * zoom)
+                    .padding(.trailing, 38 * zoom)
+            }
+        }
         .overlay {
             RoundedRectangle(cornerRadius: 18 * zoom)
                 .strokeBorder(borderColor, lineWidth: 1)

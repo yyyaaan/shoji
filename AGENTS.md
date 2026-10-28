@@ -47,10 +47,11 @@ Sources/Shoji/
   UI/Shelf/                 card shelf (Agents | Tasks), context menu, drag reorder
   UI/Panes/                 pane layouts (1 / 2 / 4) with drag splits, pane header, TerminalHost
   UI/Hub/                   Hub view big cards
-  UI/Hachi/                 mascot assets + needs-you presentation
+  UI/Hachi/                 HachiPortrait, Hachi.xcassets (vector PDF), AppIcon.icon
+                            (Icon Composer; spec in docs/design/hachi/README.md)
 Tests/ShojiTests/           Swift Testing
 docs/design/                design reference as standalone HTML (open in a browser)
-docs/handoffs/              open handoffs between agents; deleted once done
+docs/handoffs/              open handoffs between agents (local, gitignored); deleted once done
 docs/swiftterm.md           SwiftTerm API notes for the pinned version
 ```
 
@@ -129,6 +130,7 @@ Several agents work on Shoji in parallel (for example app code and design). They
 - **At session start,** read `docs/handoffs/` along with PLAN.md. Take files addressed to your role or `any`, and add `Taken by: <role>, <date>` at the top so two agents don't do the same work.
 - **When done,** delete the handoff file in the same change as the work. If only part is done, remove the finished asks and leave the rest. Move anything lasting to its real home first: decisions, gotchas and follow-up tasks to PLAN.md, rules to AGENTS.md, specs to `docs/design/`. Git history keeps the record.
 - **Don't edit someone else's open handoff** beyond claiming it or removing asks you finished.
+- **Handoffs stay out of git** (only `docs/handoffs/README.md` is tracked), because every agent shares this one checkout. If agents ever work in separate worktrees, branches or machines, commit them instead, or they won't see each other's handoffs.
 
 ## Design reference
 
