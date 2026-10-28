@@ -1,0 +1,12 @@
+#!/bin/sh
+# Forwards one CLI hook payload to Shoji: thread id line, then the JSON from stdin
+# (Claude Code hooks) or argv[1] (Codex notify). Always exits 0, fast and silent.
+if [ -z "$SHOJI_THREAD_ID" ] || [ ! -S "$SHOJI_SOCKET" ]; then
+  [ $# -gt 0 ] || cat >/dev/null
+  exit 0
+fi
+{
+  printf '%s\n' "$SHOJI_THREAD_ID"
+  if [ $# -gt 0 ]; then printf '%s' "$1"; else cat; fi
+} | /usr/bin/nc -U -w 1 "$SHOJI_SOCKET" >/dev/null 2>&1
+exit 0
