@@ -152,17 +152,22 @@ Priorities shift with the user's wishes; reorder freely. Keep items one line, sm
 
 ### Now
 - [ ] Hands-on pass by the user: the terminal checklist below, plus pane resize / focus feel, split dragging, and shortcuts with a terminal focused
-- [ ] `threads.json` (schemaVersion 1) and restore threads, layout and splits on relaunch
-- [ ] New-thread sheet (group, folder, preset: claude / claude -r / codex / custom) on ⌘N; drop the hard-coded spike threads
+- [ ] `threads.json` (schemaVersion 1) and restore threads, layout and splits on relaunch; keep the layout separate from the thread list so it can later belong to a window's workspace
+- [ ] New-thread sheet (group, folder, preset: claude / claude -r / codex / custom) on ⌘N and a minimal + button; drop the hard-coded spike threads
+- [ ] Close thread (card context menu, confirm while it's running), so added threads can be removed
 
 ### Next
 - [ ] Relaunch Claude threads with `--resume <id>` (the id is already captured from hooks; needs `threads.json`)
-- [ ] Card context menu: rename, move left / right, move to other group, resume in new pane, open folder in Zed, close thread
+- [ ] Recent-thread switcher: ⌃Tab / ⌃⇧Tab cycles threads in most-recently-used order, like ⌘Tab for apps; a quick tap returns to the previous thread. (⌘1–9 stays "card by shelf position"; check ⌃Tab doesn't collide with the CLIs.)
+- [ ] Keep waiting panes on screen: when opening a thread replaces a pane, never replace one whose agent needs you; take the least recently used other pane
+- [ ] Card context menu: rename, move left / right, move to other group, resume in new pane, open folder in Zed
 - [ ] Drag to reorder cards within a group
 - [ ] macOS notification for needs-you while Shoji is in the background
 - [ ] Codex `notify` and resume (decide the notify override first, see Open questions)
 
 ### Later
+- [ ] Multiple windows in two styles: **full** (today's shelf and panes, made for near-fullscreen) and **sidebar** (a slim column of compact cards beside your editor that shows who needs you and opens a thread in one click)
+- [ ] Workspaces: a named set of threads with its layout (for example *gosta*, *home-lab*), one per window; every window comes back on relaunch with its workspace, style, size and position
 - [ ] Hub view: Threads | Hub switch, agent cards sorted by attention with the last 3 lines, task cards with Restart / Stop / Open, totals pills, open folder in Zed
 - [ ] "Allow once" from the Hub, with guardrails (see Open questions)
 - [ ] ⌘K quick jump
@@ -209,10 +214,13 @@ Run by hand with Claude Code in Shoji; re-run after every SwiftTerm bump (AGENTS
 - **Git branch on Hub cards:** read `.git/HEAD` directly vs. shelling out to `git`.
 - **Codex notify:** `codex -c 'notify=["…/shoji-hook"]'` per launch replaces any `notify` program the user configured. Chain to theirs, or accept the override?
 - **Stable local signing identity:** a self-signed code-signing certificate (kept as a CI secret) would keep TCC grants across updates without a paid account. Worth it before daily use, or wait for Developer ID?
+- **Multiple windows:** a thread's terminal can be on screen in only one window at a time (one SwiftTerm view per thread). When a second window opens it, move it there, or show only its card?
+- **Sidebar window:** clicking a card opens the thread in a full window, or expands it in place?
 - **Quitting with live agents:** quitting closes every PTY (agents get SIGHUP). Confirm before quit while something is Working / Needs you?
 
 ## Decisions
 
+- **Name:** the app is **Shoji** (Dock, menus, repo, bundle id, code); **Hachi no Shoji** (ハチの障子) is the full name for places with room for the story, like the README header and an About box.
 - **Bundle id `fi.yan.shoji`**, ad-hoc signed until there's a Developer ID.
 - **The `.xcodeproj` is generated and not committed**; `project.yml` is the only source. Package.resolved therefore isn't committed either; SwiftTerm itself is pinned exactly.
 - **Shift+Return → ESC CR** (Meta+Return, a newline in Claude Code) for every thread whose program hasn't enabled the Kitty keyboard protocol.

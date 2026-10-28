@@ -52,6 +52,7 @@ Sources/Shoji/
 Tests/ShojiTests/           Swift Testing
 docs/design/                design reference as standalone HTML (open in a browser)
 docs/handoffs/              open handoffs between agents (local, gitignored); deleted once done
+docs/images/                README images (icon rendered with ictool, app screenshot)
 docs/swiftterm.md           SwiftTerm API notes for the pinned version
 ```
 
