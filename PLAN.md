@@ -3,23 +3,33 @@
 ## Status
 
 - **Current milestone:** M0 — repo and build
-- **Last session:** repo kick-off: AGENTS.md, PLAN.md, design HTML in `docs/design/`, `.gitignore`, Ghostty pinned to v1.4.0 (Zig 0.17.0) in `scripts/ghostty.version`. Toolchain needed: Xcode 27.1, Metal Toolchain, XcodeGen, Zig 0.17.0 (brew stable matches the pin).
-- **Next up:** `scripts/build-ghostty.sh` (fetch the pinned commit, build `GhosttyKit.xcframework` into `Vendor/`), `project.yml`, empty window that builds and launches
+- **Last session:** terminal engine switched from libghostty to SwiftTerm (decision below); Ghostty pin file and Zig ignores removed.
+- **Next up:** `project.yml` with the SwiftTerm package pinned, empty window that builds and launches. SwiftTerm latest is v1.99.1 (2026-10-21, "preview before 2.0"): pin it exactly, and treat the 2.0 move as its own bump.
 - **Blockers:** none
 
 _Agents: update this section at the end of every session (what changed, what's next)._
 
 ## Gotchas
 
-- **libghostty's embedding API is not a stable public API.** Pin the Ghostty commit,
-  keep all calls inside `Terminal/`, read Ghostty's own macOS app source when unsure.
-- **Building GhosttyKit needs the exact Zig version** that the pinned commit expects.
-  Record it in `scripts/ghostty.version`.
-- **Xcode 26+ ships the Metal Toolchain separately.** Without it the GhosttyKit build fails on shader compilation: `xcodebuild -downloadComponent MetalToolchain`.
-- **Read the embedding API at the pinned commit, not main.** `include/ghostty.h` and `macos/Sources/Ghostty/` at `GHOSTTY_COMMIT` are the reference; main can differ.
+- **SwiftTerm's default scrollback is 500 lines.** Long Claude Code replies overflow it
+  and the view drifts while scrolled up. Set a large scrollback.
+- **Launch environment.** A GUI app doesn't inherit the user's shell PATH or variables;
+  a SwiftTerm-hosted Claude Code has been reported missing MCP servers that worked in a
+  normal terminal. Start every thread via the login shell.
+- **Shift+Enter is not guaranteed.** SwiftTerm isn't on Claude Code's "works without
+  setup" list. If it submits instead of inserting a newline, send ESC + CR for Shift+Enter.
+- **Option key.** Option shortcuts (e.g. Option+Enter) need "Option as Meta" enabled.
+- **Scroll wheel on the alternate screen** can be turned into arrow keys when mouse
+  reporting is off; Claude Code then reads them as keystrokes. Test scrolling.
+- **Link clicks:** subclass overrides of SwiftTerm's delegate defaults are not called;
+  use a proxy `TerminalViewDelegate` that forwards every call.
+- **No terminal-native notifications from Claude Code** (it only sends them in Ghostty,
+  Kitty and iTerm2). "Needs you" relies entirely on hooks → socket.
+- **Reference app:** TermQ (open source, macOS) is built on SwiftTerm and runs Claude
+  Code; its fixes are a good source of lessons. It uses tmux, which Shoji does not.
 - **App Sandbox must be off** (Shoji spawns shells and CLIs). Distribute outside the
   App Store, signed with Developer ID and notarized.
-- **Hidden or minimized surfaces:** keep their size stable. Resizing a terminal to
+- **Hidden or minimized terminals:** keep their size stable. Resizing a terminal to
   zero makes TUIs like Claude Code redraw badly when restored.
 - **Glass behind terminal text hurts readability.** Solid terminal backgrounds only.
 - **Devcontainers can't reach a host Unix socket.** Threads that run CLIs inside a
@@ -72,8 +82,8 @@ private to Yan's account; agents can't open it, so the HTML files are what they 
             │        │ persists                                       │        │
             │  threads.json (~/Library/Application Support/Shoji)     │        │
             │                                                         │        │
-            │  Terminal/GhosttyBridge ── surface callbacks ───────────┤        │
-            │     (title, bell, desktop notification, child exit)     │        │
+            │  Terminal/SwiftTerm ── delegate callbacks ──────────────┤        │
+            │     (title, bell, process exit)                         │        │
             │  Status/SocketListener ◄── shoji-hook ◄── CLI hooks ────┘        │
             └──────────────────────────────────────────────────────────────────┘
 ```
@@ -108,14 +118,14 @@ private to Yan's account; agents can't open it, so the HTML files are what they 
 }
 ```
 
-Runtime-only (not persisted): status, last activity, unread count, surface handle.
+Runtime-only (not persisted): status, last activity, unread count, terminal view.
 
 ### Status states and sources
 
 | State | Agents | Tasks |
 |---|---|---|
 | Working | prompt submitted / tool running (hook) | — |
-| Needs you | Claude `Notification` hook; bell or desktop notification from surface | — |
+| Needs you | Claude `Notification` hook; bell from the terminal as a hint | — |
 | Done | Claude `Stop` hook; Codex `notify` turn complete | — |
 | Idle | Done and already seen, or fresh session at prompt | — |
 | Running | — | process alive |
@@ -127,18 +137,26 @@ Resume ids: Claude from the `SessionStart` hook payload; Codex — to confirm (O
 
 ### M0 — Repo and build
 - [ ] `project.yml` (XcodeGen), macOS 26 target, App Sandbox off, Debug/Release
-- [ ] `scripts/ghostty.version` (commit + Zig version) and `scripts/build-ghostty.sh`
-- [x] `.gitignore` (Vendor/, build output, generated project)
+- [ ] SwiftTerm added as a Swift package in `project.yml`, pinned to an exact version
+- [x] `.gitignore` (build output, generated project)
 - [ ] Empty window builds and launches via `xcodebuild`
 - [x] `docs/design/` HTML mockups of Option B and Hub view
 
 ### M1 — Spike (prove the risky parts)
-- [ ] One libghostty surface in a SwiftUI view, shell runs, typing works
-- [ ] Two surfaces side by side inside glass-framed cards (solid terminal background)
+- [ ] `TerminalBackend` protocol + SwiftTerm view (Metal renderer) in SwiftUI;
+      login shell runs, typing works
+- [ ] Two terminals side by side inside glass-framed cards (solid terminal background)
 - [ ] Each launches `claude -r` in a hard-coded folder
 - [ ] Window resize and focus switching between panes are smooth
 - [ ] Hide/show one pane without redraw glitches (stable size while hidden)
 - [ ] One Claude `Notification` hook → `shoji-hook` → socket → card turns orange
+- [ ] Terminal checklist with Claude Code (re-run after every SwiftTerm bump):
+  - [ ] Shift+Enter inserts a newline; Option+Enter works with Option as Meta
+  - [ ] Long reply + scrolling up: no drift, scroll wheel scrolls (no stray keystrokes)
+  - [ ] Heavy output (`docker compose up` logs) stays responsive
+  - [ ] Same PATH, env and MCP servers as in a normal terminal
+  - [ ] Cmd+click opens URLs and file paths correctly
+  - [ ] IME input, copy/paste, selection, emoji and wide characters render correctly
 - **Exit:** all of the above work in a single debug build. Record findings in Gotchas.
 
 ### M2 — Threads and shelf
@@ -155,7 +173,7 @@ Resume ids: Claude from the `SessionStart` hook payload; Codex — to confirm (O
 - [ ] Per-launch hook injection for Claude Code (no global config edits)
 - [ ] Capture Claude resume id from `SessionStart`; relaunch with `--resume`
 - [ ] Codex `notify` wiring + resume
-- [ ] Surface callbacks → StatusEvent: title, bell, desktop notification, child exit
+- [ ] Terminal delegate callbacks → StatusEvent: title, bell, process exit
 - [ ] Full state machine from the table above, elapsed timers, unread counts
 - [ ] Native macOS notification for needs-you when the app is in the background
 
@@ -171,9 +189,11 @@ Resume ids: Claude from the `SessionStart` hook payload; Codex — to confirm (O
 - [ ] App icon: Hachi sitting behind a shoji panel
 - [ ] Hachi on needs-you cards; subtle appear animation
 - [ ] Shortcuts: ⌘1–9 jump, ⌘J next needs-you, ⌘N new thread, ⌘K quick jump
-- [ ] Settings: default folders, command presets, notifications on/off
+- [ ] Settings: default folders, command presets, notifications on/off,
+      terminal font, theme, scrollback, Option as Meta
 - [ ] Devcontainer command presets
 - [ ] Developer ID signing + notarization
+- [ ] Third-party notices in the app bundle (SwiftTerm MIT license text)
 
 ## Open questions
 
@@ -184,8 +204,17 @@ Resume ids: Claude from the `SessionStart` hook payload; Codex — to confirm (O
   TCP listener with a per-launch token, reached via `host.docker.internal`; or mount
   the socket into the container.
 - **Codex:** does it expose a resume id and a needs-approval event we can hook, or do
-  we rely on bell / desktop notification from the surface?
-- **Performance:** how many live surfaces before it matters? Do hidden threads keep a
-  live surface or detach and reattach?
+  we rely on the terminal bell?
+- **Performance:** how many live terminal views before it matters? Do hidden threads
+  keep a live view, or keep only SwiftTerm's headless `Terminal` and reattach a view?
+- **Themes:** ship a few built-in themes, or import Ghostty/iTerm2 theme files?
 - **Task restart:** SIGINT then relaunch, or SIGTERM with a timeout? Per task setting?
 - **Git branch on Hub cards:** read `.git/HEAD` directly vs. shelling out to `git`.
+
+## Decisions
+
+- **Terminal engine: SwiftTerm** (chosen over libghostty). Pure Swift package, no Zig
+  build, stable versioned API, Metal renderer, Kitty keyboard and graphics protocols,
+  runs on iOS too, MIT license (compatible with Shoji's Apache 2.0). Accepted costs:
+  less battle-tested than Ghostty, themes/fonts are ours to build, Claude Code needs the
+  setup rules in AGENTS.md. Fallback: libghostty behind the same `TerminalBackend`.
