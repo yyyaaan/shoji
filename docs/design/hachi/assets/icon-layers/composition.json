@@ -1,0 +1,25 @@
+{
+  "purpose": "Layer manifest, not a native Icon Composer document",
+  "canvas": {
+    "width": 1024,
+    "height": 1024
+  },
+  "background": {
+    "color": "#17201F",
+    "reference": "00-background.svg",
+    "instruction": "Set the native Icon Composer background fill; do not import a second opaque background foreground."
+  },
+  "foregroundBackToFront": [
+    "01-hachi.svg",
+    "02-shoji-left.svg",
+    "03-shoji-right.svg",
+    "04-shoji-rail.svg"
+  ],
+  "instructions": [
+    "Retain full-canvas alignment and source colors.",
+    "Hachi stays opaque and matte; no blur, transparency or material distortion on the face.",
+    "Adjust any restrained panel glass material natively in Icon Composer.",
+    "Do not bake in a corner mask, shadow, glow or lighting.",
+    "Check macOS appearances and 16 pt legibility in Icon Composer before accepting the native document."
+  ]
+}

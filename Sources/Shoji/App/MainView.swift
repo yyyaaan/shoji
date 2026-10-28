@@ -16,6 +16,7 @@ struct MainView: View {
                 .padding(.bottom, 16)
         }
         .environment(\.zoom, zoom)
+        .frame(minWidth: 640, minHeight: 480)
         .background(Backdrop())
         .overlay(alignment: .top) { zoomBadge }
         .preferredColorScheme(.dark)

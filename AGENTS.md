@@ -8,13 +8,15 @@ Liquid Glass card shelf and a Hub view. Two groups of threads:
 
 Mascot: **Hachi**, an Akita who appears on a card when that thread needs the user.
 
+Words used everywhere (code, docs, chat): a **thread** is one hosted terminal session (an agent or a task); the **shelf** is the strip of **cards** across the top, one card per thread, agents then tasks split by a divider (no group titles); a **pane** shows an open thread's terminal below the shelf; the **Hub** (planned) shows big cards.
+
 Shoji is NOT an editor, diff viewer or file browser (the user keeps Zed/VS Code for
 those), and NOT an agent client: it never talks to models or APIs. It only hosts
 terminals and watches their status.
 
 **`PLAN.md` is the living state file.** Read its Status and Gotchas sections before
-starting work. Update Status and its task list (Now / Next / Later / Done) when you
-finish a session.
+starting work, then check `docs/handoffs/` for work addressed to you. Update Status and
+its task list (Now / Next / Later / Done) when you finish a session.
 
 ## Stack
 
@@ -48,6 +50,7 @@ Sources/Shoji/
   UI/Hachi/                 mascot assets + needs-you presentation
 Tests/ShojiTests/           Swift Testing
 docs/design/                design reference as standalone HTML (open in a browser)
+docs/handoffs/              open handoffs between agents; deleted once done
 docs/swiftterm.md           SwiftTerm API notes for the pinned version
 ```
 
@@ -116,6 +119,16 @@ If a command here is wrong or missing, fix this file in the same change.
 - Status is never color-only: every state has its own icon shape plus a text label.
 - Every view gets a SwiftUI preview backed by mock threads (`Threads/Mock.swift`).
 - Keep changes small; one task per PR when practical.
+
+## Handoffs between agents
+
+Several agents work on Shoji in parallel (for example app code and design). They pass work to each other through files in `docs/handoffs/`, not only in chat.
+
+- **One file per handoff:** `docs/handoffs/<yyyy-mm-dd>-<from>-to-<to>-<topic>.md`, e.g. `2026-10-28-design-to-app-hachi.md`. Roles are short names: `app`, `design`, `review`, or `any`.
+- **Keep it short:** what is wanted and why, links to the files, assets and decisions it relies on (link long specs, don't copy them), a checklist of asks, and how to tell it is done. Questions for the user go to PLAN.md Open questions, not here.
+- **At session start,** read `docs/handoffs/` along with PLAN.md. Take files addressed to your role or `any`, and add `Taken by: <role>, <date>` at the top so two agents don't do the same work.
+- **When done,** delete the handoff file in the same change as the work. If only part is done, remove the finished asks and leave the rest. Move anything lasting to its real home first: decisions, gotchas and follow-up tasks to PLAN.md, rules to AGENTS.md, specs to `docs/design/`. Git history keeps the record.
+- **Don't edit someone else's open handoff** beyond claiming it or removing asks you finished.
 
 ## Design reference
 

@@ -28,6 +28,7 @@ struct ShojiApp: App {
                 .task { sessions.startAll() }
         }
         .defaultSize(width: 1360, height: 860)
+        .windowResizability(.contentMinSize)
         .windowToolbarStyle(.unified)
         .commands { ShojiCommands(store: store) }
     }

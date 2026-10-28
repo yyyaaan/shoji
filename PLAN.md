@@ -65,7 +65,7 @@ Chosen: **B · Card shelf + split** and **Hub view**, exported as standalone HTM
 private to Yan's account; agents can't open it, so the HTML files are what they read).
 
 **Threads screen (Option B)**
-- Shelf of glass cards across the top, two clusters: **Agents | Tasks**, divider between.
+- Shelf of glass cards across the top: agents, a divider, then tasks. No group titles (user's call); scrolls sideways when cards overflow.
 - Agent card: status icon, CLI kind (CLAUDE / CODEX), name, folder or one-line status,
   elapsed time. Task card: status, name, command, port.
 - Needs-you card: orange border + glow, count badge, Hachi.
@@ -159,7 +159,7 @@ Priorities shift with the user's wishes; reorder freely. Keep items one line, sm
 - [ ] Drag to reorder cards within a group
 - [ ] macOS notification for needs-you while Shoji is in the background
 - [ ] Codex `notify` and resume (decide the notify override first, see Open questions)
-- [ ] Hachi: app icon and needs-you card art (design work in `docs/design/`)
+- [ ] Hachi: needs-you portrait on agent cards and the app icon (design signed off; spec in `docs/design/hachi/README.md`)
 
 ### Later
 - [ ] Hub view: Threads | Hub switch, agent cards sorted by attention with the last 3 lines, task cards with Restart / Stop / Open, totals pills, open folder in Zed
