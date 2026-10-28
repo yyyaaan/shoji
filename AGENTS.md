@@ -30,28 +30,33 @@ starting work. Update Status and tick milestone checkboxes when you finish a ses
 ```
 project.yml                 XcodeGen spec (source of truth for targets/settings)
 scripts/
-  shoji-hook                tiny hook client: env + stdin JSON -> Shoji socket
+  shoji-hook                hook client bundled into the app: env + JSON -> Shoji socket
 Sources/Shoji/
-  App/                      app entry, window, commands/shortcuts
-  Threads/                  Thread model, ThreadStore, JSON persistence
-  Terminal/                 TerminalBackend protocol + SwiftTerm implementation
-                            (only place importing SwiftTerm)
-  Status/                   socket listener, StatusEvent, hook/notify setup
+  App/                      app entry (ShojiApp: wiring, window), MainView + toolbar
+  Threads/                  ShojiThread, ThreadStore, PaneLayout, launch building, Mock
+  Terminal/                 TerminalBackend protocol, SwiftTerm implementation
+                            (only place importing SwiftTerm), TerminalSessions
+  Status/                   StatusEvent, HookServer (socket listener), ClaudeHooks
+  UI/                       Theme (palette), StatusIcon, Backdrop
   UI/Shelf/                 card shelf (Agents | Tasks), context menu, drag reorder
-  UI/Panes/                 pane layouts (1 / 2 / 4), pane header, min/max
+  UI/Panes/                 pane layouts (1 / 2 / 4), pane header, TerminalHost
   UI/Hub/                   Hub view big cards
   UI/Hachi/                 mascot assets + needs-you presentation
-Tests/ShojiTests/
+Tests/ShojiTests/           Swift Testing
 docs/design/                design reference as standalone HTML (open in a browser)
+docs/swiftterm.md           SwiftTerm API notes for the pinned version
 ```
 
 ## Commands
 
 ```
-xcodegen generate                            # after any project.yml change
-xcodebuild -scheme Shoji -configuration Debug build
-xcodebuild -scheme Shoji test
+xcodegen generate        # after any project.yml change and on a fresh clone (.xcodeproj is not committed)
+xcodebuild -scheme Shoji -derivedDataPath build -destination 'platform=macOS' -skipPackagePluginValidation build
+xcodebuild -scheme Shoji -derivedDataPath build -destination 'platform=macOS' -skipPackagePluginValidation test
+open build/Build/Products/Debug/Shoji.app
 ```
+
+`-skipPackagePluginValidation` is needed because SwiftTerm runs a build-tool plugin; in Xcode, click Trust & Enable once instead.
 
 If a command here is wrong or missing, fix this file in the same change.
 
@@ -94,7 +99,10 @@ If a command here is wrong or missing, fix this file in the same change.
 
 ## Conventions
 
-- Swift 6 strict concurrency. `ThreadStore` is `@MainActor @Observable`.
+- Swift 6 strict concurrency, no default actor isolation. `ThreadStore` and `TerminalSessions` are `@MainActor @Observable`.
+- The thread model is `ShojiThread`; `Thread` would shadow `Foundation.Thread`.
+- Tests use Swift Testing. The test host runs the app headless (no shells, no socket); keep `ShojiApp.isHeadless` in sync if launch wiring changes.
+- To check UI by hand, launch the built app and use `screencapture -l <windowid>`. Press controls with System Events `perform action "AXPress"`; never send keystrokes, because macOS keeps the user's frontmost app and keystrokes go there.
 - Child processes get `SHOJI_THREAD_ID` and `SHOJI_SOCKET` in their environment so
   hooks can report which thread they belong to.
 - Status is never color-only: every state has its own icon shape plus a text label.

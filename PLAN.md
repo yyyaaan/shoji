@@ -2,9 +2,9 @@
 
 ## Status
 
-- **Current milestone:** M0 — repo and build
-- **Last session:** terminal engine switched from libghostty to SwiftTerm (decision below); Ghostty pin file and Zig ignores removed.
-- **Next up:** `project.yml` with the SwiftTerm package pinned, empty window that builds and launches. SwiftTerm latest is v1.99.1 (2026-10-21, "preview before 2.0"): pin it exactly, and treat the 2.0 move as its own bump.
+- **Current milestone:** M1 — spike (M0 done)
+- **Last session (initial-sprint):** M0 done: `project.yml` (SwiftTerm 1.99.1 pinned, sandbox off, unit tests hosted headless), app builds and launches. M1 spike: two SwiftTerm panes (Metal) in glass-framed cards; Claude Code and a login shell launch through the login shell in a hard-coded folder (`ShojiApp.spikeThreads`); per-launch Claude hooks via `--settings` → `shoji-hook` → `HookServer` socket → `ThreadStore`; shelf cards and pane headers show working / needs you / done; minimize, maximize, 1 / 2 / 2×2 layouts. Verified with screenshots: real `claude -p` hooks drove Working → Done, a Notification payload turned the card orange, and a hidden Claude pane redrew intact when reopened. 19 Swift Testing tests pass.
+- **Next up:** the user's hands-on M1 checks (unticked items below: resize/focus feel, Shift+Return, scrolling, heavy output, Cmd+click, IME), then M2 (threads.json, new-thread sheet replacing the spike seed).
 - **Blockers:** none
 
 _Agents: update this section at the end of every session (what changed, what's next)._
@@ -21,8 +21,17 @@ _Agents: update this section at the end of every session (what changed, what's n
 - **Option key.** Option shortcuts (e.g. Option+Enter) need "Option as Meta" enabled.
 - **Scroll wheel on the alternate screen** can be turned into arrow keys when mouse
   reporting is off; Claude Code then reads them as keystrokes. Test scrolling.
-- **Link clicks:** subclass overrides of SwiftTerm's delegate defaults are not called;
-  use a proxy `TerminalViewDelegate` that forwards every call.
+- **SwiftTerm delegate defaults can't be overridden** (`bell`, `requestOpenLink` come from a protocol extension). `DelegateRelay` sits in front as `terminalDelegate` and forwards every call. It must not also be the `processDelegate`, or the shared-signature calls loop. Details in `docs/swiftterm.md`.
+- **SwiftTerm `keyDown` / `becomeFirstResponder` aren't `open`.** Shift+Return is an `NSEvent` local monitor that stands down when the app enabled the Kitty keyboard protocol; focus is observed by overriding `hasFocus`.
+- **Metal must be turned on after the view joins a window** (`viewDidMoveToWindow`).
+- **SwiftTerm's build plugin** needs `-skipPackagePluginValidation` on the command line (Trust & Enable in Xcode).
+- **Inside a `GlassEffectContainer`, overlays added after `.glassEffect` are drawn under the glass.** Put borders and badges before the glass modifier.
+- **Login shell must be interactive too** (`$SHELL -l -i -c 'exec …'`), or PATH set in `.zshrc` (nvm, where `codex` lives here) is missing.
+- **Darwin `accept()` inherits `O_NONBLOCK`** from the listener; `HookServer` clears it before reading.
+- **Claude `Notification` with `idle_prompt`** fires about 60 s after a finished turn; it's ignored so Done doesn't flip to Needs you.
+- **No hook fires between approving a permission prompt and the tool finishing.** Typing into a needs-you thread is taken as the answer (→ Working).
+- **Resume ids come from `UserPromptSubmit` / `PostToolUse`**, not `SessionStart`: SessionStart also fires for sessions that never got a message, and those can't be resumed. (`claude --session-id <uuid>` exists if we ever need to pick the id up front.)
+- **UI automation:** System Events keystrokes go to the user's frontmost app, not Shoji (macOS won't let a script steal focus). Use `AXPress` on buttons and `screencapture -l <windowid>`.
 - **No terminal-native notifications from Claude Code** (it only sends them in Ghostty,
   Kitty and iTerm2). "Needs you" relies entirely on hooks → socket.
 - **Reference app:** TermQ (open source, macOS) is built on SwiftTerm and runs Claude
@@ -124,32 +133,32 @@ Runtime-only (not persisted): status, last activity, unread count, terminal view
 
 | State | Agents | Tasks |
 |---|---|---|
-| Working | prompt submitted / tool running (hook) | — |
-| Needs you | Claude `Notification` hook; bell from the terminal as a hint | — |
-| Done | Claude `Stop` hook; Codex `notify` turn complete | — |
-| Idle | Done and already seen, or fresh session at prompt | — |
+| Working | `UserPromptSubmit` / `PostToolUse` hook; typing into a needs-you thread | — |
+| Needs you | `Notification` hook (not `idle_prompt`); bell while Working | — |
+| Done | `Stop` hook; Codex `notify` `agent-turn-complete` | — |
+| Idle | launched, or Done and then focused | — |
 | Running | — | process alive |
 | Exited(code) | process exited | process exited (non-zero = error) |
 
-Resume ids: Claude from the `SessionStart` hook payload; Codex — to confirm (Open questions).
+Hook transport: `shoji-hook` sends one connection per event to `~/Library/Application Support/Shoji/hook.sock`: the thread id on the first line, then the CLI's JSON (stdin for Claude, argv[1] for Codex `notify`). Resume ids: Claude from `session_id` in prompt/tool hooks; Codex — to confirm (Open questions).
 
 ## Milestones
 
 ### M0 — Repo and build
-- [ ] `project.yml` (XcodeGen), macOS 26 target, App Sandbox off, Debug/Release
-- [ ] SwiftTerm added as a Swift package in `project.yml`, pinned to an exact version
+- [x] `project.yml` (XcodeGen), macOS 26 target, App Sandbox off, Debug/Release
+- [x] SwiftTerm added as a Swift package in `project.yml`, pinned to an exact version
 - [x] `.gitignore` (build output, generated project)
-- [ ] Empty window builds and launches via `xcodebuild`
+- [x] Empty window builds and launches via `xcodebuild`
 - [x] `docs/design/` HTML mockups of Option B and Hub view
 
 ### M1 — Spike (prove the risky parts)
-- [ ] `TerminalBackend` protocol + SwiftTerm view (Metal renderer) in SwiftUI;
+- [x] `TerminalBackend` protocol + SwiftTerm view (Metal renderer) in SwiftUI;
       login shell runs, typing works
-- [ ] Two terminals side by side inside glass-framed cards (solid terminal background)
-- [ ] Each launches `claude -r` in a hard-coded folder
+- [x] Two terminals side by side inside glass-framed cards (solid terminal background)
+- [x] Claude Code + a login shell launch in a hard-coded folder (spike seed)
 - [ ] Window resize and focus switching between panes are smooth
-- [ ] Hide/show one pane without redraw glitches (stable size while hidden)
-- [ ] One Claude `Notification` hook → `shoji-hook` → socket → card turns orange
+- [x] Hide/show one pane without redraw glitches (stable size while hidden)
+- [x] One Claude `Notification` hook → `shoji-hook` → socket → card turns orange
 - [ ] Terminal checklist with Claude Code (re-run after every SwiftTerm bump):
   - [ ] Shift+Enter inserts a newline; Option+Enter works with Option as Meta
   - [ ] Long reply + scrolling up: no drift, scroll wheel scrolls (no stray keystrokes)
@@ -169,11 +178,11 @@ Resume ids: Claude from the `SessionStart` hook payload; Codex — to confirm (O
 - [ ] Restore layout and open threads on relaunch
 
 ### M3 — Status and resume
-- [ ] `shoji-hook` client (fast, silent when Shoji is down)
-- [ ] Per-launch hook injection for Claude Code (no global config edits)
+- [x] `shoji-hook` client (fast, silent when Shoji is down)
+- [x] Per-launch hook injection for Claude Code (no global config edits)
 - [ ] Capture Claude resume id from `SessionStart`; relaunch with `--resume`
 - [ ] Codex `notify` wiring + resume
-- [ ] Terminal delegate callbacks → StatusEvent: title, bell, process exit
+- [x] Terminal delegate callbacks → StatusEvent: title, bell, process exit
 - [ ] Full state machine from the table above, elapsed timers, unread counts
 - [ ] Native macOS notification for needs-you when the app is in the background
 
@@ -210,9 +219,14 @@ Resume ids: Claude from the `SessionStart` hook payload; Codex — to confirm (O
 - **Themes:** ship a few built-in themes, or import Ghostty/iTerm2 theme files?
 - **Task restart:** SIGINT then relaunch, or SIGTERM with a timeout? Per task setting?
 - **Git branch on Hub cards:** read `.git/HEAD` directly vs. shelling out to `git`.
+- **Codex notify:** `codex -c 'notify=["…/shoji-hook"]'` per launch replaces any `notify` program the user configured. Chain to theirs, or accept the override?
+- **Quitting with live agents:** quitting closes every PTY (agents get SIGHUP). Confirm before quit while something is Working / Needs you?
 
 ## Decisions
 
+- **Bundle id `fi.yan.shoji`**, ad-hoc signed for local builds until M5.
+- **The `.xcodeproj` is generated and not committed**; `project.yml` is the only source. Package.resolved therefore isn't committed either; SwiftTerm itself is pinned exactly.
+- **Shift+Return → ESC CR** (Meta+Return, a newline in Claude Code) for every thread whose program hasn't enabled the Kitty keyboard protocol.
 - **Terminal engine: SwiftTerm** (chosen over libghostty). Pure Swift package, no Zig
   build, stable versioned API, Metal renderer, Kitty keyboard and graphics protocols,
   runs on iOS too, MIT license (compatible with Shoji's Apache 2.0). Accepted costs:
