@@ -5,7 +5,13 @@ import Observation
 /// terminal callbacks into status events.
 @MainActor @Observable
 final class TerminalSessions {
+    static let baseFontSize: CGFloat = 13
+
     private(set) var backends: [UUID: any TerminalBackend] = [:]
+    /// Applied to every terminal, current and future (app zoom).
+    @ObservationIgnored var fontSize = baseFontSize {
+        didSet { backends.values.forEach { $0.setFontSize(fontSize) } }
+    }
     @ObservationIgnored private let store: ThreadStore
     @ObservationIgnored private let context: LaunchContext
     @ObservationIgnored private let makeBackend: () -> any TerminalBackend
@@ -30,6 +36,7 @@ final class TerminalSessions {
         let backend = makeBackend()
         let id = thread.id
         backend.onEvent = { [weak self] in self?.handle($0, from: id) }
+        backend.setFontSize(fontSize)
         backends[id] = backend
         backend.start(thread.launch(in: context))
         store.apply(StatusEvent(threadId: id, signal: .launched))

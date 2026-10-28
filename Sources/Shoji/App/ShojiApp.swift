@@ -29,6 +29,7 @@ struct ShojiApp: App {
         }
         .defaultSize(width: 1360, height: 860)
         .windowToolbarStyle(.unified)
+        .commands { ShojiCommands(store: store) }
     }
 
     private static func startHookServer(at path: String, feeding store: ThreadStore) -> HookServer? {
@@ -43,7 +44,7 @@ struct ShojiApp: App {
         }
     }
 
-    // Until M2 brings the new-thread sheet and threads.json.
+    // Until the new-thread sheet and threads.json land.
     private static let spikeThreads = [
         ShojiThread(group: .agent, kind: .claude, title: "shoji", folder: "~/lab/shoji", command: ["claude"]),
         ShojiThread(group: .task, kind: .command, title: "shell", folder: "~/lab/shoji", command: []),

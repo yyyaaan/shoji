@@ -13,7 +13,7 @@ final class SwiftTermBackend: TerminalBackend, LocalProcessTerminalViewDelegate 
     init() {
         terminalView = ShojiTerminalView(
             frame: CGRect(x: 0, y: 0, width: 960, height: 600),
-            font: .monospacedSystemFont(ofSize: 13, weight: .regular),
+            font: .monospacedSystemFont(ofSize: TerminalSessions.baseFontSize, weight: .regular),
             options: TerminalOptions(scrollback: 10_000)
         )
         terminalView.optionAsMetaKey = true
@@ -38,6 +38,11 @@ final class SwiftTermBackend: TerminalBackend, LocalProcessTerminalViewDelegate 
 
     func focus() {
         terminalView.window?.makeFirstResponder(terminalView)
+    }
+
+    func setFontSize(_ size: CGFloat) {
+        guard terminalView.font.pointSize != size else { return }
+        terminalView.font = .monospacedSystemFont(ofSize: size, weight: .regular)
     }
 
     // MARK: LocalProcessTerminalViewDelegate

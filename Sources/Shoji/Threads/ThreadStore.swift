@@ -93,11 +93,43 @@ final class ThreadStore {
 
     func minimize(_ id: UUID) {
         layout.close(id)
-        if focusedThreadId == id { focusedThreadId = nil }
+        guard focusedThreadId == id else { return }
+        focusedThreadId = nil
+        focusRequest = layout.visibleThreadIds.first
     }
 
     func toggleMaximize(_ id: UUID) {
         layout.toggleMaximize(id)
         focusRequest = id
+    }
+
+    // MARK: Keyboard navigation
+
+    /// Agents then tasks, as the shelf shows them; ⌘1–9 index into this.
+    var shelfOrder: [ShojiThread] {
+        threads(in: .agent) + threads(in: .task)
+    }
+
+    func openThread(at index: Int) {
+        guard shelfOrder.indices.contains(index) else { return }
+        open(shelfOrder[index].id)
+    }
+
+    /// Opens the next thread in shelf order that needs the user, wrapping around. False when none does.
+    @discardableResult
+    func openNextNeedingYou() -> Bool {
+        let order = shelfOrder
+        let start = order.firstIndex { $0.id == focusedThreadId }.map { $0 + 1 } ?? 0
+        let rotated = order[start...] + order[..<start]
+        guard let next = rotated.first(where: { activity(for: $0.id).status == .needsYou }) else { return false }
+        open(next.id)
+        return true
+    }
+
+    func focusPane(offset: Int) {
+        let visible = layout.visibleThreadIds
+        guard !visible.isEmpty else { return }
+        let current = visible.firstIndex { $0 == focusedThreadId } ?? (offset > 0 ? -1 : 0)
+        focusRequest = visible[(current + offset + visible.count) % visible.count]
     }
 }

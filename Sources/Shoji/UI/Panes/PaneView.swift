@@ -5,6 +5,7 @@ struct PaneView: View {
 
     @Environment(ThreadStore.self) private var store
     @Environment(TerminalSessions.self) private var sessions: TerminalSessions?
+    @Environment(\.zoom) private var zoom
 
     private var isFocused: Bool { store.focusedThreadId == thread.id }
     private var isMaximized: Bool { store.layout.maximizedThreadId == thread.id }
@@ -24,21 +25,21 @@ struct PaneView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Palette.terminalBackground)
         }
-        .clipShape(.rect(cornerRadius: 18))
+        .clipShape(.rect(cornerRadius: 18 * zoom))
         .overlay {
-            RoundedRectangle(cornerRadius: 18)
+            RoundedRectangle(cornerRadius: 18 * zoom)
                 .strokeBorder(.white.opacity(isFocused ? 0.32 : 0.16), lineWidth: 1)
         }
     }
 
     private var header: some View {
-        HStack(spacing: 10) {
-            StatusIcon(status: store.activity(for: thread.id).status, size: 16)
+        HStack(spacing: 10 * zoom) {
+            StatusIcon(status: store.activity(for: thread.id).status, size: 16 * zoom)
             Text(thread.title)
-                .font(.system(size: 14, weight: .semibold))
+                .font(.system(size: 14 * zoom, weight: .semibold))
                 .lineLimit(1)
             Text(thread.displayFolder)
-                .font(.system(size: 12, weight: .medium, design: .monospaced))
+                .font(.system(size: 12 * zoom, weight: .medium, design: .monospaced))
                 .foregroundStyle(.white.opacity(0.72))
                 .lineLimit(1)
                 .truncationMode(.head)
@@ -52,10 +53,11 @@ struct PaneView: View {
         }
         .labelStyle(.iconOnly)
         .buttonStyle(.glass)
+        .controlSize(zoom < 0.9 ? .small : zoom > 1.3 ? .large : .regular)
         .foregroundStyle(Palette.text)
-        .padding(.leading, 16)
-        .padding(.trailing, 12)
-        .padding(.vertical, 8)
+        .padding(.leading, 16 * zoom)
+        .padding(.trailing, 12 * zoom)
+        .padding(.vertical, 8 * zoom)
         .frame(maxWidth: .infinity)
         .glassEffect(.regular, in: .rect)
     }

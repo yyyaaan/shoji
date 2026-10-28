@@ -5,51 +5,53 @@ struct ThreadCard: View {
     let activity: ThreadActivity
     var isFocused = false
 
+    @Environment(\.zoom) private var zoom
+
     private var needsYou: Bool { activity.status == .needsYou }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 8) {
-                StatusIcon(status: activity.status)
+        VStack(alignment: .leading, spacing: 6 * zoom) {
+            HStack(spacing: 8 * zoom) {
+                StatusIcon(status: activity.status, size: 22 * zoom)
                 if thread.group == .agent {
                     Text(thread.kind.label)
-                        .font(.system(size: 10, weight: .bold))
-                        .tracking(0.6)
+                        .font(.system(size: 10 * zoom, weight: .bold))
+                        .tracking(0.6 * zoom)
                         .foregroundStyle(.white.opacity(0.8))
                 }
                 Spacer(minLength: 0)
                 trailing
             }
             Text(thread.title)
-                .font(.system(size: 15, weight: .semibold))
+                .font(.system(size: 15 * zoom, weight: .semibold))
                 .lineLimit(1)
             Text(subtitle)
-                .font(.system(size: 11, weight: .medium, design: .monospaced))
+                .font(.system(size: 11 * zoom, weight: .medium, design: .monospaced))
                 .foregroundStyle(needsYou ? Palette.needsYouText : .white.opacity(0.75))
                 .lineLimit(1)
                 .truncationMode(.middle)
         }
         .foregroundStyle(Palette.text)
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
-        .frame(width: thread.group == .agent ? 196 : 168, height: 104, alignment: .topLeading)
+        .padding(.horizontal, 14 * zoom)
+        .padding(.vertical, 12 * zoom)
+        .frame(width: (thread.group == .agent ? 196 : 168) * zoom, height: 104 * zoom, alignment: .topLeading)
         // Overlays must precede the glass: inside a GlassEffectContainer the glass draws over later ones.
         .overlay {
-            RoundedRectangle(cornerRadius: 18)
+            RoundedRectangle(cornerRadius: 18 * zoom)
                 .strokeBorder(borderColor, lineWidth: 1)
         }
         .overlay(alignment: .topTrailing) {
             if activity.attention > 0 {
                 Text("\(activity.attention)")
-                    .font(.system(size: 12, weight: .bold))
+                    .font(.system(size: 12 * zoom, weight: .bold))
                     .foregroundStyle(Color(hex: 0x1A1206))
-                    .padding(.horizontal, 6)
-                    .frame(minWidth: 22, minHeight: 22)
+                    .padding(.horizontal, 6 * zoom)
+                    .frame(minWidth: 22 * zoom, minHeight: 22 * zoom)
                     .background(Palette.needsYou, in: .capsule)
-                    .offset(x: 7, y: -7)
+                    .offset(x: 7 * zoom, y: -7 * zoom)
             }
         }
-        .glassEffect(.regular.tint(tint).interactive(), in: .rect(cornerRadius: 18))
+        .glassEffect(.regular.tint(tint).interactive(), in: .rect(cornerRadius: 18 * zoom))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel([thread.title, thread.kind.label.capitalized, activity.status.label, subtitle].joined(separator: ", "))
     }
@@ -65,12 +67,12 @@ struct ThreadCard: View {
         case .working, .done:
             TimelineView(.periodic(from: .now, by: 30)) { context in
                 Text(Self.compactElapsed(since: activity.since, now: context.date))
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(.system(size: 11 * zoom, weight: .semibold))
                     .foregroundStyle(activity.status == .working ? Color(hex: 0x9FCBFF) : .white.opacity(0.72))
             }
         case .exited(let code?) where code != 0:
             Text("code \(code)")
-                .font(.system(size: 11, weight: .medium, design: .monospaced))
+                .font(.system(size: 11 * zoom, weight: .medium, design: .monospaced))
                 .foregroundStyle(Palette.exitedText)
         default:
             EmptyView()

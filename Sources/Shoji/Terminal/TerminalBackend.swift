@@ -22,4 +22,5 @@ protocol TerminalBackend: AnyObject {
     var onEvent: ((TerminalEvent) -> Void)? { get set }
     func start(_ launch: TerminalLaunch)
     func focus()
+    func setFontSize(_ size: CGFloat)
 }

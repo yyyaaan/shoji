@@ -13,7 +13,8 @@ those), and NOT an agent client: it never talks to models or APIs. It only hosts
 terminals and watches their status.
 
 **`PLAN.md` is the living state file.** Read its Status and Gotchas sections before
-starting work. Update Status and tick milestone checkboxes when you finish a session.
+starting work. Update Status and its task list (Now / Next / Later / Done) when you
+finish a session.
 
 ## Stack
 
@@ -34,12 +35,13 @@ scripts/
   shoji-hook                hook client bundled into the app: env + JSON -> Shoji socket
   package.sh                Release build -> build/Shoji-<version>.dmg (used by release.yml)
 Sources/Shoji/
-  App/                      app entry (ShojiApp: wiring, window), MainView + toolbar
+  App/                      app entry (ShojiApp: wiring, window), MainView + toolbar,
+                            Shortcuts (catalog + menu commands)
   Threads/                  ShojiThread, ThreadStore, PaneLayout, launch building, Mock
   Terminal/                 TerminalBackend protocol, SwiftTerm implementation
                             (only place importing SwiftTerm), TerminalSessions
   Status/                   StatusEvent, HookServer (socket listener), ClaudeHooks
-  UI/                       Theme (palette), StatusIcon, Backdrop
+  UI/                       Theme (palette), StatusIcon, Backdrop, Zoom, ShortcutsSheet
   UI/Shelf/                 card shelf (Agents | Tasks), context menu, drag reorder
   UI/Panes/                 pane layouts (1 / 2 / 4) with drag splits, pane header, TerminalHost
   UI/Hub/                   Hub view big cards
@@ -107,11 +109,13 @@ If a command here is wrong or missing, fix this file in the same change.
 - The thread model is `ShojiThread`; `Thread` would shadow `Foundation.Thread`.
 - Tests use Swift Testing. The test host runs the app headless (no shells, no socket); keep `ShojiApp.isHeadless` in sync if launch wiring changes.
 - To check UI by hand, launch the built app and use `screencapture -l <windowid>`. Press controls with System Events `perform action "AXPress"`; never send keystrokes, because macOS keeps the user's frontmost app and keystrokes go there.
+- **Zoom:** chrome metrics (font sizes, card and header sizes, radii, paddings) multiply by `@Environment(\.zoom)`, so ⌘+ / ⌘− scale the UI with the terminal text. New chrome must do the same.
+- **Shortcuts:** add new ones to the `Shortcut` catalog in `App/Shortcuts.swift`; the menu bar and the ⌘/ sheet both read it. Leave ⌘K free (planned quick jump; it also means "clear" in Mac terminals).
 - Child processes get `SHOJI_THREAD_ID` and `SHOJI_SOCKET` in their environment so
   hooks can report which thread they belong to.
 - Status is never color-only: every state has its own icon shape plus a text label.
 - Every view gets a SwiftUI preview backed by mock threads (`Threads/Mock.swift`).
-- Keep changes small and milestone-scoped; one milestone item per PR when practical.
+- Keep changes small; one task per PR when practical.
 
 ## Design reference
 
