@@ -65,7 +65,7 @@ xcodebuild -scheme Shoji -derivedDataPath build -destination 'platform=macOS' -s
 xcodebuild -scheme Shoji -derivedDataPath build -destination 'platform=macOS' -skipPackagePluginValidation test
 open build/Build/Products/Debug/Shoji.app
 scripts/package.sh [version]     # universal Release app + DMG, ad-hoc signed
-git tag v0.1.0 && git push origin v0.1.0   # Release workflow publishes the DMG on GitHub
+# Releasing: bump MARKETING_VERSION in project.yml in a PR; merging it publishes vX.Y.Z (release.yml)
 ```
 
 `-skipPackagePluginValidation` is needed because SwiftTerm runs a build-tool plugin; in Xcode, click Trust & Enable once instead.
