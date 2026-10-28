@@ -51,6 +51,14 @@ struct ThreadFileTests {
         #expect(try FileManager.default.contentsOfDirectory(atPath: folder.path).count == 1)
     }
 
+    @Test func filesWithThreadNumbersStillLoad() throws {
+        let id = UUID()
+        let json = #"{"schemaVersion": 1, "threads": [{"id": "\#(id)", "number": 2, "folder": "~/lab/shoji", "group": 0, "order": 0}], "layout": {"mode": "single", "openThreadIds": ["\#(id)"], "columnSplit": 0.5, "rowSplit": 0.5}}"#
+        try Data(json.utf8).write(to: url)
+        let file = try #require(ThreadFile.load(from: url))
+        #expect(file.threads.map(\.id) == [id])
+    }
+
     @Test func layoutDropsThreadsThatNoLongerExist() {
         let thread = ShojiThread(folder: "/tmp")
         let gone = UUID()

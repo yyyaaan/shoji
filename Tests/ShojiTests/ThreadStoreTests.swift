@@ -74,7 +74,7 @@ struct ThreadStoreTests {
         let store = makeStore()
         send(.directory(NSHomeDirectory() + "/lab/shoji"), to: second.id, in: store)
         #expect(store.thread(second.id)?.folder == "~/lab/shoji")
-        #expect(store.thread(second.id)?.displayTitle == "shoji 2")
+        #expect(store.thread(second.id).map(store.name) == "shoji")
         #expect(store.activity(for: second.id).isIntegrated)
     }
 
@@ -153,19 +153,28 @@ struct ThreadStoreTests {
         let empty = ThreadStore(threads: [])
         let home = empty.newThread()
         #expect(empty.thread(home)?.folder == "~")
-        #expect(empty.thread(home)?.displayTitle == "~ 1")
+        #expect(empty.thread(home).map(empty.name) == "~")
     }
 
-    @Test func numbersStayLowAndStable() {
-        let store = makeStore()
-        #expect(store.shelfOrder.map(\.number) == [1, 2])
-        store.close(first.id)
-        let reused = store.newThread()
-        #expect(store.thread(reused)?.number == 1)
-        let next = store.newThread()
-        #expect(store.thread(next)?.number == 3)
-        store.move(next, by: -1)
-        #expect(store.thread(next)?.number == 3)
+    @Test func numbersOnlyTellApartThreadsInSameNamedFolders() {
+        let store = ThreadStore(threads: [])
+        let a = store.newThread()
+        let b = store.newThread()
+        let names = { [a, b].map { store.thread($0).map(store.name) } }
+        #expect(names() == ["~", "~ 2"])
+
+        // Whoever arrives in a folder later carries the number.
+        send(.directory(NSHomeDirectory() + "/lab/shoji"), to: a, in: store)
+        #expect(names() == ["shoji", "~"])
+        send(.directory("/tmp/shoji"), to: b, in: store)
+        #expect(names() == ["shoji", "shoji 2"])
+        store.move(b, by: -1)
+        #expect(names() == ["shoji", "shoji 2"])
+
+        store.rename(a, to: "api")
+        #expect(names() == ["api", "shoji"])
+        store.close(a)
+        #expect(store.thread(b).map(store.name) == "shoji")
     }
 
     @Test func closeAsksOnlyWhenSomethingWouldBeLost() {
@@ -193,46 +202,88 @@ struct ThreadStoreTests {
     @Test func renameTrimsAndEmptyFallsBackToTheFolder() {
         let store = makeStore()
         store.rename(second.id, to: "  web  ")
-        #expect(store.thread(second.id)?.displayTitle == "web")
+        #expect(store.thread(second.id).map(store.name) == "web")
         store.rename(second.id, to: "   ")
         #expect(store.thread(second.id)?.title == nil)
-        #expect(store.thread(second.id)?.displayTitle == "web 2")
+        #expect(store.thread(second.id).map(store.name) == "web")
     }
 
     @Test func movingAcrossBarsJoinsTheNeighbouringGroup() {
         let third = ShojiThread(title: "third", group: 1, order: 0)
         let store = ThreadStore(threads: [first, second, third])
-        let titles = { store.shelf.map { $0.map(\.displayTitle) } }
-        #expect(titles() == [["first", "web 2"], ["third"]])
+        let titles = { store.shelf.map { $0.map(store.name) } }
+        #expect(titles() == [["first", "web"], ["third"]])
         #expect(!store.canMove(first.id, by: -1))
         #expect(!store.canMove(third.id, by: 1))
 
         store.move(second.id, by: 1)
-        #expect(titles() == [["first"], ["web 2", "third"]])
+        #expect(titles() == [["first"], ["web", "third"]])
         store.move(first.id, by: 1)
-        #expect(titles() == [["first", "web 2", "third"]])
+        #expect(titles() == [["first", "web", "third"]])
         store.move(third.id, by: -1)
-        #expect(titles() == [["first", "third", "web 2"]])
+        #expect(titles() == [["first", "third", "web"]])
 
         store.toggleBarBefore(third.id)
-        #expect(titles() == [["first"], ["third", "web 2"]])
+        #expect(titles() == [["first"], ["third", "web"]])
         #expect(store.hasBarBefore(third.id))
         store.toggleBarBefore(third.id)
-        #expect(titles() == [["first", "third", "web 2"]])
+        #expect(titles() == [["first", "third", "web"]])
     }
 
     @Test func droppingACardPlacesItBesideTheTarget() {
         let third = ShojiThread(title: "third", group: 1, order: 0)
         let store = ThreadStore(threads: [first, second, third])
-        let titles = { store.shelf.map { $0.map(\.displayTitle) } }
+        let titles = { store.shelf.map { $0.map(store.name) } }
 
         store.place(first.id, nextTo: third.id, after: true)
-        #expect(titles() == [["web 2"], ["third", "first"]])
+        #expect(titles() == [["web"], ["third", "first"]])
         store.place(second.id, nextTo: first.id, after: false)
-        #expect(titles() == [["third", "web 2", "first"]])
+        #expect(titles() == [["third", "web", "first"]])
         store.place(first.id, nextTo: third.id, after: false)
-        #expect(titles() == [["first", "third", "web 2"]])
+        #expect(titles() == [["first", "third", "web"]])
         store.place(first.id, nextTo: first.id, after: true)
-        #expect(titles() == [["first", "third", "web 2"]])
+        #expect(titles() == [["first", "third", "web"]])
+    }
+
+    @Test func openingACardReplacesThePaneYouAreIn() {
+        let threads = (0..<4).map { ShojiThread(title: "\($0)", order: $0) }
+        let ids = threads.map(\.id)
+        let store = ThreadStore(threads: threads, layout: PaneLayout(mode: .twoColumns, openThreadIds: [ids[0], ids[1]]))
+        store.focus(ids[0])
+        store.open(ids[2])
+        #expect(store.layout.panes == [ids[2], ids[1]])
+        #expect(store.focusRequest == ids[2])
+
+        // Already on screen: only focus moves.
+        store.open(ids[1])
+        #expect(store.layout.panes == [ids[2], ids[1]])
+        #expect(store.focusRequest == ids[1])
+    }
+
+    @Test func withNoPaneFocusedOpeningSparesPanesThatNeedYou() {
+        let threads = (0..<4).map { ShojiThread(title: "\($0)", order: $0) }
+        let ids = threads.map(\.id)
+        let store = ThreadStore(threads: threads, layout: PaneLayout(mode: .twoColumns, openThreadIds: [ids[0], ids[1]]))
+        send(.needsYou(message: nil), to: ids[1], in: store)
+        store.open(ids[2])
+        #expect(store.layout.panes == [ids[2], ids[1]])
+    }
+
+    @Test func switchingLayoutsKeepsYourPaneAndFillsNewOnes() {
+        let threads = (0..<5).map { ShojiThread(title: "\($0)", order: $0) }
+        let ids = threads.map(\.id)
+        let store = ThreadStore(threads: threads, layout: PaneLayout(mode: .grid, openThreadIds: Array(ids.prefix(4))))
+        store.focus(ids[3])
+        store.layoutMode = .twoColumns
+        #expect(store.layout.panes == [ids[0], ids[3]])
+        store.layoutMode = .grid
+        #expect(store.layout.panes == [ids[0], ids[3], ids[2], ids[1]])
+
+        let single = ThreadStore(threads: threads, layout: PaneLayout(mode: .single, openThreadIds: [ids[2]]))
+        single.focus(ids[2])
+        single.open(ids[4])
+        single.focus(ids[4])
+        single.layoutMode = .threePanes
+        #expect(single.layout.panes == [ids[4], ids[2], ids[0]])
     }
 }

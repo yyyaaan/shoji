@@ -4,6 +4,7 @@ struct ThreadCard: View {
     static let width: CGFloat = 188
 
     let thread: ShojiThread
+    let name: String
     let activity: ThreadActivity
     var isFocused = false
 
@@ -25,7 +26,7 @@ struct ThreadCard: View {
                 Spacer(minLength: 0)
                 trailing
             }
-            Text(thread.displayTitle)
+            Text(name)
                 .font(.system(size: 15 * zoom, weight: .semibold))
                 .lineLimit(1)
             Text(subtitle)
@@ -63,7 +64,7 @@ struct ThreadCard: View {
         }
         .glassEffect(.regular.tint(tint).interactive(), in: .rect(cornerRadius: 18 * zoom))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel([thread.displayTitle, tag?.capitalized, activity.status.label, subtitle].compactMap(\.self).joined(separator: ", "))
+        .accessibilityLabel([name, tag?.capitalized, activity.status.label, subtitle].compactMap(\.self).joined(separator: ", "))
     }
 
     private var tint: Color {
@@ -128,7 +129,7 @@ struct ThreadCard: View {
     let store = Mock.store()
     HStack(spacing: 10) {
         ForEach(store.threads) { thread in
-            ThreadCard(thread: thread, activity: store.activity(for: thread.id), isFocused: thread.id == Mock.threads[1].id)
+            ThreadCard(thread: thread, name: store.name(of: thread), activity: store.activity(for: thread.id), isFocused: thread.id == Mock.threads[1].id)
         }
     }
     .padding(24)

@@ -37,7 +37,7 @@ struct MainView: View {
         .sheet(isPresented: $showsShortcuts) { ShortcutsSheet() }
         .focusedSceneValue(\.showsShortcuts, $showsShortcuts)
         .alert(
-            "Close “\(closing?.displayTitle ?? "")”?",
+            "Close “\(closing.map(store.name) ?? "")”?",
             isPresented: Binding { store.closeRequest != nil } set: { if !$0 { store.closeRequest = nil } },
             presenting: closing
         ) { thread in
@@ -65,7 +65,7 @@ struct MainView: View {
     private var trailingControls: some View {
         @Bindable var store = store
         return VStack(alignment: .trailing) {
-            Picker("Layout", selection: $store.layout.mode) {
+            Picker("Layout", selection: $store.layoutMode) {
                 // The macOS window-tiling family, so the four read as one set.
                 Label("Single pane", systemImage: "rectangle.inset.filled").tag(PaneLayout.Mode.single)
                 Label("Two columns", systemImage: "inset.filled.leadinghalf.trailinghalf.rectangle").tag(PaneLayout.Mode.twoColumns)

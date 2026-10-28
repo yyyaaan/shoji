@@ -35,7 +35,7 @@ struct PaneView: View {
     private var header: some View {
         HStack(spacing: 10 * zoom) {
             StatusIcon(status: store.activity(for: thread.id).status, size: 16 * zoom)
-            Text(thread.displayTitle)
+            Text(store.name(of: thread))
                 .font(.system(size: 14 * zoom, weight: .semibold))
                 .lineLimit(1)
             Text(thread.displayFolder)

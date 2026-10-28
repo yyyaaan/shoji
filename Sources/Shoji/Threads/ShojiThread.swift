@@ -5,9 +5,7 @@ import Foundation
 /// Not named `Thread` to avoid shadowing `Foundation.Thread`.
 struct ShojiThread: Identifiable, Codable, Hashable, Sendable {
     let id: UUID
-    /// Stable and small (the lowest free one when created), so threads in the same folder stay apart.
-    var number: Int
-    /// Given by the user; without one the card shows the folder's name and the number.
+    /// Given by the user; without one the thread goes by its folder's name (`ThreadStore.name(of:)`).
     var title: String?
     /// Where the shell last was; a relaunch starts there.
     var folder: String
@@ -21,7 +19,6 @@ struct ShojiThread: Identifiable, Codable, Hashable, Sendable {
 
     init(
         id: UUID = UUID(),
-        number: Int = 0,
         title: String? = nil,
         folder: String = "~",
         group: Int = 0,
@@ -30,7 +27,6 @@ struct ShojiThread: Identifiable, Codable, Hashable, Sendable {
         command: String? = nil
     ) {
         self.id = id
-        self.number = number
         self.title = title
         self.folder = folder
         self.group = group
@@ -39,21 +35,7 @@ struct ShojiThread: Identifiable, Codable, Hashable, Sendable {
         self.command = command
     }
 
-    /// Threads saved before numbering get theirs from `ThreadStore` on load.
-    init(from decoder: any Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        id = try container.decode(UUID.self, forKey: .id)
-        number = try container.decodeIfPresent(Int.self, forKey: .number) ?? 0
-        title = try container.decodeIfPresent(String.self, forKey: .title)
-        folder = try container.decode(String.self, forKey: .folder)
-        group = try container.decode(Int.self, forKey: .group)
-        order = try container.decode(Int.self, forKey: .order)
-        resumeId = try container.decodeIfPresent(String.self, forKey: .resumeId)
-        command = try container.decodeIfPresent(String.self, forKey: .command)
-    }
-
-    /// What an unnamed thread is called: its folder and number, like "~ 2".
-    var autoTitle: String { "\((displayFolder as NSString).lastPathComponent) \(number)" }
-    var displayTitle: String { title ?? autoTitle }
+    /// What an unnamed thread goes by.
+    var folderName: String { (displayFolder as NSString).lastPathComponent }
     var displayFolder: String { (folder as NSString).abbreviatingWithTildeInPath }
 }

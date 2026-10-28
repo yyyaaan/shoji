@@ -18,30 +18,36 @@ struct PaneLayout: Codable, Equatable, Sendable {
     var mode: Mode = .twoColumns {
         didSet { maximizedThreadId = nil }
     }
-    /// Ordered; the first `mode.capacity` are on screen, the rest come back when the layout grows.
+    /// In pane order; the first `mode.capacity` are on screen, the rest come back when the layout grows.
     var openThreadIds: [UUID] = []
     var maximizedThreadId: UUID?
     /// Share of the width given to the left column, and of the height to the top row.
     var columnSplit = 0.5
     var rowSplit = 0.5
 
-    var visibleThreadIds: [UUID] {
-        if let maximizedThreadId { return [maximizedThreadId] }
-        return Array(openThreadIds.prefix(mode.capacity))
+    /// The threads in the layout's panes, maximized or not.
+    var panes: [UUID] {
+        Array(openThreadIds.prefix(mode.capacity))
     }
 
-    /// Puts a thread on screen. When every pane is taken, it replaces the last pane other than `focused`.
-    mutating func open(_ id: UUID, keeping focused: UUID?) {
+    var visibleThreadIds: [UUID] {
+        maximizedThreadId.map { [$0] } ?? panes
+    }
+
+    /// Puts a thread on screen: in a free pane, else in place of `replaced` (the last pane when nil),
+    /// which then comes back first when the layout grows.
+    mutating func show(_ id: UUID, replacing replaced: UUID?) {
         maximizedThreadId = nil
-        guard !visibleThreadIds.contains(id) else { return }
+        guard !panes.contains(id) else { return }
         openThreadIds.removeAll { $0 == id }
-        let visible = openThreadIds.prefix(mode.capacity)
-        if visible.count < mode.capacity {
-            openThreadIds.insert(id, at: visible.endIndex)
-        } else {
-            let slot = visible.lastIndex { $0 != focused } ?? visible.endIndex - 1
-            openThreadIds[slot] = id
+        let shown = panes
+        guard shown.count == mode.capacity else {
+            openThreadIds.append(id)
+            return
         }
+        let slot = replaced.flatMap { shown.firstIndex(of: $0) } ?? shown.count - 1
+        openThreadIds.insert(openThreadIds[slot], at: shown.count)
+        openThreadIds[slot] = id
     }
 
     mutating func close(_ id: UUID) {

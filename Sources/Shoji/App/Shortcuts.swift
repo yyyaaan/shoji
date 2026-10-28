@@ -86,7 +86,7 @@ struct ShojiCommands: Commands {
 
         CommandMenu("Threads") {
             ForEach(Array(store.shelfOrder.prefix(9).enumerated()), id: \.element.id) { index, thread in
-                Button(thread.displayTitle) { store.openThread(at: index) }
+                Button(store.name(of: thread)) { store.openThread(at: index) }
                     .keyboardShortcut(KeyEquivalent(Character("\(index + 1)")), modifiers: .command)
             }
             Divider()
@@ -102,10 +102,10 @@ struct ShojiCommands: Commands {
         }
 
         CommandGroup(before: .toolbar) {
-            button(.singlePane) { store.layout.mode = .single }
-            button(.twoColumns) { store.layout.mode = .twoColumns }
-            button(.threePanes) { store.layout.mode = .threePanes }
-            button(.grid) { store.layout.mode = .grid }
+            button(.singlePane) { store.layoutMode = .single }
+            button(.twoColumns) { store.layoutMode = .twoColumns }
+            button(.threePanes) { store.layoutMode = .threePanes }
+            button(.grid) { store.layoutMode = .grid }
             Divider()
             button(.zoomIn) { zoom = Zoom.step(zoom, by: 1) }
             button(.zoomOut) { zoom = Zoom.step(zoom, by: -1) }

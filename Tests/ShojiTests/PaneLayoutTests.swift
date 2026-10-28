@@ -5,17 +5,21 @@ import Testing
 struct PaneLayoutTests {
     private let ids = (0..<5).map { _ in UUID() }
 
-    @Test func fillsFreePanesThenReplacesTheUnfocusedOne() {
+    @Test func fillsFreePanesThenReplacesTheChosenOne() {
         var layout = PaneLayout(mode: .twoColumns)
-        layout.open(ids[0], keeping: nil)
-        layout.open(ids[1], keeping: nil)
+        layout.show(ids[0], replacing: nil)
+        layout.show(ids[1], replacing: nil)
         #expect(layout.visibleThreadIds == [ids[0], ids[1]])
 
-        layout.open(ids[2], keeping: ids[1])
+        layout.show(ids[2], replacing: ids[0])
+        #expect(layout.visibleThreadIds == [ids[2], ids[1]])
+        #expect(layout.openThreadIds == [ids[2], ids[1], ids[0]])
+
+        layout.show(ids[1], replacing: ids[2])
         #expect(layout.visibleThreadIds == [ids[2], ids[1]])
 
-        layout.open(ids[1], keeping: ids[1])
-        #expect(layout.visibleThreadIds == [ids[2], ids[1]])
+        layout.show(ids[3], replacing: nil)
+        #expect(layout.visibleThreadIds == [ids[2], ids[3]])
     }
 
     @Test func hiddenPanesReturnWhenTheLayoutGrows() {
@@ -23,11 +27,12 @@ struct PaneLayoutTests {
         layout.mode = .single
         #expect(layout.visibleThreadIds == [ids[0]])
 
-        layout.open(ids[2], keeping: nil)
-        #expect(layout.visibleThreadIds == [ids[2]])
+        layout.show(ids[4], replacing: ids[0])
+        #expect(layout.visibleThreadIds == [ids[4]])
 
+        // The replaced thread comes back first.
         layout.mode = .grid
-        #expect(layout.visibleThreadIds == [ids[2], ids[1], ids[3]])
+        #expect(layout.visibleThreadIds == [ids[4], ids[0], ids[1], ids[2]])
     }
 
     @Test func maximizeAndClose() {
@@ -47,7 +52,7 @@ struct PaneLayoutTests {
     @Test func threePanesHoldsThree() {
         var layout = PaneLayout(mode: .threePanes, openThreadIds: Array(ids.prefix(4)))
         #expect(layout.visibleThreadIds == Array(ids.prefix(3)))
-        layout.open(ids[4], keeping: ids[0])
+        layout.show(ids[4], replacing: ids[2])
         #expect(layout.visibleThreadIds == [ids[0], ids[1], ids[4]])
     }
 }

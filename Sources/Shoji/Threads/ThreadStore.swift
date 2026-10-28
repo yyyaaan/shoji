@@ -12,6 +12,8 @@ final class ThreadStore {
         didSet { scheduleSave() }
     }
     private(set) var focusedThreadId: UUID?
+    /// Most recently focused first.
+    private(set) var recentThreadIds: [UUID] = []
     /// A pane that should take keyboard focus once its terminal is on screen.
     private(set) var focusRequest: UUID?
     /// A busy thread the user asked to close; the window confirms before `close` runs.
@@ -23,10 +25,6 @@ final class ThreadStore {
 
     init(threads: [ShojiThread], layout: PaneLayout = PaneLayout(), now: Date = .now, fileURL: URL? = nil) {
         let ids = Set(threads.map(\.id))
-        var threads = threads
-        for index in threads.indices where threads[index].number < 1 {
-            threads[index].number = Self.lowestFreeNumber(in: threads)
-        }
         var layout = layout
         layout.openThreadIds.removeAll { !ids.contains($0) }
         if let maximized = layout.maximizedThreadId, !ids.contains(maximized) { layout.maximizedThreadId = nil }
@@ -58,7 +56,12 @@ final class ThreadStore {
         case .directory(let path):
             activity.isIntegrated = true
             let folder = (path as NSString).abbreviatingWithTildeInPath
-            if threads[index].folder != folder { threads[index].folder = folder }
+            if threads[index].folder != folder {
+                // Last in line: of two threads in one folder, the one that arrived later carries the number.
+                var thread = threads.remove(at: index)
+                thread.folder = folder
+                threads.append(thread)
+            }
         case .commandStarted(let line):
             activity.isIntegrated = true
             threads[index].command = line
@@ -119,6 +122,7 @@ final class ThreadStore {
     func focus(_ id: UUID, at now: Date = .now) {
         if focusedThreadId != id { focusedThreadId = id }
         if focusRequest == id { focusRequest = nil }
+        if recentThreadIds.first != id { recentThreadIds = [id] + recentThreadIds.filter { $0 != id } }
         guard var activity = activities[id] else { return }
         let current = activity
         activity.attention = 0
@@ -134,7 +138,7 @@ final class ThreadStore {
     @discardableResult
     func newThread(at now: Date = .now) -> UUID {
         let focused = focusedThreadId.flatMap(thread)
-        let thread = ShojiThread(number: Self.lowestFreeNumber(in: threads), folder: focused?.folder ?? "~")
+        let thread = ShojiThread(folder: focused?.folder ?? "~")
         var groups = shelfIds
         if let focused, let place = position(of: focused.id, in: groups) {
             groups[place.group].insert(thread.id, at: place.index + 1)
@@ -150,9 +154,13 @@ final class ThreadStore {
         return thread.id
     }
 
-    private static func lowestFreeNumber(in threads: [ShojiThread]) -> Int {
-        let used = Set(threads.map(\.number))
-        return (1...).first { !used.contains($0) }!
+    /// The user's name for the thread, else its folder's name. Unnamed threads in folders of the same name
+    /// are numbered in the order they got there: "shoji", "shoji 2".
+    func name(of thread: ShojiThread) -> String {
+        if let title = thread.title { return title }
+        let twins = threads.filter { $0.title == nil && $0.folderName == thread.folderName }
+        let place = twins.firstIndex { $0.id == thread.id } ?? 0
+        return place == 0 ? thread.folderName : "\(thread.folderName) \(place + 1)"
     }
 
     /// An empty name goes back to showing the folder.
@@ -180,6 +188,7 @@ final class ThreadStore {
         minimize(id)
         threads.removeAll { $0.id == id }
         activities[id] = nil
+        recentThreadIds.removeAll { $0 == id }
     }
 
     // MARK: Shelf
@@ -282,9 +291,36 @@ final class ThreadStore {
 
     // MARK: Panes
 
+    /// Shows the thread in a free pane, else in the pane you're in (or, with none, the one used longest ago that
+    /// isn't waiting for you), and focuses it. A thread already on screen just takes focus.
     func open(_ id: UUID) {
-        layout.open(id, keeping: focusedThreadId)
+        let panes = layout.panes
+        let replaced = panes.first { $0 == focusedThreadId }
+            ?? panes.reversed().filter { activity(for: $0).status != .needsYou }.max { recency($0) < recency($1) }
+        layout.show(id, replacing: replaced)
         focusRequest = id
+    }
+
+    /// Position in `recentThreadIds`; threads never focused count as oldest.
+    private func recency(_ id: UUID) -> Int {
+        recentThreadIds.firstIndex(of: id) ?? .max
+    }
+
+    /// Switching layouts keeps the pane you're in on screen, and fills new panes with the threads
+    /// shown there before, then your most recent ones, then the shelf's.
+    var layoutMode: PaneLayout.Mode {
+        get { layout.mode }
+        set {
+            var layout = self.layout
+            layout.mode = newValue
+            if let focusedThreadId, let index = layout.openThreadIds.firstIndex(of: focusedThreadId), index >= newValue.capacity {
+                layout.openThreadIds.swapAt(index, newValue.capacity - 1)
+            }
+            for id in recentThreadIds + shelfOrder.map(\.id) where layout.openThreadIds.count < newValue.capacity {
+                if !layout.openThreadIds.contains(id) { layout.openThreadIds.append(id) }
+            }
+            self.layout = layout
+        }
     }
 
     func minimize(_ id: UUID) {

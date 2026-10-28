@@ -28,7 +28,7 @@ Shoji is deliberately not an editor, a diff viewer or an agent client. It never 
 ## Features
 
 - **Every thread is your shell.** ⌘N opens one next to the card you're on. `cd` anywhere, run `claude`, `codex` or `pnpm dev`, quit back to the prompt; the card follows along. Reopen Shoji and your threads, layout and Claude conversations come back.
-- **Your shelf, your groups.** Drag cards into place and drop plain bars between them (right-click a card); groups mean whatever you want. Unnamed threads read like "~ 2", so two shells in the same folder stay apart.
+- **Your shelf, your groups.** Drag cards into place and drop plain bars between them (right-click a card); groups mean whatever you want. Unnamed threads go by their folder's name, and get a number ("shoji 2") only when two would read the same.
 - **Know who needs you.** Cards show working, needs you, done, idle, running and exited, each with its own shape and label. A needs-you card turns orange, counts what's waiting and brings out Hachi, who also peeks out under the window buttons: one click opens the thread that's waiting.
 - **Status from the CLI itself.** Claude Code reports through its own hooks, injected per launch with `--settings`, so your `~/.claude` is never touched. Shoji never scrapes terminal output.
 - **Real terminals.** SwiftTerm with Metal rendering, your login shell's environment, 10,000 lines of scrollback, and Shift+Return for a new line in agent prompts.

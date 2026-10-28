@@ -35,11 +35,11 @@ struct ShelfView: View {
             }
             .scrollIndicators(.automatic)
             .alert("Rename Thread", isPresented: Binding { renaming != nil } set: { if !$0 { renaming = nil } }, presenting: renaming) { thread in
-                TextField("Name", text: $draftTitle, prompt: Text(thread.autoTitle))
+                TextField("Name", text: $draftTitle, prompt: Text(thread.folderName))
                 Button("Rename") { store.rename(thread.id, to: draftTitle) }
                 Button("Cancel", role: .cancel) {}
             } message: { _ in
-                Text("Leave it empty to show the folder and number.")
+                Text("Leave it empty to show the folder’s name.")
             }
             // Keyboard jumps can land on a card that is scrolled out of view.
             .onChange(of: store.focusedThreadId) { _, id in
@@ -55,6 +55,7 @@ struct ShelfView: View {
                 // A tap gesture rather than a Button: on macOS a Button swallows the drag.
                 ThreadCard(
                     thread: thread,
+                    name: store.name(of: thread),
                     activity: store.activity(for: thread.id),
                     isFocused: store.focusedThreadId == thread.id
                 )

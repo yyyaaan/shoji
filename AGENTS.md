@@ -6,7 +6,7 @@ anywhere and run coding-agent CLIs (`claude`, `codex`) or long-running commands
 (`docker compose up`, `pnpm dev`, watchers) in it, and quit back to the prompt as usual.
 Shoji shows what's running and what needs the user.
 
-Mascot: **Hachi**, an Akita who appears on a card when that thread needs the user.
+Mascot: **Hachi**, an Akita who appears on a card, and in the window's top-left corner, when a thread needs the user.
 
 Words used everywhere (code, docs, chat): a **thread** is one hosted shell session, whatever runs in it; the **shelf** is the strip of **cards** across the top, one card per thread in the user's order, with **bars** splitting it into groups that mean whatever the user wants (no titles); a **pane** shows an open thread's terminal below the shelf; the **Hub** (planned) shows big cards.
 
@@ -32,7 +32,7 @@ its task list (Now / Next / Later / Done) when you finish a session.
 
 ```
 project.yml                 XcodeGen spec (source of truth for targets/settings)
-.github/workflows/          ci.yml (tests on PRs and main), release.yml (DMG on v* tags)
+.github/workflows/          ci.yml (tests on PRs and main), release.yml (merged version bump -> vX.Y.Z release + DMG)
 scripts/
   shoji-hook                hook client bundled into the app: env + JSON -> Shoji socket
   shoji.zsh, zshenv         zsh integration bundled into the app (folder, commands, claude hooks, resume)
@@ -46,9 +46,9 @@ Sources/Shoji/
   Status/                   StatusEvent, HookServer (socket listener), ClaudeHooks
   UI/                       Theme (palette), StatusIcon, Backdrop, Zoom, ShortcutsSheet
   UI/Shelf/                 card shelf with bars between groups, context menu
-  UI/Panes/                 pane layouts (1 / 2 / 4) with drag splits, pane header, TerminalHost
+  UI/Panes/                 pane layouts (1 / 2 / 3 / 4) with drag splits, pane header, TerminalHost
   UI/Hub/                   Hub view big cards
-  UI/Hachi/                 HachiPortrait, Hachi.xcassets (vector PDF), AppIcon.icon
+  UI/Hachi/                 HachiPortrait, HachiCorner, Hachi.xcassets (vector PDF), AppIcon.icon
                             (Icon Composer; spec in docs/design/hachi/README.md)
 Tests/ShojiTests/           Swift Testing
 docs/design/                design reference as standalone HTML (open in a browser)
