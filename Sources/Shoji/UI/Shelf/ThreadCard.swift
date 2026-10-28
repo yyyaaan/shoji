@@ -13,16 +13,17 @@ struct ThreadCard: View {
         VStack(alignment: .leading, spacing: 6 * zoom) {
             HStack(spacing: 8 * zoom) {
                 StatusIcon(status: activity.status, size: 22 * zoom)
-                if thread.group == .agent {
-                    Text(thread.kind.label)
+                if let tag {
+                    Text(tag)
                         .font(.system(size: 10 * zoom, weight: .bold))
                         .tracking(0.6 * zoom)
                         .foregroundStyle(.white.opacity(0.8))
+                        .lineLimit(1)
                 }
                 Spacer(minLength: 0)
                 trailing
             }
-            Text(thread.title)
+            Text(thread.displayTitle)
                 .font(.system(size: 15 * zoom, weight: .semibold))
                 .lineLimit(1)
             Text(subtitle)
@@ -34,10 +35,10 @@ struct ThreadCard: View {
         .foregroundStyle(Palette.text)
         .padding(.horizontal, 14 * zoom)
         .padding(.vertical, 12 * zoom)
-        .frame(width: (thread.group == .agent ? 196 : 168) * zoom, height: 104 * zoom, alignment: .topLeading)
+        .frame(width: 188 * zoom, height: 104 * zoom, alignment: .topLeading)
         // Overlays must precede the glass: inside a GlassEffectContainer the glass draws over later ones.
         .overlay(alignment: .topTrailing) {
-            if needsYou, thread.group == .agent {
+            if needsYou {
                 HachiPortrait(size: 32 * zoom)
                     .padding(.top, 6 * zoom)
                     .padding(.trailing, 38 * zoom)
@@ -60,7 +61,7 @@ struct ThreadCard: View {
         }
         .glassEffect(.regular.tint(tint).interactive(), in: .rect(cornerRadius: 18 * zoom))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel([thread.title, thread.kind.label.capitalized, activity.status.label, subtitle].joined(separator: ", "))
+        .accessibilityLabel([thread.displayTitle, tag?.capitalized, activity.status.label, subtitle].compactMap(\.self).joined(separator: ", "))
     }
 
     private var tint: Color {
@@ -71,7 +72,7 @@ struct ThreadCard: View {
     @ViewBuilder
     private var trailing: some View {
         switch activity.status {
-        case .working, .done:
+        case .working, .done, .running:
             TimelineView(.periodic(from: .now, by: 30)) { context in
                 Text(Self.compactElapsed(since: activity.since, now: context.date))
                     .font(.system(size: 11 * zoom, weight: .semibold))
@@ -86,10 +87,18 @@ struct ThreadCard: View {
         }
     }
 
+    /// The agent, or the running command's executable ("PNPM"); none at an idle prompt.
+    private var tag: String? {
+        if let agent = activity.agent { return agent.label }
+        guard let executable = thread.command?.split(whereSeparator: \.isWhitespace).first else { return nil }
+        return (String(executable) as NSString).lastPathComponent.uppercased()
+    }
+
     private var subtitle: String {
         if needsYou { return activity.detail ?? "Waiting for you" }
-        if thread.group == .task { return thread.displayCommand }
-        return activity.terminalTitle.flatMap { $0.isEmpty ? nil : $0 } ?? thread.displayFolder
+        if activity.agent != nil, let title = activity.terminalTitle, !title.isEmpty { return title }
+        if activity.agent == nil, let command = thread.command { return command }
+        return thread.displayFolder
     }
 
     private var borderColor: Color {

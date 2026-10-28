@@ -36,6 +36,10 @@ final class SwiftTermBackend: TerminalBackend, LocalProcessTerminalViewDelegate 
         )
     }
 
+    func terminate() {
+        terminalView.terminate()
+    }
+
     func focus() {
         terminalView.window?.makeFirstResponder(terminalView)
     }
@@ -134,6 +138,10 @@ private final class DelegateRelay: TerminalViewDelegate {
     }
 
     func iTermContent(source: TerminalView, content: ArraySlice<UInt8>) {
+        if let event = TerminalEvent(shojiReport: String(decoding: content, as: UTF8.self)) {
+            onEvent?(event)
+            return
+        }
         view.iTermContent(source: source, content: content)
     }
 

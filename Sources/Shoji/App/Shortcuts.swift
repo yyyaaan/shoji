@@ -19,6 +19,8 @@ struct Shortcut: Identifiable {
 }
 
 extension Shortcut {
+    static let newThread = Shortcut(title: "New thread", key: "n")
+    static let closeThread = Shortcut(title: "Close thread", key: "w")
     static let jumpToThread = Shortcut(title: "Jump to thread 1–9", key: "1", keyLabel: "1–9")
     static let nextNeedingYou = Shortcut(title: "Next thread that needs you", key: "j")
     static let nextPane = Shortcut(title: "Next pane", key: "]")
@@ -50,7 +52,7 @@ struct ShortcutSection: Identifiable {
 
     static let columns: [[ShortcutSection]] = [
         [
-            ShortcutSection(title: "Threads", symbol: "rectangle.stack", shortcuts: [.jumpToThread, .nextNeedingYou]),
+            ShortcutSection(title: "Threads", symbol: "rectangle.stack", shortcuts: [.newThread, .jumpToThread, .nextNeedingYou, .closeThread]),
             ShortcutSection(title: "Panes", symbol: "rectangle.split.2x1", shortcuts: [.nextPane, .previousPane, .toggleMaximize, .minimizePane]),
             ShortcutSection(title: "Layout", symbol: "square.grid.2x2", shortcuts: [.singlePane, .twoColumns, .grid]),
         ],
@@ -71,9 +73,19 @@ struct ShojiCommands: Commands {
     @FocusedBinding(\.showsShortcuts) private var showsShortcuts
 
     var body: some Commands {
+        CommandGroup(replacing: .newItem) {
+            button(.newThread) { store.newThread() }
+        }
+
+        // Like closing a tab in a terminal app; confirms while the process runs.
+        CommandGroup(replacing: .saveItem) {
+            button(.closeThread) { store.focusedThreadId.map(store.requestClose) }
+                .disabled(store.focusedThreadId == nil)
+        }
+
         CommandMenu("Threads") {
             ForEach(Array(store.shelfOrder.prefix(9).enumerated()), id: \.element.id) { index, thread in
-                Button(thread.title) { store.openThread(at: index) }
+                Button(thread.displayTitle) { store.openThread(at: index) }
                     .keyboardShortcut(KeyEquivalent(Character("\(index + 1)")), modifiers: .command)
             }
             Divider()

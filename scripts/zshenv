@@ -1,0 +1,11 @@
+# Shoji copies this to <support folder>/zsh/.zshenv and starts each thread's zsh with ZDOTDIR there.
+# It restores your ZDOTDIR so zsh reads your own startup files next, then loads Shoji's integration.
+if [[ -n ${SHOJI_USER_ZDOTDIR+set} ]]; then
+  ZDOTDIR=$SHOJI_USER_ZDOTDIR
+else
+  unset ZDOTDIR
+fi
+unset SHOJI_USER_ZDOTDIR
+[[ -r ${ZDOTDIR:-$HOME}/.zshenv ]] && builtin source ${ZDOTDIR:-$HOME}/.zshenv
+[[ -o interactive && -r ${SHOJI_ZSH-} ]] && builtin source $SHOJI_ZSH
+unset SHOJI_ZSH

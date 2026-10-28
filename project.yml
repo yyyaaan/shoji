@@ -27,6 +27,10 @@ targets:
       - path: Sources/Shoji
       - path: scripts/shoji-hook
         buildPhase: resources
+      - path: scripts/shoji.zsh
+        buildPhase: resources
+      - path: scripts/zshenv
+        buildPhase: resources
     dependencies:
       - package: SwiftTerm
     settings:

@@ -27,6 +27,8 @@ Shoji is deliberately not an editor, a diff viewer or an agent client. It never 
 
 ## Features
 
+- **Every thread is your shell.** ⌘N opens one next to the card you're on. `cd` anywhere, run `claude`, `codex` or `pnpm dev`, quit back to the prompt; the card follows along. Reopen Shoji and your threads, layout and Claude conversations come back.
+- **Your shelf, your groups.** Order cards and drop plain bars between them from the right-click menu; groups mean whatever you want.
 - **Know who needs you.** Cards show working, needs you, done, idle, running and exited, each with its own shape and label. A needs-you card turns orange, counts what's waiting and brings out Hachi.
 - **Status from the CLI itself.** Claude Code reports through its own hooks, injected per launch with `--settings`, so your `~/.claude` is never touched. Shoji never scrapes terminal output.
 - **Real terminals.** SwiftTerm with Metal rendering, your login shell's environment, 10,000 lines of scrollback, and Shift+Return for a new line in agent prompts.
@@ -36,7 +38,7 @@ Shoji is deliberately not an editor, a diff viewer or an agent client. It never 
 - **Native to macOS 26.** SwiftUI and Liquid Glass on the chrome, solid backgrounds behind terminal text.
 
 > [!NOTE]
-> Shoji is an early preview (v0). The starter threads are fixed for now; the new-thread sheet, saved threads and session resume are next on the [roadmap](#roadmap).
+> Shoji is an early preview (v0). Folder, command and Claude status need zsh (the macOS default); Codex status and resume are on the [roadmap](#roadmap).
 
 ## Requirements
 
@@ -88,10 +90,10 @@ flowchart LR
     Store --> UI["Cards and panes"]
 ```
 
-- Each thread runs through your login shell with `SHOJI_THREAD_ID` and `SHOJI_SOCKET` in its environment.
-- Claude Code gets its hooks for that launch only. They call the bundled `shoji-hook`, which forwards the event to Shoji in about 10 ms and exits silently when Shoji isn't running, so it never slows the CLI.
+- Each thread is your login shell with `SHOJI_THREAD_ID` and `SHOJI_SOCKET` in its environment. For zsh, Shoji points `ZDOTDIR` at a tiny loader that restores yours, so your dotfiles load unchanged, then adds prompt hooks that report the folder and each command.
+- Typing `claude` in a thread runs it with Shoji's hooks for that run only (`--settings`). They call the bundled `shoji-hook`, which forwards the event to Shoji in about 10 ms and exits silently when Shoji isn't running, so it never slows the CLI.
 - Every status change, from a hook or from the terminal, goes through one path into `ThreadStore`.
-- No tmux, no multiplexer: persistence will come from each CLI's own resume.
+- No tmux, no multiplexer: threads persist through each CLI's own resume (`claude --resume <id>`).
 - Shoji never types into a terminal on its own; anything it sends will come from an explicit click, showing exactly what it sends.
 
 ## Development
@@ -108,8 +110,8 @@ open build/Build/Products/Debug/Shoji.app
 
 ## Roadmap
 
-- **Now:** saved threads (`threads.json`) restored on relaunch, and a new-thread sheet on ⌘N
-- **Next:** resume Claude sessions on relaunch, a recent-thread switcher, card context menu and reordering, macOS notifications while Shoji is in the background, Codex status
+- **Now:** a hands-on polish pass on everyday use
+- **Next:** a recent-thread switcher, macOS notifications while Shoji is in the background, Codex status and resume, bash integration
 - **Later:** multiple windows with a slim sidebar style, saved workspaces, a Hub view of every agent sorted by attention, "Allow once" from the Hub, quick jump, settings and themes
 
 The live list is in [PLAN.md](PLAN.md#tasks).

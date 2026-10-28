@@ -11,13 +11,35 @@ struct ShojiApp: App {
     private static let isHeadless = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
         || ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
 
+    /// Debug builds get their own folder, so a dev build never touches the installed app's threads or socket.
+    private static let supportFolder: URL = {
+        #if DEBUG
+        let name = "Shoji-Debug"
+        #else
+        let name = "Shoji"
+        #endif
+        let folder = URL.applicationSupportDirectory.appending(path: name, directoryHint: .isDirectory)
+        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        return folder
+    }()
+
     init() {
-        let store = ThreadStore(threads: Self.isHeadless ? [] : Self.spikeThreads)
-        store.layout.openThreadIds = store.threads.map(\.id)
-        let socketPath = HookServer.defaultPath
+        let store: ThreadStore
+        if Self.isHeadless {
+            store = ThreadStore(threads: [])
+        } else {
+            let fileURL = Self.supportFolder.appending(path: "threads.json")
+            let saved = ThreadFile.load(from: fileURL)
+            store = ThreadStore(threads: saved?.threads ?? [], layout: saved?.layout ?? PaneLayout(), fileURL: fileURL)
+            NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { _ in
+                MainActor.assumeIsolated { store.saveNow() }
+            }
+        }
+        let socketPath = Self.isHeadless ? "" : Self.supportFolder.appending(path: "hook.sock").path(percentEncoded: false)
         hookServer = Self.isHeadless ? nil : Self.startHookServer(at: socketPath, feeding: store)
         _store = State(initialValue: store)
-        _sessions = State(initialValue: TerminalSessions(store: store, context: .current(socketPath: socketPath)))
+        let context = LaunchContext.current(socketPath: socketPath, supportFolder: Self.isHeadless ? FileManager.default.temporaryDirectory : Self.supportFolder)
+        _sessions = State(initialValue: TerminalSessions(store: store, context: context))
     }
 
     var body: some Scene {
@@ -25,7 +47,7 @@ struct ShojiApp: App {
             MainView()
                 .environment(store)
                 .environment(sessions)
-                .task { sessions.startAll() }
+                .onChange(of: store.threads.map(\.id), initial: true) { sessions.sync() }
         }
         .defaultSize(width: 1360, height: 860)
         .windowResizability(.contentMinSize)
@@ -44,10 +66,4 @@ struct ShojiApp: App {
             return nil
         }
     }
-
-    // Until the new-thread sheet and threads.json land.
-    private static let spikeThreads = [
-        ShojiThread(group: .agent, kind: .claude, title: "shoji", folder: "~/lab/shoji", command: ["claude"]),
-        ShojiThread(group: .task, kind: .command, title: "shell", folder: "~/lab/shoji", command: []),
-    ]
 }

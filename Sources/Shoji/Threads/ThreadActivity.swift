@@ -18,6 +18,19 @@ enum ThreadStatus: Equatable, Sendable {
     }
 }
 
+/// Agent CLIs Shoji recognises when they run in a thread.
+enum Agent: String, Sendable {
+    case claude, codex
+
+    /// From the command's first word, so `claude --model opus` counts.
+    init?(commandLine: String) {
+        guard let executable = commandLine.split(whereSeparator: \.isWhitespace).first else { return nil }
+        self.init(rawValue: (String(executable) as NSString).lastPathComponent)
+    }
+
+    var label: String { rawValue.uppercased() }
+}
+
 /// Runtime state of a thread; never persisted.
 struct ThreadActivity: Equatable, Sendable {
     var status: ThreadStatus
@@ -27,6 +40,26 @@ struct ThreadActivity: Equatable, Sendable {
     /// What the thread is waiting on, from the hook that raised needs-you.
     var detail: String?
     var terminalTitle: String?
+    /// The agent CLI running in the shell right now.
+    var agent: Agent?
+    /// The shell integration has reported in, so a thread without a command really sits at its prompt.
+    var isIntegrated = false
+    /// False once the shell itself has ended; Restart starts a new one.
+    var isAlive = true
+
+    init(status: ThreadStatus, since: Date, attention: Int = 0, detail: String? = nil, terminalTitle: String? = nil, agent: Agent? = nil) {
+        self.status = status
+        self.since = since
+        self.attention = attention
+        self.detail = detail
+        self.terminalTitle = terminalTitle
+        self.agent = agent
+    }
+
+    /// A fresh shell, at its prompt.
+    init(launchedAt now: Date) {
+        self.init(status: .idle, since: now)
+    }
 
     mutating func transition(to status: ThreadStatus, at now: Date) {
         guard status != self.status else { return }
