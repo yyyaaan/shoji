@@ -223,6 +223,18 @@ final class ThreadStore {
         arrange(groups)
     }
 
+    /// Drag and drop: puts the card just before or after another one, in that card's group.
+    func place(_ id: UUID, nextTo target: UUID, after: Bool) {
+        guard id != target else { return }
+        var groups = shelfIds
+        guard let from = position(of: id, in: groups) else { return }
+        groups[from.group].remove(at: from.index)
+        guard let to = position(of: target, in: groups) else { return }
+        groups[to.group].insert(id, at: to.index + (after ? 1 : 0))
+        groups.removeAll(where: \.isEmpty)
+        arrange(groups)
+    }
+
     /// True when the card starts a group that has another group to its left.
     func hasBarBefore(_ id: UUID) -> Bool {
         guard let place = position(of: id, in: shelfIds) else { return false }

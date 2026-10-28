@@ -2,7 +2,7 @@
 
 ## Status
 
-- **Last session (daily-driver):** Shoji keeps your threads, and every thread is now a plain shell. ⌘N opens one at once next to the focused card, in its folder; you `cd` and run `claude`, `codex` or a dev server, and quit back to the prompt. A zsh integration reports folder and commands and gives typed `claude` the status hooks; a relaunch restores threads, layout and splits, resumes Claude sessions and leaves other last commands at the prompt. Shelf groups are just bars the user adds or removes (context menu: Move Left / Right, Add / Remove Bar Before, Rename, Restart, Close). ⌘W closes, confirming only when something is running. Verified the integration in a pty (events, resume autorun with a fake claude, ZDOTDIR restored) and in the Debug app (folder report reaches `threads.json`). Then: clicking a pane now always moves typing there, the toolbar row is gone (title bar hidden; + under the window buttons, layout and shortcuts at the shelf's right end), and unnamed threads read "<folder> <number>" with stable, lowest-free numbers. 45 tests pass.
+- **Last session (daily-driver):** Shoji keeps your threads, and every thread is now a plain shell. ⌘N opens one at once next to the focused card, in its folder; you `cd` and run `claude`, `codex` or a dev server, and quit back to the prompt. A zsh integration reports folder and commands and gives typed `claude` the status hooks; a relaunch restores threads, layout and splits, resumes Claude sessions and leaves other last commands at the prompt. Shelf groups are just bars the user adds or removes (context menu: Move Left / Right, Add / Remove Bar Before, Rename, Restart, Close). ⌘W closes, confirming only when something is running. Verified the integration in a pty (events, resume autorun with a fake claude, ZDOTDIR restored) and in the Debug app (folder report reaches `threads.json`). Then: clicking a pane now always moves typing there, the toolbar row is gone (title bar hidden; + under the window buttons, layout and shortcuts at the shelf's right end), and unnamed threads read "<folder> <number>" with stable, lowest-free numbers. Last: cards drag into place (drop on a card's left or right half; a blue line shows where), and the shortcuts button left the top row (⌘/ and the Help menu remain). 46 tests pass.
 - **Next up:** the user's hands-on pass (Tasks › Now), then **Tasks › Next**.
 - **Blockers:** none
 
@@ -76,12 +76,13 @@ Chosen: **B · Card shelf + split** and **Hub view**, exported as standalone HTM
 private to Yan's account; agents can't open it, so the HTML files are what they read).
 
 **Threads screen (Option B)**
-- No toolbar row (user's call): the title bar is hidden and the shelf takes the top. Its left end holds the window buttons with + below them, its right end the layout switcher with the shortcuts button below; the window drags by its background.
+- No toolbar row (user's call): the title bar is hidden and the shelf takes the top. Its left end holds the window buttons with + below them, its right end the layout switcher (shortcuts live in the Help menu and ⌘/); the window drags by its background.
 - Shelf of glass cards across the top in the user's order, split into groups by plain bars (no titles, no fixed meaning; user's call); scrolls sideways when cards overflow.
 - Card: status icon, a tag for what runs (CLAUDE / CODEX / the command's name, none at an idle prompt), name (folder and number, like "~ 2", unless renamed), one-line status, command or folder, elapsed time.
 - Needs-you card: orange border + glow, count badge, Hachi.
-- Card context menu: Rename, Move Left / Right (across a bar joins that group), Add / Remove Bar Before, Restart (shell ended), Close Thread. Later: open folder in Zed.
-- No drag to reorder for now: a thread is a place to run things, so the user usually stops one command and runs the next in the same card.
+- Drag a card onto another to put it before or after it (by which half), joining that card's group; ⌘N plus a drag replaces any per-group + button.
+- Card context menu: Rename, Move Left / Right (the non-drag path, also for VoiceOver), Add / Remove Bar Before, Restart (shell ended), Close Thread. Later: open folder in Zed.
+- Bars are lanes for scanning (say agents left, servers right), not layout: where terminals sit on screen is the pane layout's job.
 - Layout switcher: 1 pane / 2 columns / 2×2 grid. Pane header: name, folder,
   Maximize, Minimize to shelf; Restart once the shell has ended.
 
@@ -172,7 +173,9 @@ Priorities shift with the user's wishes; reorder freely. Keep items one line, sm
 - [ ] Keep waiting panes on screen: when opening a thread replaces a pane, never replace one whose agent needs you; take the least recently used other pane
 - [ ] Open folder in Zed from the card context menu
 - [ ] bash (and maybe fish) integration, so threads in those shells get folder, command and Claude status
-- [ ] Drag to reorder cards, only if Move Left / Right turns out not to be enough
+- [ ] Drop a card onto a pane to show it there (direct control over which pane a thread takes)
+- [ ] Pin a pane so opening other threads never replaces it (a dev server's log, a waiting agent)
+- [ ] Maybe a "main + stack" layout (one large pane beside a column of small ones), if 1 / 2 / grid with its 2-up-1-down for three panes isn't enough
 - [ ] macOS notification for needs-you while Shoji is in the background
 - [ ] Codex `notify` and resume through the zsh integration's `codex` function (decide the notify override first, see Open questions); until then Codex shows as running and a relaunch leaves `codex` at the prompt
 

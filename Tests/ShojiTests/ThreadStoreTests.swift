@@ -220,4 +220,19 @@ struct ThreadStoreTests {
         store.toggleBarBefore(third.id)
         #expect(titles() == [["first", "third", "web 2"]])
     }
+
+    @Test func droppingACardPlacesItBesideTheTarget() {
+        let third = ShojiThread(title: "third", group: 1, order: 0)
+        let store = ThreadStore(threads: [first, second, third])
+        let titles = { store.shelf.map { $0.map(\.displayTitle) } }
+
+        store.place(first.id, nextTo: third.id, after: true)
+        #expect(titles() == [["web 2"], ["third", "first"]])
+        store.place(second.id, nextTo: first.id, after: false)
+        #expect(titles() == [["third", "web 2", "first"]])
+        store.place(first.id, nextTo: third.id, after: false)
+        #expect(titles() == [["first", "third", "web 2"]])
+        store.place(first.id, nextTo: first.id, after: true)
+        #expect(titles() == [["first", "third", "web 2"]])
+    }
 }

@@ -84,10 +84,6 @@ struct MainView: View {
             .labelsHidden()
             .fixedSize()
             Spacer(minLength: 0)
-            Button("Keyboard Shortcuts", systemImage: "keyboard") { showsShortcuts = true }
-                .help("Keyboard Shortcuts (⌘/)")
-                .buttonStyle(.glass)
-                .buttonBorderShape(.circle)
         }
         .labelStyle(.iconOnly)
         .controlSize(controlSize)

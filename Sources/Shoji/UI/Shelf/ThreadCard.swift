@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct ThreadCard: View {
+    static let width: CGFloat = 188
+
     let thread: ShojiThread
     let activity: ThreadActivity
     var isFocused = false
@@ -35,7 +37,7 @@ struct ThreadCard: View {
         .foregroundStyle(Palette.text)
         .padding(.horizontal, 14 * zoom)
         .padding(.vertical, 12 * zoom)
-        .frame(width: 188 * zoom, height: 104 * zoom, alignment: .topLeading)
+        .frame(width: Self.width * zoom, height: 104 * zoom, alignment: .topLeading)
         // Overlays must precede the glass: inside a GlassEffectContainer the glass draws over later ones.
         .overlay(alignment: .topTrailing) {
             if needsYou {
