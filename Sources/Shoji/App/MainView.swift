@@ -14,8 +14,11 @@ struct MainView: View {
             } else {
                 // No title bar or toolbar row: the shelf shares the top with the window buttons and Shoji's controls.
                 HStack(spacing: 0) {
-                    // Clear of the window's close, minimize and zoom buttons.
-                    Color.clear.frame(width: 78)
+                    // Clear of the window's close, minimize and zoom buttons; Hachi's corner sits below them.
+                    HachiCorner()
+                        .frame(width: 78)
+                        .frame(maxHeight: .infinity, alignment: .bottom)
+                        .padding(.bottom, 6 * zoom)
                     ShelfView()
                     trailingControls
                 }

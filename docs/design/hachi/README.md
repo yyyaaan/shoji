@@ -6,7 +6,7 @@
 
 - Quiet Balance C throughout, retaining the fuller ink sketch and relaxed ear tip.
 - Open Shoji app icon, face only: no paws or Torii.
-- Hachi appears only on needs-you agent cards. No other status, welcome illustration, terminal decoration or custom toolbar glyph.
+- Hachi appears only on needs-you agent cards, and in the window's top-left corner (under the window buttons) while any thread needs you, with the count; a click there opens the next waiting thread. Otherwise that corner stays empty. No other status, welcome illustration, terminal decoration or custom toolbar glyph.
 - Static artwork; existing status shapes, labels, badge, colors and click behavior remain authoritative.
 
 No design selection remains open. Native integration and Icon Composer checks are tracked separately.
@@ -36,6 +36,7 @@ The trace suppresses isolated speckles up to two source pixels and quantizes gra
 | Existing status symbol | 22 pt, top-left |
 | Existing count badge | Keep current minimum 22 pt and 7 pt overhang; allow digit-driven width |
 | Hachi on shelf | 32 × 32 pt, aspect fit; top **6 pt**, trailing **38 pt** |
+| Hachi in the window corner | 36 × 36 pt, capped at 58 pt (the column is 78 pt at any zoom); centered under the window buttons, bottom aligned with the cards; count badge top-trailing |
 | Hachi on future Hub needs-you card | 48 × 48 pt, trailing in header, 12 pt text gap; hide first if space is insufficient |
 
 Every chrome dimension and offset uses the existing `@Environment(\.zoom)` scale. Shelf portrait bounds at 100% are x=126…158, y=6…38. The title begins at y=40 in the current layout. The portrait moves left from the previous proposal so a **999** count badge can grow left without touching it. The ring and CLI kind retain the leading header area. Pixel density is independent of zoom; vector assets cover 75–200% at 1×/2× without a bitmap upscale.
