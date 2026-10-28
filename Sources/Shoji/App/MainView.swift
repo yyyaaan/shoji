@@ -14,7 +14,8 @@ struct MainView: View {
             } else {
                 // No title bar or toolbar row: the shelf shares the top with the window buttons and Shoji's controls.
                 HStack(spacing: 0) {
-                    leadingControls
+                    // Clear of the window's close, minimize and zoom buttons.
+                    Color.clear.frame(width: 78)
                     ShelfView()
                     trailingControls
                 }
@@ -57,28 +58,16 @@ struct MainView: View {
         zoom < 0.9 ? .small : zoom > 1.3 ? .large : .regular
     }
 
-    /// The window's close, minimize and zoom buttons sit at the top of this column.
-    private var leadingControls: some View {
-        VStack {
-            Spacer(minLength: 0)
-            Button("New Thread", systemImage: "plus") { store.newThread() }
-                .help("New Thread (⌘N)")
-        }
-        .frame(width: 78)
-        .padding(.bottom, 6 * zoom)
-        .labelStyle(.iconOnly)
-        .buttonStyle(.glass)
-        .buttonBorderShape(.circle)
-        .controlSize(controlSize)
-    }
 
     private var trailingControls: some View {
         @Bindable var store = store
         return VStack(alignment: .trailing) {
             Picker("Layout", selection: $store.layout.mode) {
-                Label("Single pane", systemImage: "rectangle").tag(PaneLayout.Mode.single)
-                Label("Two columns", systemImage: "rectangle.split.2x1").tag(PaneLayout.Mode.twoColumns)
-                Label("Grid of four", systemImage: "rectangle.split.2x2").tag(PaneLayout.Mode.grid)
+                // The macOS window-tiling family, so the four read as one set.
+                Label("Single pane", systemImage: "rectangle.inset.filled").tag(PaneLayout.Mode.single)
+                Label("Two columns", systemImage: "inset.filled.leadinghalf.trailinghalf.rectangle").tag(PaneLayout.Mode.twoColumns)
+                Label("Three panes", systemImage: "inset.filled.leadinghalf.toptrailing.bottomtrailing.rectangle").tag(PaneLayout.Mode.threePanes)
+                Label("Grid of four", systemImage: "inset.filled.topleft.topright.bottomleft.bottomright.rectangle").tag(PaneLayout.Mode.grid)
             }
             .pickerStyle(.segmented)
             .labelsHidden()

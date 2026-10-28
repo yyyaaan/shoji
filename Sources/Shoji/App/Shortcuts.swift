@@ -29,7 +29,8 @@ extension Shortcut {
     static let minimizePane = Shortcut(title: "Minimize pane to shelf", key: "m", modifiers: [.command, .shift])
     static let singlePane = Shortcut(title: "Single pane", key: "1", modifiers: [.command, .option])
     static let twoColumns = Shortcut(title: "Two columns", key: "2", modifiers: [.command, .option])
-    static let grid = Shortcut(title: "Grid of four", key: "3", modifiers: [.command, .option])
+    static let threePanes = Shortcut(title: "Three panes", key: "3", modifiers: [.command, .option])
+    static let grid = Shortcut(title: "Grid of four", key: "4", modifiers: [.command, .option])
     // ⌘= so no Shift is needed; shown as + like every zoom menu.
     static let zoomIn = Shortcut(title: "Zoom in", key: "=", keyLabel: "+")
     static let zoomOut = Shortcut(title: "Zoom out", key: "-", keyLabel: "−")
@@ -54,7 +55,7 @@ struct ShortcutSection: Identifiable {
         [
             ShortcutSection(title: "Threads", symbol: "rectangle.stack", shortcuts: [.newThread, .jumpToThread, .nextNeedingYou, .closeThread]),
             ShortcutSection(title: "Panes", symbol: "rectangle.split.2x1", shortcuts: [.nextPane, .previousPane, .toggleMaximize, .minimizePane]),
-            ShortcutSection(title: "Layout", symbol: "square.grid.2x2", shortcuts: [.singlePane, .twoColumns, .grid]),
+            ShortcutSection(title: "Layout", symbol: "square.grid.2x2", shortcuts: [.singlePane, .twoColumns, .threePanes, .grid]),
         ],
         [
             ShortcutSection(title: "View", symbol: "textformat.size", shortcuts: [.zoomIn, .zoomOut, .actualSize, .showShortcuts]),
@@ -103,6 +104,7 @@ struct ShojiCommands: Commands {
         CommandGroup(before: .toolbar) {
             button(.singlePane) { store.layout.mode = .single }
             button(.twoColumns) { store.layout.mode = .twoColumns }
+            button(.threePanes) { store.layout.mode = .threePanes }
             button(.grid) { store.layout.mode = .grid }
             Divider()
             button(.zoomIn) { zoom = Zoom.step(zoom, by: 1) }

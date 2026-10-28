@@ -12,6 +12,16 @@ struct PaneGrid: View {
             ContentUnavailableView("No open threads", systemImage: "rectangle.split.2x1", description: Text("Pick a card on the shelf."))
         case 1, 2:
             row(threads, split: $store.layout.columnSplit)
+        case 3 where store.layout.mode == .threePanes:
+            SplitStack(axis: .horizontal, fraction: $store.layout.columnSplit) {
+                PaneView(thread: threads[0])
+            } second: {
+                SplitStack(axis: .vertical, fraction: $store.layout.rowSplit) {
+                    PaneView(thread: threads[1])
+                } second: {
+                    PaneView(thread: threads[2])
+                }
+            }
         default:
             SplitStack(axis: .vertical, fraction: $store.layout.rowSplit) {
                 row(Array(threads.prefix(2)), split: $store.layout.columnSplit)

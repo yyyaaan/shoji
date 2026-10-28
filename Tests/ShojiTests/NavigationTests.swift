@@ -59,7 +59,7 @@ struct NavigationTests {
 
     @Test func shortcutCapsFollowMacOrder() {
         #expect(Shortcut.toggleMaximize.caps == ["⇧", "⌘", "↩"])
-        #expect(Shortcut.grid.caps == ["⌥", "⌘", "3"])
+        #expect(Shortcut.grid.caps == ["⌥", "⌘", "4"])
         #expect(Shortcut.zoomIn.caps == ["⌘", "+"])
     }
 }

@@ -43,4 +43,11 @@ struct PaneLayoutTests {
         #expect(layout.maximizedThreadId == nil)
         #expect(layout.visibleThreadIds == [ids[1]])
     }
+
+    @Test func threePanesHoldsThree() {
+        var layout = PaneLayout(mode: .threePanes, openThreadIds: Array(ids.prefix(4)))
+        #expect(layout.visibleThreadIds == Array(ids.prefix(3)))
+        layout.open(ids[4], keeping: ids[0])
+        #expect(layout.visibleThreadIds == [ids[0], ids[1], ids[4]])
+    }
 }

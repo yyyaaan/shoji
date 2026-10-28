@@ -2,7 +2,7 @@
 
 ## Status
 
-- **Last session (daily-driver):** Shoji keeps your threads, and every thread is now a plain shell. ⌘N opens one at once next to the focused card, in its folder; you `cd` and run `claude`, `codex` or a dev server, and quit back to the prompt. A zsh integration reports folder and commands and gives typed `claude` the status hooks; a relaunch restores threads, layout and splits, resumes Claude sessions and leaves other last commands at the prompt. Shelf groups are just bars the user adds or removes (context menu: Move Left / Right, Add / Remove Bar Before, Rename, Restart, Close). ⌘W closes, confirming only when something is running. Verified the integration in a pty (events, resume autorun with a fake claude, ZDOTDIR restored) and in the Debug app (folder report reaches `threads.json`). Then: clicking a pane now always moves typing there, the toolbar row is gone (title bar hidden; + under the window buttons, layout and shortcuts at the shelf's right end), and unnamed threads read "<folder> <number>" with stable, lowest-free numbers. Last: cards drag into place (drop on a card's left or right half; a blue line shows where), and the shortcuts button left the top row (⌘/ and the Help menu remain). 46 tests pass.
+- **Last session (daily-driver):** Shoji keeps your threads, and every thread is now a plain shell. ⌘N opens one at once next to the focused card, in its folder; you `cd` and run `claude`, `codex` or a dev server, and quit back to the prompt. A zsh integration reports folder and commands and gives typed `claude` the status hooks; a relaunch restores threads, layout and splits, resumes Claude sessions and leaves other last commands at the prompt. Shelf groups are just bars the user adds or removes (context menu: Move Left / Right, Add / Remove Bar Before, Rename, Restart, Close). ⌘W closes, confirming only when something is running. Verified the integration in a pty (events, resume autorun with a fake claude, ZDOTDIR restored) and in the Debug app (folder report reaches `threads.json`). Then: clicking a pane now always moves typing there, the toolbar row is gone (title bar hidden; + under the window buttons, layout and shortcuts at the shelf's right end), and unnamed threads read "<folder> <number>" with stable, lowest-free numbers. Last: cards drag into place (drop on a card's left or right half; a blue line shows where), and the shortcuts and + buttons left the top row (⌘/, the Help menu and ⌘N remain). New three-pane layout, one tall left and two stacked right, on ⌥⌘3; the grid moved to ⌥⌘4 so the number matches the panes. 47 tests pass.
 - **Next up:** the user's hands-on pass (Tasks › Now), then **Tasks › Next**.
 - **Blockers:** none
 
@@ -76,14 +76,14 @@ Chosen: **B · Card shelf + split** and **Hub view**, exported as standalone HTM
 private to Yan's account; agents can't open it, so the HTML files are what they read).
 
 **Threads screen (Option B)**
-- No toolbar row (user's call): the title bar is hidden and the shelf takes the top. Its left end holds the window buttons with + below them, its right end the layout switcher (shortcuts live in the Help menu and ⌘/); the window drags by its background.
+- No toolbar row (user's call): the title bar is hidden and the shelf takes the top. Its left end is kept clear for the window buttons, its right end holds the layout switcher; new threads come from ⌘N and shortcuts from ⌘/ or the Help menu, so neither has a button. The window drags by its background.
 - Shelf of glass cards across the top in the user's order, split into groups by plain bars (no titles, no fixed meaning; user's call); scrolls sideways when cards overflow.
 - Card: status icon, a tag for what runs (CLAUDE / CODEX / the command's name, none at an idle prompt), name (folder and number, like "~ 2", unless renamed), one-line status, command or folder, elapsed time.
 - Needs-you card: orange border + glow, count badge, Hachi.
 - Drag a card onto another to put it before or after it (by which half), joining that card's group; ⌘N plus a drag replaces any per-group + button.
 - Card context menu: Rename, Move Left / Right (the non-drag path, also for VoiceOver), Add / Remove Bar Before, Restart (shell ended), Close Thread. Later: open folder in Zed.
 - Bars are lanes for scanning (say agents left, servers right), not layout: where terminals sit on screen is the pane layout's job.
-- Layout switcher: 1 pane / 2 columns / 2×2 grid. Pane header: name, folder,
+- Layout switcher (macOS tiling icons, ⌥⌘1–4 by pane count): 1 pane / 2 columns / 3 panes (one tall left, two stacked right) / 2×2 grid, which shows 2 up 1 down with three open. Pane header: name, folder,
   Maximize, Minimize to shelf; Restart once the shell has ended.
 
 **Hub view**
@@ -175,7 +175,6 @@ Priorities shift with the user's wishes; reorder freely. Keep items one line, sm
 - [ ] bash (and maybe fish) integration, so threads in those shells get folder, command and Claude status
 - [ ] Drop a card onto a pane to show it there (direct control over which pane a thread takes)
 - [ ] Pin a pane so opening other threads never replaces it (a dev server's log, a waiting agent)
-- [ ] Maybe a "main + stack" layout (one large pane beside a column of small ones), if 1 / 2 / grid with its 2-up-1-down for three panes isn't enough
 - [ ] macOS notification for needs-you while Shoji is in the background
 - [ ] Codex `notify` and resume through the zsh integration's `codex` function (decide the notify override first, see Open questions); until then Codex shows as running and a relaunch leaves `codex` at the prompt
 
@@ -195,7 +194,7 @@ Priorities shift with the user's wishes; reorder freely. Keep items one line, sm
 - Build: XcodeGen project, SwiftTerm 1.99.1 pinned, CI on GitHub (`xcode-27` runner), release workflow and `scripts/package.sh` (universal ad-hoc DMG)
 - Terminals: SwiftTerm panes (Metal) in glass cards, login-shell launch, 10k scrollback, Shift+Return fallback, hide / show without redraw glitches
 - Status: `shoji-hook` → socket → `ThreadStore`, per-launch Claude hooks, terminal title / bell / exit; working / needs you / done / idle with elapsed time and needs-you count; resume id captured
-- Shelf and panes: Agents | Tasks shelf, click a card to open it, 1 / 2 / 2×2 layouts, maximize / minimize, drag splits
+- Shelf and panes: Agents | Tasks shelf, click a card to open it, 1 / 2 / 3 / 2×2 layouts, maximize / minimize, drag splits
 - Keyboard and zoom: one `Shortcut` catalog for menus and the ⌘/ sheet, app-wide zoom ⌘+ / ⌘− / ⌘0
 - Hachi: vector portrait on needs-you agent cards (zoom-aware, behind the count badge) and a layered Icon Composer app icon
 - Daily driver: threads are shells (⌘N instant, welcome screen); zsh integration for folder, commands and Claude hooks; `threads.json` save and restore with Claude resume and last-command prefill; shelf bars with Move Left / Right; rename, restart, close (⌘W, confirm while running)

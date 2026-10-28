@@ -32,7 +32,7 @@ Shoji is deliberately not an editor, a diff viewer or an agent client. It never 
 - **Know who needs you.** Cards show working, needs you, done, idle, running and exited, each with its own shape and label. A needs-you card turns orange, counts what's waiting and brings out Hachi.
 - **Status from the CLI itself.** Claude Code reports through its own hooks, injected per launch with `--settings`, so your `~/.claude` is never touched. Shoji never scrapes terminal output.
 - **Real terminals.** SwiftTerm with Metal rendering, your login shell's environment, 10,000 lines of scrollback, and Shift+Return for a new line in agent prompts.
-- **Panes that stay out of the way.** One, two or four panes; drag the gap between them to resize; maximize one or send it back to the shelf. Hidden threads keep running.
+- **Panes that stay out of the way.** One, two, three (one tall beside two stacked) or four panes; drag the gap between them to resize; maximize one or send it back to the shelf. Hidden threads keep running.
 - **Keyboard first.** Jump to any card, cycle panes, switch layouts or find the next agent waiting on you without touching the mouse. Press ⌘/ to see every shortcut.
 - **Zoom everything.** ⌘+ and ⌘− scale terminal text and the glass chrome together, from 75% to 200%.
 - **Native to macOS 26.** SwiftUI and Liquid Glass on the chrome, solid backgrounds behind terminal text.
