@@ -16,6 +16,7 @@ struct ThreadFileTests {
         let id = store.newThread()
         store.layout.mode = .grid
         store.layout.columnSplit = 0.3
+        store.togglePin(id)
         store.apply(StatusEvent(threadId: id, signal: .directory("/tmp")))
         store.apply(StatusEvent(threadId: id, signal: .commandStarted("claude --model opus")))
         store.apply(StatusEvent(threadId: id, signal: .working(sessionId: "s1")))
@@ -30,6 +31,7 @@ struct ThreadFileTests {
         #expect(saved.layout.mode == .grid)
         #expect(saved.layout.columnSplit == 0.3)
         #expect(saved.layout.openThreadIds == [id])
+        #expect(saved.layout.pinnedThreadIds == [id])
     }
 
     @Test func missingFileLoadsAsNothing() {

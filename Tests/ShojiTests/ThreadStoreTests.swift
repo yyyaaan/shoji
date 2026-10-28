@@ -286,4 +286,68 @@ struct ThreadStoreTests {
         single.layoutMode = .threePanes
         #expect(single.layout.panes == [ids[4], ids[2], ids[0]])
     }
+
+    @Test func openingPassesOverPinnedPanesUntilAllArePinned() {
+        let threads = (0..<5).map { ShojiThread(title: "\($0)", order: $0) }
+        let ids = threads.map(\.id)
+        let store = ThreadStore(threads: threads, layout: PaneLayout(mode: .twoColumns, openThreadIds: [ids[0], ids[1]]))
+        store.focus(ids[0])
+        store.togglePin(ids[0])
+        store.open(ids[2])
+        #expect(store.layout.panes == [ids[0], ids[2]])
+
+        // Dropping a card is explicit, so it takes even a pinned pane.
+        store.show(ids[3], inPaneOf: ids[0])
+        #expect(store.layout.panes == [ids[3], ids[2]])
+        #expect(store.layout.pinnedThreadIds.isEmpty)
+
+        store.togglePin(ids[3])
+        store.togglePin(ids[2])
+        store.focus(ids[3])
+        store.open(ids[4])
+        #expect(store.layout.panes == [ids[4], ids[2]])
+    }
+
+    @Test func shrinkingKeepsPinnedPanesOnScreen() {
+        let threads = (0..<4).map { ShojiThread(title: "\($0)", order: $0) }
+        let ids = threads.map(\.id)
+        let store = ThreadStore(threads: threads, layout: PaneLayout(mode: .grid, openThreadIds: ids))
+        store.togglePin(ids[2])
+        store.focus(ids[3])
+        store.layoutMode = .twoColumns
+        #expect(Set(store.layout.panes) == [ids[3], ids[2]])
+    }
+
+    @Test func recentSwitchStepsInTheOrderOfUse() {
+        let threads = (0..<4).map { ShojiThread(title: "\($0)", order: $0) }
+        let ids = threads.map(\.id)
+        let store = ThreadStore(threads: threads)
+        for id in [ids[2], ids[0], ids[1]] {
+            store.open(id)
+            store.focus(id)
+        }
+
+        // A quick ⌃Tab goes back to the previous thread.
+        store.stepRecent(by: 1)
+        #expect(store.recentSwitch?.threadIds == [ids[1], ids[0], ids[2], ids[3]])
+        store.finishRecentSwitch()
+        #expect(store.recentSwitch == nil)
+        #expect(store.focusRequest == ids[0])
+        store.focus(ids[0])
+
+        // Holding ⌃ keeps stepping, wrapping around; ⌃⇧Tab steps back.
+        store.stepRecent(by: 1)
+        store.stepRecent(by: 1)
+        store.stepRecent(by: 1)
+        #expect(store.recentSwitch?.selected == ids[3])
+        store.stepRecent(by: 1)
+        #expect(store.recentSwitch?.selected == ids[0])
+        store.stepRecent(by: -1)
+        #expect(store.recentSwitch?.selected == ids[3])
+        store.cancelRecentSwitch()
+        #expect(store.recentSwitch == nil && store.focusRequest == nil)
+
+        store.stepRecent(by: -1)
+        #expect(store.recentSwitch?.selected == ids[3])
+    }
 }

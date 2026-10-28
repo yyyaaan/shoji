@@ -18,6 +18,8 @@ final class ThreadStore {
     private(set) var focusRequest: UUID?
     /// A busy thread the user asked to close; the window confirms before `close` runs.
     var closeRequest: UUID?
+    /// ⌃Tab in progress (⌃ still held).
+    private(set) var recentSwitch: RecentSwitch?
 
     /// Where `threads.json` lives; nil keeps everything in memory (tests, previews).
     @ObservationIgnored private let fileURL: URL?
@@ -27,6 +29,7 @@ final class ThreadStore {
         let ids = Set(threads.map(\.id))
         var layout = layout
         layout.openThreadIds.removeAll { !ids.contains($0) }
+        layout.pinnedThreadIds.removeAll { !ids.contains($0) }
         if let maximized = layout.maximizedThreadId, !ids.contains(maximized) { layout.maximizedThreadId = nil }
         self.threads = threads
         self.layout = layout
@@ -292,13 +295,26 @@ final class ThreadStore {
     // MARK: Panes
 
     /// Shows the thread in a free pane, else in the pane you're in (or, with none, the one used longest ago that
-    /// isn't waiting for you), and focuses it. A thread already on screen just takes focus.
+    /// isn't waiting for you), and focuses it. Pinned panes are passed over unless every pane is pinned.
+    /// A thread already on screen just takes focus.
     func open(_ id: UUID) {
-        let panes = layout.panes
-        let replaced = panes.first { $0 == focusedThreadId }
-            ?? panes.reversed().filter { activity(for: $0).status != .needsYou }.max { recency($0) < recency($1) }
+        let unpinned = layout.panes.filter { !layout.pinnedThreadIds.contains($0) }
+        let candidates = unpinned.isEmpty ? layout.panes : unpinned
+        let notWaiting = candidates.filter { activity(for: $0).status != .needsYou }
+        let replaced = candidates.first { $0 == focusedThreadId }
+            ?? (notWaiting.isEmpty ? candidates : notWaiting).reversed().max { recency($0) < recency($1) }
         layout.show(id, replacing: replaced)
         focusRequest = id
+    }
+
+    /// Drag and drop onto a pane: the thread takes that pane, even a pinned one.
+    func show(_ id: UUID, inPaneOf target: UUID) {
+        layout.put(id, inPaneOf: target)
+        focusRequest = id
+    }
+
+    func togglePin(_ id: UUID) {
+        layout.togglePin(id)
     }
 
     /// Position in `recentThreadIds`; threads never focused count as oldest.
@@ -306,15 +322,19 @@ final class ThreadStore {
         recentThreadIds.firstIndex(of: id) ?? .max
     }
 
-    /// Switching layouts keeps the pane you're in on screen, and fills new panes with the threads
-    /// shown there before, then your most recent ones, then the shelf's.
+    /// Switching layouts keeps the pane you're in and pinned panes on screen, and fills new panes with
+    /// the threads shown there before, then your most recent ones, then the shelf's.
     var layoutMode: PaneLayout.Mode {
         get { layout.mode }
         set {
             var layout = self.layout
             layout.mode = newValue
-            if let focusedThreadId, let index = layout.openThreadIds.firstIndex(of: focusedThreadId), index >= newValue.capacity {
-                layout.openThreadIds.swapAt(index, newValue.capacity - 1)
+            let keep = (focusedThreadId.map { [$0] } ?? []) + layout.pinnedThreadIds
+            for id in keep {
+                guard let index = layout.openThreadIds.firstIndex(of: id), index >= newValue.capacity,
+                      let slot = layout.openThreadIds.prefix(newValue.capacity).lastIndex(where: { !keep.contains($0) })
+                else { continue }
+                layout.openThreadIds.swapAt(index, slot)
             }
             for id in recentThreadIds + shelfOrder.map(\.id) where layout.openThreadIds.count < newValue.capacity {
                 if !layout.openThreadIds.contains(id) { layout.openThreadIds.append(id) }
@@ -359,6 +379,40 @@ final class ThreadStore {
         guard !visible.isEmpty else { return }
         let current = visible.firstIndex { $0 == focusedThreadId } ?? (offset > 0 ? -1 : 0)
         focusRequest = visible[(current + offset + visible.count) % visible.count]
+    }
+
+    // MARK: Recent threads
+
+    struct RecentSwitch: Equatable {
+        /// The thread you're in first, then the others in the order you last used them.
+        var threadIds: [UUID]
+        var index: Int
+        var selected: UUID { threadIds[index] }
+    }
+
+    /// ⌃Tab steps through threads in the order you last used them, ⌃⇧Tab the other way, like ⌘Tab for apps.
+    /// The first ⌃Tab picks the previous thread; `finishRecentSwitch` opens the pick once ⌃ is released.
+    func stepRecent(by offset: Int) {
+        if var current = recentSwitch {
+            current.index = (current.index + offset + current.threadIds.count) % current.threadIds.count
+            recentSwitch = current
+            return
+        }
+        var ids = focusedThreadId.map { [$0] } ?? []
+        for id in recentThreadIds + shelfOrder.map(\.id) where !ids.contains(id) { ids.append(id) }
+        let start = focusedThreadId == nil ? 0 : 1
+        guard ids.count > start else { return }
+        recentSwitch = RecentSwitch(threadIds: ids, index: offset > 0 ? start : ids.count - 1)
+    }
+
+    func finishRecentSwitch() {
+        guard let recentSwitch else { return }
+        self.recentSwitch = nil
+        if thread(recentSwitch.selected) != nil { open(recentSwitch.selected) }
+    }
+
+    func cancelRecentSwitch() {
+        if recentSwitch != nil { recentSwitch = nil }
     }
 
     // MARK: Saving

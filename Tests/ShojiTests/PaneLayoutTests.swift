@@ -35,6 +35,37 @@ struct PaneLayoutTests {
         #expect(layout.visibleThreadIds == [ids[4], ids[0], ids[1], ids[2]])
     }
 
+    @Test func droppingACardTakesThatPaneOrTradesPlaces() {
+        var layout = PaneLayout(mode: .threePanes, openThreadIds: Array(ids.prefix(3)))
+        layout.put(ids[2], inPaneOf: ids[0])
+        #expect(layout.panes == [ids[2], ids[1], ids[0]])
+
+        layout.put(ids[3], inPaneOf: ids[1])
+        #expect(layout.panes == [ids[2], ids[3], ids[0]])
+        #expect(layout.openThreadIds == [ids[2], ids[3], ids[0], ids[1]])
+
+        layout.put(ids[4], inPaneOf: ids[1])
+        #expect(layout.panes == [ids[2], ids[3], ids[0]])
+    }
+
+    @Test func pinsEndWhenTheThreadLeavesThePanes() {
+        var layout = PaneLayout(mode: .twoColumns, openThreadIds: [ids[0], ids[1]])
+        layout.togglePin(ids[2])
+        #expect(layout.pinnedThreadIds.isEmpty)
+
+        layout.togglePin(ids[0])
+        layout.togglePin(ids[1])
+        layout.put(ids[2], inPaneOf: ids[0])
+        #expect(layout.pinnedThreadIds == [ids[1]])
+        layout.close(ids[1])
+        #expect(layout.pinnedThreadIds.isEmpty)
+    }
+
+    @Test func layoutsWithoutNewerFieldsDecode() throws {
+        let layout = try JSONDecoder().decode(PaneLayout.self, from: Data(#"{"mode": "grid", "openThreadIds": []}"#.utf8))
+        #expect(layout.mode == .grid && layout.columnSplit == 0.5 && layout.pinnedThreadIds.isEmpty)
+    }
+
     @Test func maximizeAndClose() {
         var layout = PaneLayout(mode: .twoColumns, openThreadIds: [ids[0], ids[1]])
         layout.toggleMaximize(ids[1])

@@ -32,8 +32,8 @@ Shoji is deliberately not an editor, a diff viewer or an agent client. It never 
 - **Know who needs you.** Cards show working, needs you, done, idle, running and exited, each with its own shape and label. A needs-you card turns orange, counts what's waiting and brings out Hachi, who also peeks out under the window buttons: one click opens the thread that's waiting.
 - **Status from the CLI itself.** Claude Code reports through its own hooks, injected per launch with `--settings`, so your `~/.claude` is never touched. Shoji never scrapes terminal output.
 - **Real terminals.** SwiftTerm with Metal rendering, your login shell's environment, 10,000 lines of scrollback, and Shift+Return for a new line in agent prompts.
-- **Panes that stay out of the way.** One, two, three (one tall beside two stacked) or four panes; drag the gap between them to resize; maximize one or send it back to the shelf. Hidden threads keep running. No toolbar row: the shelf shares the top of the window with the window buttons.
-- **Keyboard first.** Jump to any card, cycle panes, switch layouts or find the next agent waiting on you without touching the mouse. Press ⌘/ to see every shortcut.
+- **Panes that stay out of the way.** One, two, three (one tall beside two stacked) or four panes; drag the gap between them to resize; maximize one or send it back to the shelf. A clicked card opens in the pane you're in; drop a card on a pane to put it exactly there, and pin the panes you want to keep, like a dev server's log. Hidden threads keep running. No toolbar row: the shelf shares the top of the window with the window buttons.
+- **Keyboard first.** ⌃Tab flips back to the thread you were just in; hold ⌃ to keep going, like ⌘Tab. Jump to any card, cycle panes, switch layouts or find the next agent waiting on you without touching the mouse. Press ⌘/ to see every shortcut.
 - **Zoom everything.** ⌘+ and ⌘− scale terminal text and the glass chrome together, from 75% to 200%.
 - **Native to macOS 26.** SwiftUI and Liquid Glass on the chrome, solid backgrounds behind terminal text.
 

@@ -3,8 +3,8 @@
 ## Status
 
 - **Last session (daily-driver, PR #2):** Shoji became a daily driver. Threads are the user's shells: ⌘N opens one instantly next to the focused card; a zsh integration reports folder and commands and gives typed `claude` its hooks; quitting an agent returns to the prompt. `threads.json` restores threads, layout and splits, resumes Claude and prefills the last command. Shelf: drag cards, user-placed bars, numbered names ("~ 2"). No toolbar row: hidden title bar, layout switcher at the shelf's right end, Hachi under the window buttons while anything needs you. Layouts 1 / 2 / 3 / 4 on ⌥⌘1–4. Click-to-focus fixed. 47 tests pass.
-- **This session (pane-control, PR #3, in progress):** names carry a number only when two unnamed threads would read the same ("shoji", "shoji 2"); `number` is gone from `threads.json`. Panes: a card opens in the pane you're in; switching layouts no longer blanks the terminals (panes keep their identity), keeps the pane you're in and fills new panes. 51 tests pass.
-- **Next up:** the user checks layout switching and card clicks in a build, then Tasks › Next: drop a card onto a pane, pin a pane, recent-thread switcher.
+- **This session (pane-control, PR #3):** names carry a number only when two unnamed threads would read the same ("shoji", "shoji 2"); `number` is gone from `threads.json`. Panes: a card opens in the pane you're in; panes keep their identity across layout switches (should end the blank terminals); switching keeps the pane you're in and pinned panes, and fills new panes. Drop a card on a pane to put it there (swaps if already on screen); pin a pane (header pin, ⇧⌘P); ⌃Tab / ⌃⇧Tab recent-thread switcher with a list while ⌃ is held. 57 tests pass.
+- **Next up:** the user's hands-on pass of this branch (Tasks › Now), then the PR; after it, macOS notifications and Codex from Tasks › Next.
 - **Blockers:** none
 
 _Agents: update this section at the end of every session (what changed, what's next), tick or move tasks, and add new wishes to the right bucket._
@@ -57,7 +57,9 @@ _Agents: update this section at the end of every session (what changed, what's n
 - **Hidden title bar:** content ignores the top safe area so the shelf shares the row with the traffic lights; the leading 78 pt column stays clear for them. `windowBackgroundDragBehavior(.enabled)` keeps the window draggable.
 - **A blank app icon in ⌘Tab or the Dock is a stale icon cache**, not a missing icon: macOS keys it on the bundle folder's date, which incremental builds don't touch. `touch build/Build/Products/Debug/Shoji.app` and `lsregister -f` it, then relaunch.
 - **Only one Debug Shoji at a time.** A second instance (`open -n`) takes over `Shoji-Debug/hook.sock` and both write `threads.json`; quitting either removes the socket.
-- **Panes keep their identity across layouts.** `PaneGrid` places one `PaneView` per thread by frame (`PaneTiles`); it used to rebuild the split views on every layout switch, which re-hosted every terminal and left them blank until something redrew.
+- **Panes keep their identity across layouts.** `PaneGrid` places one `PaneView` per thread by frame (`PaneTiles`); it used to rebuild the split views on every layout switch, re-hosting every terminal, the likely cause of terminals going blank on a switch (confirm by hand).
+- **⌃Tab is read by a local key monitor** (`RecentSwitchKeys`), not the menu, because the switcher needs ⌃'s release (`flagsChanged`) and the keys must never reach the terminal. The menu items still show the shortcut, and a click switches at once. It stands down while a sheet or alert is up.
+- **Drops on a pane land on SwiftUI's `onDrop`**, because SwiftTerm's view registers no dragged types; the drop never reaches the shell.
 - **⌘W is Close thread.** `ShojiCommands` replaces the `.saveItem` group, which also removes the system Close Window item, so ⌘W can't close the main window by accident.
 - **A restarted terminal's old process still reports its exit.** `TerminalSessions` ignores events from any backend that is no longer the thread's current one.
 - **AX `set value` on a SwiftUI text field doesn't reach its binding until editing ends.** In accessibility-driven checks, move focus (set another field) before pressing a button.
@@ -88,7 +90,9 @@ private to Yan's account; agents can't open it, so the HTML files are what they 
 - Card context menu: Rename, Move Left / Right (the non-drag path, also for VoiceOver), Add / Remove Bar Before, Restart (shell ended), Close Thread. Later: open folder in Zed.
 - Bars are lanes for scanning (say agents left, servers right), not layout: where terminals sit on screen is the pane layout's job.
 - Layout switcher (macOS tiling icons, ⌥⌘1–4 by pane count): 1 pane / 2 columns / 3 panes (one tall left, two stacked right) / 2×2 grid, which shows 2 up 1 down with three open. Switching keeps the pane you're in on screen, and new panes show threads that were there before, then recent ones, then the shelf's.
-- Clicking a card shows it in a free pane, else in the pane you're in (with none focused: the one used longest ago that isn't waiting for you); the thread it replaces comes back first when the layout grows. Pane header: name, folder,
+- Clicking a card shows it in a free pane, else in the pane you're in (with none focused: the one used longest ago that isn't waiting for you); the thread it replaces comes back first when the layout grows. Dropping a card on a pane puts it there (a thread already on screen trades places). A pinned pane is passed over by clicks until every pane is pinned; pins follow the thread and end when it leaves the panes.
+- ⌃Tab / ⌃⇧Tab: recent threads like ⌘Tab; a quick tap returns to the previous thread, holding ⌃ shows the list (after 150 ms), Esc cancels.
+- Pane header: name, folder, Pin,
   Maximize, Minimize to shelf; Restart once the shell has ended.
 
 **Hub view**
@@ -138,11 +142,11 @@ private to Yan's account; agents can't open it, so the HTML files are what they 
       "command": "docker compose up"
     }
   ],
-  "layout": { "mode": "twoColumns", "openThreadIds": ["6F1C…", "9A2E…"], "columnSplit": 0.5, "rowSplit": 0.5 }
+  "layout": { "mode": "twoColumns", "openThreadIds": ["6F1C…", "9A2E…"], "pinnedThreadIds": ["9A2E…"], "columnSplit": 0.5, "rowSplit": 0.5 }
 }
 ```
 
-`title` is optional (the card shows the folder's name), `folder` follows the shell's working directory, and `group` / `order` place the card (a bar between groups). The array is in order of arrival in the current folder, which decides who carries the number among same-named threads. Files from v0.2 still load: their `number` is ignored. `command` is what was running at the last save and `resumeId` the Claude session in it: a relaunch runs `claude --resume <id>` at the first prompt, or leaves `command` at the prompt for Return.
+`title` is optional (the card shows the folder's name), `folder` follows the shell's working directory, and `group` / `order` place the card (a bar between groups). The array is in order of arrival in the current folder, which decides who carries the number among same-named threads. Files from v0.2 still load: their `number` is ignored, and every `layout` key may be missing (`pinnedThreadIds` is newer). `command` is what was running at the last save and `resumeId` the Claude session in it: a relaunch runs `claude --resume <id>` at the first prompt, or leaves `command` at the prompt for Return.
 
 Runtime-only (not persisted): status, last activity, unread count, agent, terminal view.
 
@@ -172,13 +176,11 @@ Priorities shift with the user's wishes; reorder freely. Keep items one line, sm
 - [ ] Hands-on pass on daily-driver: ⌘N opens a shell beside the focused card; `cd` updates the card; typed `claude` shows status and `/exit` returns to the prompt; quit and reopen resumes Claude and prefills a stopped `pnpm dev`; Move Left / Right and bars; ⌘W confirm only while running
 
 - [ ] Open the v0.2.0 DMG once and check its first launch (Open Anyway); the automatic release itself worked (tag on the squash commit, DMG attached)
+- [ ] Hands-on pass on pane-control: switch layouts with busy terminals (no blank panes), click cards with a pane focused, drag a card onto a pane and onto another visible pane (swap), pin then click cards, ⌃Tab tap and hold / ⌃⇧Tab / Esc with Claude focused, names with two shells in one folder
 
 ### Next
-- [ ] Recent-thread switcher: ⌃Tab / ⌃⇧Tab cycles threads in most-recently-used order, like ⌘Tab for apps; a quick tap returns to the previous thread. (⌘1–9 stays "card by shelf position"; check ⌃Tab doesn't collide with the CLIs.)
 - [ ] Open folder in Zed from the card context menu
 - [ ] bash (and maybe fish) integration, so threads in those shells get folder, command and Claude status
-- [ ] Drop a card onto a pane to show it there (direct control over which pane a thread takes)
-- [ ] Pin a pane so opening other threads never replaces it (a dev server's log, a waiting agent)
 - [ ] macOS notification for needs-you while Shoji is in the background
 - [ ] Codex `notify` and resume through the zsh integration's `codex` function (decide the notify override first, see Open questions); until then Codex shows as running and a relaunch leaves `codex` at the prompt
 
@@ -200,7 +202,7 @@ Priorities shift with the user's wishes; reorder freely. Keep items one line, sm
 - Shelf and panes: card shelf, click a card to open it, 1 / 2 / 3 / 2×2 layouts, maximize / minimize, drag splits
 - Keyboard and zoom: one `Shortcut` catalog for menus and the ⌘/ sheet, app-wide zoom ⌘+ / ⌘− / ⌘0
 - Hachi: vector portrait on needs-you cards (zoom-aware, behind the count badge) and in the window corner while anything needs you; a layered Icon Composer app icon
-- Pane control: a card opens in the pane you're in, or a free one, else the least recently used pane that isn't waiting; layout switches keep panes (no blank terminals), the focused one on screen, and fill new panes; names number only same-named threads
+- Pane control: a card opens in the pane you're in, or a free one, else the least recently used pane that isn't waiting; layout switches keep panes (no re-hosted terminals), the focused and pinned ones on screen, and fill new panes; drop a card on a pane; pin a pane; ⌃Tab recent-thread switcher; names number only same-named threads
 - Daily driver: threads are shells (⌘N instant, welcome screen); zsh integration for folder, commands and Claude hooks; `threads.json` save and restore with Claude resume and last-command prefill; shelf bars with Move Left / Right; rename, restart, close (⌘W, confirm while running)
 
 ## Terminal checklist

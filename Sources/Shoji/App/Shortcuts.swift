@@ -13,7 +13,7 @@ struct Shortcut: Identifiable {
     /// Key caps in macOS order: ⌃ ⌥ ⇧ ⌘, then the key.
     var caps: [String] {
         let symbols: [(EventModifiers, String)] = [(.control, "⌃"), (.option, "⌥"), (.shift, "⇧"), (.command, "⌘")]
-        let key = keyLabel ?? (key == .return ? "↩" : String(key.character).uppercased())
+        let key = keyLabel ?? (key == .return ? "↩" : key == .tab ? "⇥" : String(key.character).uppercased())
         return symbols.filter { modifiers.contains($0.0) }.map(\.1) + [key]
     }
 }
@@ -23,10 +23,13 @@ extension Shortcut {
     static let closeThread = Shortcut(title: "Close thread", key: "w")
     static let jumpToThread = Shortcut(title: "Jump to thread 1–9", key: "1", keyLabel: "1–9")
     static let nextNeedingYou = Shortcut(title: "Next thread that needs you", key: "j")
+    static let recentThread = Shortcut(title: "Previous thread (hold ⌃ for more)", key: .tab, modifiers: .control)
+    static let recentThreadReversed = Shortcut(title: "Recent threads, oldest first", key: .tab, modifiers: [.control, .shift])
     static let nextPane = Shortcut(title: "Next pane", key: "]")
     static let previousPane = Shortcut(title: "Previous pane", key: "[")
     static let toggleMaximize = Shortcut(title: "Maximize or restore pane", key: .return, modifiers: [.command, .shift])
     static let minimizePane = Shortcut(title: "Minimize pane to shelf", key: "m", modifiers: [.command, .shift])
+    static let pinPane = Shortcut(title: "Pin or unpin pane", key: "p", modifiers: [.command, .shift])
     static let singlePane = Shortcut(title: "Single pane", key: "1", modifiers: [.command, .option])
     static let twoColumns = Shortcut(title: "Two columns", key: "2", modifiers: [.command, .option])
     static let threePanes = Shortcut(title: "Three panes", key: "3", modifiers: [.command, .option])
@@ -53,11 +56,11 @@ struct ShortcutSection: Identifiable {
 
     static let columns: [[ShortcutSection]] = [
         [
-            ShortcutSection(title: "Threads", symbol: "rectangle.stack", shortcuts: [.newThread, .jumpToThread, .nextNeedingYou, .closeThread]),
-            ShortcutSection(title: "Panes", symbol: "rectangle.split.2x1", shortcuts: [.nextPane, .previousPane, .toggleMaximize, .minimizePane]),
-            ShortcutSection(title: "Layout", symbol: "square.grid.2x2", shortcuts: [.singlePane, .twoColumns, .threePanes, .grid]),
+            ShortcutSection(title: "Threads", symbol: "rectangle.stack", shortcuts: [.newThread, .jumpToThread, .recentThread, .recentThreadReversed, .nextNeedingYou, .closeThread]),
+            ShortcutSection(title: "Panes", symbol: "rectangle.split.2x1", shortcuts: [.nextPane, .previousPane, .toggleMaximize, .minimizePane, .pinPane]),
         ],
         [
+            ShortcutSection(title: "Layout", symbol: "square.grid.2x2", shortcuts: [.singlePane, .twoColumns, .threePanes, .grid]),
             ShortcutSection(title: "View", symbol: "textformat.size", shortcuts: [.zoomIn, .zoomOut, .actualSize, .showShortcuts]),
             ShortcutSection(title: "In a terminal", symbol: "terminal", shortcuts: [.newline, .copy, .paste, .openLink]),
         ],
@@ -91,12 +94,22 @@ struct ShojiCommands: Commands {
             }
             Divider()
             button(.nextNeedingYou) { if !store.openNextNeedingYou() { NSSound.beep() } }
+            // From the keyboard, RecentSwitchKeys takes these first so ⌃ can be held; a click switches at once.
+            button(.recentThread) {
+                store.stepRecent(by: 1)
+                store.finishRecentSwitch()
+            }
+            button(.recentThreadReversed) {
+                store.stepRecent(by: -1)
+                store.finishRecentSwitch()
+            }
             Divider()
             button(.nextPane) { store.focusPane(offset: 1) }
             button(.previousPane) { store.focusPane(offset: -1) }
             Group {
                 button(.toggleMaximize) { store.focusedThreadId.map(store.toggleMaximize) }
                 button(.minimizePane) { store.focusedThreadId.map(store.minimize) }
+                button(.pinPane) { store.focusedThreadId.map(store.togglePin) }
             }
             .disabled(store.focusedThreadId == nil)
         }

@@ -63,7 +63,7 @@ struct ShelfView: View {
                 .onTapGesture { store.open(thread.id) }
                 .accessibilityAddTraits(.isButton)
                 .accessibilityAction { store.open(thread.id) }
-                .onDrag { NSItemProvider(object: CardDrop.payload(for: thread.id) as NSString) }
+                .onDrag { CardDrag.item(for: thread.id) }
                 .onDrop(of: [.plainText], delegate: CardDrop(target: thread.id, width: ThreadCard.width * zoom, spot: $dropSpot, store: store))
                 .overlay(alignment: dropSpot?.after == true ? .trailing : .leading) {
                     if dropSpot?.id == thread.id {
@@ -111,19 +111,31 @@ private struct DropSpot: Equatable {
     var after: Bool
 }
 
+/// A card being dragged, as Shoji's own text payload, so text dragged in from elsewhere is ignored.
+enum CardDrag {
+    private nonisolated static let prefix = "shoji-thread:"
+
+    static func item(for id: UUID) -> NSItemProvider {
+        NSItemProvider(object: (prefix + id.uuidString) as NSString)
+    }
+
+    /// Reads the dragged card's thread and hands it over on the main actor. False when nothing could be read.
+    static func load(_ providers: [NSItemProvider], then action: @escaping @MainActor (UUID) -> Void) -> Bool {
+        guard let provider = providers.first else { return false }
+        _ = provider.loadObject(ofClass: String.self) { text, _ in
+            guard let text, text.hasPrefix(prefix), let id = UUID(uuidString: String(text.dropFirst(prefix.count))) else { return }
+            Task { @MainActor in action(id) }
+        }
+        return true
+    }
+}
+
 /// Dropping a card on another puts it before or after that card, by which half it lands on.
-/// Only Shoji's own payload counts, so text dragged in from elsewhere is ignored.
 private struct CardDrop: DropDelegate {
     let target: UUID
     let width: CGFloat
     @Binding var spot: DropSpot?
     let store: ThreadStore
-
-    private nonisolated static let prefix = "shoji-thread:"
-
-    static func payload(for id: UUID) -> String {
-        prefix + id.uuidString
-    }
 
     func validateDrop(info: DropInfo) -> Bool {
         info.hasItemsConforming(to: [.plainText])
@@ -142,16 +154,11 @@ private struct CardDrop: DropDelegate {
     func performDrop(info: DropInfo) -> Bool {
         let after = info.location.x > width / 2
         spot = nil
-        guard let provider = info.itemProviders(for: [.plainText]).first else { return false }
         let target = target
         let store = store
-        _ = provider.loadObject(ofClass: String.self) { text, _ in
-            guard let text, text.hasPrefix(Self.prefix), let id = UUID(uuidString: String(text.dropFirst(Self.prefix.count))) else { return }
-            Task { @MainActor in
-                withAnimation(.snappy) { store.place(id, nextTo: target, after: after) }
-            }
+        return CardDrag.load(info.itemProviders(for: [.plainText])) { id in
+            withAnimation(.snappy) { store.place(id, nextTo: target, after: after) }
         }
-        return true
     }
 }
 

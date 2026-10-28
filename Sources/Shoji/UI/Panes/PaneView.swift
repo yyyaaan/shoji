@@ -6,9 +6,11 @@ struct PaneView: View {
     @Environment(ThreadStore.self) private var store
     @Environment(TerminalSessions.self) private var sessions: TerminalSessions?
     @Environment(\.zoom) private var zoom
+    @State private var isDropTarget = false
 
     private var isFocused: Bool { store.focusedThreadId == thread.id }
     private var isMaximized: Bool { store.layout.maximizedThreadId == thread.id }
+    private var isPinned: Bool { store.layout.pinnedThreadIds.contains(thread.id) }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -28,7 +30,13 @@ struct PaneView: View {
         .clipShape(.rect(cornerRadius: 18 * zoom))
         .overlay {
             RoundedRectangle(cornerRadius: 18 * zoom)
-                .strokeBorder(.white.opacity(isFocused ? 0.32 : 0.16), lineWidth: 1)
+                .fill(Palette.working.opacity(isDropTarget ? 0.08 : 0))
+                .strokeBorder(isDropTarget ? Palette.working : .white.opacity(isFocused ? 0.32 : 0.16), lineWidth: isDropTarget ? 2 : 1)
+                .allowsHitTesting(false)
+        }
+        // A card dropped here takes this pane.
+        .onDrop(of: [.plainText], isTargeted: $isDropTarget) { providers in
+            CardDrag.load(providers) { store.show($0, inPaneOf: thread.id) }
         }
     }
 
@@ -49,6 +57,11 @@ struct PaneView: View {
                     sessions?.restart(thread.id)
                 }
             }
+            Button(isPinned ? "Unpin" : "Pin", systemImage: isPinned ? "pin.fill" : "pin") {
+                store.togglePin(thread.id)
+            }
+            .foregroundStyle(isPinned ? Palette.working : Palette.text)
+            .help(isPinned ? "Pinned: opening other threads won't replace this pane" : "Pin, so opening other threads won't replace this pane")
             Button(isMaximized ? "Restore" : "Maximize", systemImage: isMaximized ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right") {
                 store.toggleMaximize(thread.id)
             }

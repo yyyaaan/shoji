@@ -44,7 +44,7 @@ Sources/Shoji/
   Terminal/                 TerminalBackend protocol, SwiftTerm implementation
                             (only place importing SwiftTerm), TerminalSessions
   Status/                   StatusEvent, HookServer (socket listener), ClaudeHooks
-  UI/                       Theme (palette), StatusIcon, Backdrop, Zoom, ShortcutsSheet
+  UI/                       Theme (palette), StatusIcon, Backdrop, Zoom, ShortcutsSheet, RecentSwitch (⌃Tab)
   UI/Shelf/                 card shelf with bars between groups, context menu
   UI/Panes/                 pane layouts (1 / 2 / 3 / 4) with drag splits, pane header, TerminalHost
   UI/Hub/                   Hub view big cards
