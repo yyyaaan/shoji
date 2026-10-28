@@ -3,8 +3,8 @@
 ## Status
 
 - **Current milestone:** M1 — spike (M0 done)
-- **Last session (initial-sprint):** M0 done: `project.yml` (SwiftTerm 1.99.1 pinned, sandbox off, unit tests hosted headless), app builds and launches. M1 spike: two SwiftTerm panes (Metal) in glass-framed cards; Claude Code and a login shell launch through the login shell in a hard-coded folder (`ShojiApp.spikeThreads`); per-launch Claude hooks via `--settings` → `shoji-hook` → `HookServer` socket → `ThreadStore`; shelf cards and pane headers show working / needs you / done; minimize, maximize, 1 / 2 / 2×2 layouts. Verified with screenshots: real `claude -p` hooks drove Working → Done, a Notification payload turned the card orange, and a hidden Claude pane redrew intact when reopened. 19 Swift Testing tests pass.
-- **Next up:** the user's hands-on M1 checks (unticked items below: resize/focus feel, Shift+Return, scrolling, heavy output, Cmd+click, IME), then M2 (threads.json, new-thread sheet replacing the spike seed).
+- **Last session (initial-sprint):** M0 done, M1 spike built and checked with screenshots (two SwiftTerm panes, Claude hooks via `--settings` → socket → cards; minimize / maximize / layouts). Then: drag-resizable splits for 1×2 and 2×2 (the gap between panes is the handle; double-click resets; fractions live in `PaneLayout`), GitHub Actions CI (tests on PRs and `main`) and a Release workflow that publishes an ad-hoc signed universal DMG on `v*` tags via `scripts/package.sh` (verified locally: 3.9 MB DMG, about 70 s). 19 Swift Testing tests pass.
+- **Next up:** the user's hands-on M1 checks (unticked items below: resize/focus feel, split dragging, Shift+Return, scrolling, heavy output, Cmd+click, IME); first CI run on the PR; then M2 (threads.json, new-thread sheet replacing the spike seed).
 - **Blockers:** none
 
 _Agents: update this section at the end of every session (what changed, what's next)._
@@ -46,6 +46,9 @@ _Agents: update this section at the end of every session (what changed, what's n
 - **Hooks run on every agent event.** A slow or failing hook makes the CLI feel broken;
   `shoji-hook` must be fast and fail silently.
 - **Agents editing `.pbxproj` break projects.** Use XcodeGen.
+- **No paid Apple Developer account yet:** builds are ad-hoc signed and not notarized. A downloaded DMG is quarantined; first launch needs Privacy & Security › Open Anyway (or `xattr -dr com.apple.quarantine`). Locally built apps aren't quarantined.
+- **Ad-hoc signatures change every build**, so macOS privacy grants (TCC, e.g. Files & Folders prompts that child CLIs trigger in Shoji's name) reset after each update.
+- **CI runs on the `xcode-27` runner label** (public preview) to match local Xcode 27.1; `macos-26` only has Xcode 26. Move to the GA label once it exists.
 
 ## Vision
 
@@ -123,7 +126,7 @@ private to Yan's account; agents can't open it, so the HTML files are what they 
       "order": 0
     }
   ],
-  "layout": { "mode": "twoColumns", "openThreadIds": ["6F1C…", "9A2E…"] }
+  "layout": { "mode": "twoColumns", "openThreadIds": ["6F1C…", "9A2E…"], "columnSplit": 0.5, "rowSplit": 0.5 }
 }
 ```
 
@@ -174,7 +177,8 @@ Hook transport: `shoji-hook` sends one connection per event to `~/Library/Applic
       codex / custom)
 - [ ] Card shelf with Agents | Tasks clusters, selection opens in a pane
 - [ ] Rename inline, context menu, drag to reorder, move between groups
-- [ ] Layouts: 1 / 2 / 2×2; Maximize; Minimize to shelf
+- [x] Layouts: 1 / 2 / 2×2; Maximize; Minimize to shelf
+- [ ] Drag the gap between panes to resize (1×2 and 2×2; double-click resets) — built, needs a hands-on check
 - [ ] Restore layout and open threads on relaunch
 
 ### M3 — Status and resume
@@ -201,7 +205,8 @@ Hook transport: `shoji-hook` sends one connection per event to `~/Library/Applic
 - [ ] Settings: default folders, command presets, notifications on/off,
       terminal font, theme, scrollback, Option as Meta
 - [ ] Devcontainer command presets
-- [ ] Developer ID signing + notarization
+- [ ] CI (tests) and Release workflow (ad-hoc signed DMG on `v*` tags) — built, first GitHub run pending
+- [ ] Developer ID signing + notarization (needs a paid Apple Developer account)
 - [ ] Third-party notices in the app bundle (SwiftTerm MIT license text)
 
 ## Open questions
@@ -220,6 +225,7 @@ Hook transport: `shoji-hook` sends one connection per event to `~/Library/Applic
 - **Task restart:** SIGINT then relaunch, or SIGTERM with a timeout? Per task setting?
 - **Git branch on Hub cards:** read `.git/HEAD` directly vs. shelling out to `git`.
 - **Codex notify:** `codex -c 'notify=["…/shoji-hook"]'` per launch replaces any `notify` program the user configured. Chain to theirs, or accept the override?
+- **Stable local signing identity:** a self-signed code-signing certificate (kept as a CI secret) would keep TCC grants across updates without a paid account. Worth it before daily use, or wait for Developer ID?
 - **Quitting with live agents:** quitting closes every PTY (agents get SIGHUP). Confirm before quit while something is Working / Needs you?
 
 ## Decisions

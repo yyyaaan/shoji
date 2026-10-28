@@ -29,8 +29,10 @@ starting work. Update Status and tick milestone checkboxes when you finish a ses
 
 ```
 project.yml                 XcodeGen spec (source of truth for targets/settings)
+.github/workflows/          ci.yml (tests on PRs and main), release.yml (DMG on v* tags)
 scripts/
   shoji-hook                hook client bundled into the app: env + JSON -> Shoji socket
+  package.sh                Release build -> build/Shoji-<version>.dmg (used by release.yml)
 Sources/Shoji/
   App/                      app entry (ShojiApp: wiring, window), MainView + toolbar
   Threads/                  ShojiThread, ThreadStore, PaneLayout, launch building, Mock
@@ -39,7 +41,7 @@ Sources/Shoji/
   Status/                   StatusEvent, HookServer (socket listener), ClaudeHooks
   UI/                       Theme (palette), StatusIcon, Backdrop
   UI/Shelf/                 card shelf (Agents | Tasks), context menu, drag reorder
-  UI/Panes/                 pane layouts (1 / 2 / 4), pane header, TerminalHost
+  UI/Panes/                 pane layouts (1 / 2 / 4) with drag splits, pane header, TerminalHost
   UI/Hub/                   Hub view big cards
   UI/Hachi/                 mascot assets + needs-you presentation
 Tests/ShojiTests/           Swift Testing
@@ -54,6 +56,8 @@ xcodegen generate        # after any project.yml change and on a fresh clone (.x
 xcodebuild -scheme Shoji -derivedDataPath build -destination 'platform=macOS' -skipPackagePluginValidation build
 xcodebuild -scheme Shoji -derivedDataPath build -destination 'platform=macOS' -skipPackagePluginValidation test
 open build/Build/Products/Debug/Shoji.app
+scripts/package.sh [version]     # universal Release app + DMG, ad-hoc signed
+git tag v0.1.0 && git push origin v0.1.0   # Release workflow publishes the DMG on GitHub
 ```
 
 `-skipPackagePluginValidation` is needed because SwiftTerm runs a build-tool plugin; in Xcode, click Trust & Enable once instead.

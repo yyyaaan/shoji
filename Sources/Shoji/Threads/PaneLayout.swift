@@ -19,6 +19,9 @@ struct PaneLayout: Codable, Equatable, Sendable {
     /// Ordered; the first `mode.capacity` are on screen, the rest come back when the layout grows.
     var openThreadIds: [UUID] = []
     var maximizedThreadId: UUID?
+    /// Share of the width given to the left column, and of the height to the top row.
+    var columnSplit = 0.5
+    var rowSplit = 0.5
 
     var visibleThreadIds: [UUID] {
         if let maximizedThreadId { return [maximizedThreadId] }
