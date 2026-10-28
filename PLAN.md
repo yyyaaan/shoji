@@ -2,8 +2,8 @@
 
 ## Status
 
-- **Last session (daily-driver):** Shoji keeps your threads, and every thread is now a plain shell. ⌘N opens one at once next to the focused card, in its folder; you `cd` and run `claude`, `codex` or a dev server, and quit back to the prompt. A zsh integration reports folder and commands and gives typed `claude` the status hooks; a relaunch restores threads, layout and splits, resumes Claude sessions and leaves other last commands at the prompt. Shelf groups are just bars the user adds or removes (context menu: Move Left / Right, Add / Remove Bar Before, Rename, Restart, Close). ⌘W closes, confirming only when something is running. Verified the integration in a pty (events, resume autorun with a fake claude, ZDOTDIR restored) and in the Debug app (folder report reaches `threads.json`). Then: clicking a pane now always moves typing there, the toolbar row is gone (title bar hidden; + under the window buttons, layout and shortcuts at the shelf's right end), and unnamed threads read "<folder> <number>" with stable, lowest-free numbers. Last: cards drag into place (drop on a card's left or right half; a blue line shows where), and the shortcuts and + buttons left the top row (⌘/, the Help menu and ⌘N remain). New three-pane layout, one tall left and two stacked right, on ⌥⌘3; the grid moved to ⌥⌘4 so the number matches the panes. Hachi's corner under the window buttons: empty, or Hachi with the count while any thread needs you (click = ⌘J); the Hachi spec now lists this placement. 47 tests pass.
-- **Next up:** the user's hands-on pass (Tasks › Now), then **Tasks › Next**.
+- **Last session (daily-driver, PR #2):** Shoji became a daily driver. Threads are the user's shells: ⌘N opens one instantly next to the focused card; a zsh integration reports folder and commands and gives typed `claude` its hooks; quitting an agent returns to the prompt. `threads.json` restores threads, layout and splits, resumes Claude and prefills the last command. Shelf: drag cards, user-placed bars, numbered names ("~ 2"). No toolbar row: hidden title bar, layout switcher at the shelf's right end, Hachi under the window buttons while anything needs you. Layouts 1 / 2 / 3 / 4 on ⌥⌘1–4. Click-to-focus fixed. 47 tests pass.
+- **Next up:** the user's hands-on pass (Tasks › Now), then Tasks › Next: drop a card onto a pane, pin a pane, recent-thread switcher.
 - **Blockers:** none
 
 _Agents: update this section at the end of every session (what changed, what's next), tick or move tasks, and add new wishes to the right bucket._
@@ -195,9 +195,9 @@ Priorities shift with the user's wishes; reorder freely. Keep items one line, sm
 - Build: XcodeGen project, SwiftTerm 1.99.1 pinned, CI on GitHub (`xcode-27` runner), release workflow and `scripts/package.sh` (universal ad-hoc DMG)
 - Terminals: SwiftTerm panes (Metal) in glass cards, login-shell launch, 10k scrollback, Shift+Return fallback, hide / show without redraw glitches
 - Status: `shoji-hook` → socket → `ThreadStore`, per-launch Claude hooks, terminal title / bell / exit; working / needs you / done / idle with elapsed time and needs-you count; resume id captured
-- Shelf and panes: Agents | Tasks shelf, click a card to open it, 1 / 2 / 3 / 2×2 layouts, maximize / minimize, drag splits
+- Shelf and panes: card shelf, click a card to open it, 1 / 2 / 3 / 2×2 layouts, maximize / minimize, drag splits
 - Keyboard and zoom: one `Shortcut` catalog for menus and the ⌘/ sheet, app-wide zoom ⌘+ / ⌘− / ⌘0
-- Hachi: vector portrait on needs-you agent cards (zoom-aware, behind the count badge) and a layered Icon Composer app icon
+- Hachi: vector portrait on needs-you cards (zoom-aware, behind the count badge) and in the window corner while anything needs you; a layered Icon Composer app icon
 - Daily driver: threads are shells (⌘N instant, welcome screen); zsh integration for folder, commands and Claude hooks; `threads.json` save and restore with Claude resume and last-command prefill; shelf bars with Move Left / Right; rename, restart, close (⌘W, confirm while running)
 
 ## Terminal checklist

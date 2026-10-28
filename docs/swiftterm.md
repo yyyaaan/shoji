@@ -13,11 +13,15 @@ What Shoji relies on, found by reading the pinned source. Re-check this file whe
 - The view sets `terminalDelegate = self`. `bell(source:)` and `requestOpenLink` defaults live in a protocol extension, so a subclass cannot override `bell`. Shoji installs `DelegateRelay` as `terminalDelegate`: it forwards every `TerminalViewDelegate` call to the view and reports input and bell.
 - Several methods share one signature in both delegate protocols (`hostCurrentDirectoryUpdate`, the kitty clipboard calls, `programStatusChanged`). The view forwards them to `processDelegate`, so the relay must not also be the process delegate or calls loop.
 - `bellStyle = .visual` skips the delegate call entirely; keep `.sound` or `.soundAndVisual` if bell events matter.
+- `Terminal.registerOscHandler(code:handler:)` is public, but the view's `terminal` is internal, so an app can't add its own OSC code. OSC 1337 keys other than `File` (and `Capabilities`) go to `iTermContent(source:content:)` on the main thread, in order: Shoji's zsh integration reports through `OSC 1337 ; ShojiEvent=…`, which `DelegateRelay` intercepts before forwarding the rest.
 
 ## Input and focus
 
 - `keyDown`, `becomeFirstResponder` and `resignFirstResponder` are `public`, not `open`. Key rebinding happens in an `NSEvent` local monitor in front of the view (Shift+Return), and focus is observed by overriding `open var hasFocus`.
 - `keyboardEnhancementFlags` (public, nonisolated) tells whether the app in the terminal enabled the Kitty keyboard protocol. When it has, SwiftTerm encodes Shift+Return itself and Shoji's monitor stands down.
+- Clicking doesn't focus the terminal by itself: SwiftTerm leaves it to AppKit, which only focuses the exact view hit (sometimes a render subview). `mouseDown` is `open`, so `ShojiTerminalView` calls `makeFirstResponder(self)` there.
+- `makeFirstResponder` on a view that already is first responder calls nothing, so `hasFocus` doesn't change; `SwiftTermBackend.focus()` reports `.focused` itself in that case.
+- The view doesn't register for dragged types, so nothing dropped on a pane (a shelf card, text) reaches the shell.
 - `optionAsMetaKey` defaults to true.
 - Scroll wheel on the alternate screen becomes cursor keys only when the app enabled alternate scroll mode (`?1007`) and mouse reporting is off; Option or Shift scrolls locally.
 

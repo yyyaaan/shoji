@@ -28,11 +28,11 @@ Shoji is deliberately not an editor, a diff viewer or an agent client. It never 
 ## Features
 
 - **Every thread is your shell.** ⌘N opens one next to the card you're on. `cd` anywhere, run `claude`, `codex` or `pnpm dev`, quit back to the prompt; the card follows along. Reopen Shoji and your threads, layout and Claude conversations come back.
-- **Your shelf, your groups.** Order cards and drop plain bars between them from the right-click menu; groups mean whatever you want.
-- **Know who needs you.** Cards show working, needs you, done, idle, running and exited, each with its own shape and label. A needs-you card turns orange, counts what's waiting and brings out Hachi.
+- **Your shelf, your groups.** Drag cards into place and drop plain bars between them (right-click a card); groups mean whatever you want. Unnamed threads read like "~ 2", so two shells in the same folder stay apart.
+- **Know who needs you.** Cards show working, needs you, done, idle, running and exited, each with its own shape and label. A needs-you card turns orange, counts what's waiting and brings out Hachi, who also peeks out under the window buttons: one click opens the thread that's waiting.
 - **Status from the CLI itself.** Claude Code reports through its own hooks, injected per launch with `--settings`, so your `~/.claude` is never touched. Shoji never scrapes terminal output.
 - **Real terminals.** SwiftTerm with Metal rendering, your login shell's environment, 10,000 lines of scrollback, and Shift+Return for a new line in agent prompts.
-- **Panes that stay out of the way.** One, two, three (one tall beside two stacked) or four panes; drag the gap between them to resize; maximize one or send it back to the shelf. Hidden threads keep running.
+- **Panes that stay out of the way.** One, two, three (one tall beside two stacked) or four panes; drag the gap between them to resize; maximize one or send it back to the shelf. Hidden threads keep running. No toolbar row: the shelf shares the top of the window with the window buttons.
 - **Keyboard first.** Jump to any card, cycle panes, switch layouts or find the next agent waiting on you without touching the mouse. Press ⌘/ to see every shortcut.
 - **Zoom everything.** ⌘+ and ⌘− scale terminal text and the glass chrome together, from 75% to 200%.
 - **Native to macOS 26.** SwiftUI and Liquid Glass on the chrome, solid backgrounds behind terminal text.
@@ -68,12 +68,14 @@ Tagged versions publish a DMG on [Releases](https://github.com/yyyaaan/shoji/rel
 
 | Action | Keys |
 |---|---|
+| New thread (next to the current card) | ⌘N |
+| Close thread (asks while something runs) | ⌘W |
 | Jump to card 1–9 | ⌘1 … ⌘9 |
 | Next thread that needs you | ⌘J |
 | Next / previous pane | ⌘] / ⌘[ |
 | Maximize or restore pane | ⇧⌘↩ |
 | Minimize pane to shelf | ⇧⌘M |
-| Single pane / two columns / grid | ⌥⌘1 / ⌥⌘2 / ⌥⌘3 |
+| One / two / three / four panes | ⌥⌘1 / ⌥⌘2 / ⌥⌘3 / ⌥⌘4 |
 | Zoom in / out / actual size | ⌘+ / ⌘− / ⌘0 |
 | All shortcuts | ⌘/ |
 
@@ -85,7 +87,8 @@ Shortcuts work while a terminal has focus. In agent prompts, Shift+Return insert
 flowchart LR
     CLI["Claude Code<br/>(in a Shoji pane)"] -- "hook event (JSON)" --> Hook["shoji-hook"]
     Hook -- "Unix socket" --> Server["HookServer"]
-    PTY["SwiftTerm PTY"] -- "title · bell · exit" --> Store
+    Zsh["zsh integration"] -- "folder · command · exit code<br/>(OSC 1337)" --> PTY
+    PTY["SwiftTerm PTY"] -- "title · bell · shell reports · exit" --> Store
     Server -- "StatusEvent" --> Store["ThreadStore"]
     Store --> UI["Cards and panes"]
 ```
@@ -93,7 +96,7 @@ flowchart LR
 - Each thread is your login shell with `SHOJI_THREAD_ID` and `SHOJI_SOCKET` in its environment. For zsh, Shoji points `ZDOTDIR` at a tiny loader that restores yours, so your dotfiles load unchanged, then adds prompt hooks that report the folder and each command.
 - Typing `claude` in a thread runs it with Shoji's hooks for that run only (`--settings`). They call the bundled `shoji-hook`, which forwards the event to Shoji in about 10 ms and exits silently when Shoji isn't running, so it never slows the CLI.
 - Every status change, from a hook or from the terminal, goes through one path into `ThreadStore`.
-- No tmux, no multiplexer: threads persist through each CLI's own resume (`claude --resume <id>`).
+- No tmux, no multiplexer: threads persist through each CLI's own resume. On relaunch a Claude thread runs `claude --resume <id>` at its first prompt; any other last command waits at the prompt for you to press Return.
 - Shoji never types into a terminal on its own; anything it sends will come from an explicit click, showing exactly what it sends.
 
 ## Development
