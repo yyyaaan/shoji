@@ -2,12 +2,11 @@
 
 ## Status
 
-- **Current milestone:** M0 — repo and build
-- **Last session:** terminal engine switched from libghostty to SwiftTerm (decision below); Ghostty pin file and Zig ignores removed.
-- **Next up:** `project.yml` with the SwiftTerm package pinned, empty window that builds and launches. SwiftTerm latest is v1.99.1 (2026-10-21, "preview before 2.0"): pin it exactly, and treat the 2.0 move as its own bump.
+- **Last session (initial-sprint):** spike to a usable v0 (SwiftTerm panes, Claude hooks → status cards, layouts with drag splits, CI + release workflow, shortcuts with a ⌘/ sheet, app-wide zoom), shelf without group titles, then the Hachi integration from the design handoff (needs-you portrait, Icon Composer app icon; checked at 75/100/200%, counts 1/999, all statuses, every icon appearance, 16 pt). Handoffs are now local-only (gitignored). 25 Swift Testing tests pass.
+- **Next up:** top of **Tasks › Now**.
 - **Blockers:** none
 
-_Agents: update this section at the end of every session (what changed, what's next)._
+_Agents: update this section at the end of every session (what changed, what's next), tick or move tasks, and add new wishes to the right bucket._
 
 ## Gotchas
 
@@ -21,8 +20,17 @@ _Agents: update this section at the end of every session (what changed, what's n
 - **Option key.** Option shortcuts (e.g. Option+Enter) need "Option as Meta" enabled.
 - **Scroll wheel on the alternate screen** can be turned into arrow keys when mouse
   reporting is off; Claude Code then reads them as keystrokes. Test scrolling.
-- **Link clicks:** subclass overrides of SwiftTerm's delegate defaults are not called;
-  use a proxy `TerminalViewDelegate` that forwards every call.
+- **SwiftTerm delegate defaults can't be overridden** (`bell`, `requestOpenLink` come from a protocol extension). `DelegateRelay` sits in front as `terminalDelegate` and forwards every call. It must not also be the `processDelegate`, or the shared-signature calls loop. Details in `docs/swiftterm.md`.
+- **SwiftTerm `keyDown` / `becomeFirstResponder` aren't `open`.** Shift+Return is an `NSEvent` local monitor that stands down when the app enabled the Kitty keyboard protocol; focus is observed by overriding `hasFocus`.
+- **Metal must be turned on after the view joins a window** (`viewDidMoveToWindow`).
+- **SwiftTerm's build plugin** needs `-skipPackagePluginValidation` on the command line (Trust & Enable in Xcode).
+- **Inside a `GlassEffectContainer`, overlays added after `.glassEffect` are drawn under the glass.** Put borders and badges before the glass modifier.
+- **Login shell must be interactive too** (`$SHELL -l -i -c 'exec …'`), or PATH set in `.zshrc` (nvm, where `codex` lives here) is missing.
+- **Darwin `accept()` inherits `O_NONBLOCK`** from the listener; `HookServer` clears it before reading.
+- **Claude `Notification` with `idle_prompt`** fires about 60 s after a finished turn; it's ignored so Done doesn't flip to Needs you.
+- **No hook fires between approving a permission prompt and the tool finishing.** Typing into a needs-you thread is taken as the answer (→ Working).
+- **Resume ids come from `UserPromptSubmit` / `PostToolUse`**, not `SessionStart`: SessionStart also fires for sessions that never got a message, and those can't be resumed. (`claude --session-id <uuid>` exists if we ever need to pick the id up front.)
+- **UI automation:** System Events keystrokes go to the user's frontmost app, not Shoji (macOS won't let a script steal focus). Use `AXPress` on buttons and `screencapture -l <windowid>`.
 - **No terminal-native notifications from Claude Code** (it only sends them in Ghostty,
   Kitty and iTerm2). "Needs you" relies entirely on hooks → socket.
 - **Reference app:** TermQ (open source, macOS) is built on SwiftTerm and runs Claude
@@ -37,6 +45,11 @@ _Agents: update this section at the end of every session (what changed, what's n
 - **Hooks run on every agent event.** A slow or failing hook makes the CLI feel broken;
   `shoji-hook` must be fast and fail silently.
 - **Agents editing `.pbxproj` break projects.** Use XcodeGen.
+- **No paid Apple Developer account yet:** builds are ad-hoc signed and not notarized. A downloaded DMG is quarantined; first launch needs Privacy & Security › Open Anyway (or `xattr -dr com.apple.quarantine`). Locally built apps aren't quarantined.
+- **Ad-hoc signatures change every build**, so macOS privacy grants (TCC, e.g. Files & Folders prompts that child CLIs trigger in Shoji's name) reset after each update.
+- **Icon Composer documents:** XcodeGen adds `AppIcon.icon` as one `wrapper.icon` file, and actool compiles it to `AppIcon.icns` + `Assets.car` with `ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon`. Check renders with `ictool <file>.icon --export-image --platform macOS --rendition Default|Dark|ClearLight|TintedDark …`; in `icon.json`, `groups` and `layers` list front to back.
+- **Visual checks of SwiftUI views without touching the live app:** render them with `ImageRenderer` from a throwaway test (the test host has the asset catalog). Glass renders flat there, so confirm glass ordering in the running app.
+- **CI runs on the `xcode-27` runner label** (public preview) to match local Xcode 27.1; `macos-26` only has Xcode 26. Move to the GA label once it exists.
 
 ## Vision
 
@@ -54,7 +67,7 @@ Chosen: **B · Card shelf + split** and **Hub view**, exported as standalone HTM
 private to Yan's account; agents can't open it, so the HTML files are what they read).
 
 **Threads screen (Option B)**
-- Shelf of glass cards across the top, two clusters: **Agents | Tasks**, divider between.
+- Shelf of glass cards across the top: agents, a divider, then tasks. No group titles (user's call); scrolls sideways when cards overflow.
 - Agent card: status icon, CLI kind (CLAUDE / CODEX), name, folder or one-line status,
   elapsed time. Task card: status, name, command, port.
 - Needs-you card: orange border + glow, count badge, Hachi.
@@ -114,7 +127,7 @@ private to Yan's account; agents can't open it, so the HTML files are what they 
       "order": 0
     }
   ],
-  "layout": { "mode": "twoColumns", "openThreadIds": ["6F1C…", "9A2E…"] }
+  "layout": { "mode": "twoColumns", "openThreadIds": ["6F1C…", "9A2E…"], "columnSplit": 0.5, "rowSplit": 0.5 }
 }
 ```
 
@@ -124,76 +137,65 @@ Runtime-only (not persisted): status, last activity, unread count, terminal view
 
 | State | Agents | Tasks |
 |---|---|---|
-| Working | prompt submitted / tool running (hook) | — |
-| Needs you | Claude `Notification` hook; bell from the terminal as a hint | — |
-| Done | Claude `Stop` hook; Codex `notify` turn complete | — |
-| Idle | Done and already seen, or fresh session at prompt | — |
+| Working | `UserPromptSubmit` / `PostToolUse` hook; typing into a needs-you thread | — |
+| Needs you | `Notification` hook (not `idle_prompt`); bell while Working | — |
+| Done | `Stop` hook; Codex `notify` `agent-turn-complete` | — |
+| Idle | launched, or Done and then focused | — |
 | Running | — | process alive |
 | Exited(code) | process exited | process exited (non-zero = error) |
 
-Resume ids: Claude from the `SessionStart` hook payload; Codex — to confirm (Open questions).
+Hook transport: `shoji-hook` sends one connection per event to `~/Library/Application Support/Shoji/hook.sock`: the thread id on the first line, then the CLI's JSON (stdin for Claude, argv[1] for Codex `notify`). Resume ids: Claude from `session_id` in prompt/tool hooks; Codex — to confirm (Open questions).
 
-## Milestones
+## Tasks
 
-### M0 — Repo and build
-- [ ] `project.yml` (XcodeGen), macOS 26 target, App Sandbox off, Debug/Release
-- [ ] SwiftTerm added as a Swift package in `project.yml`, pinned to an exact version
-- [x] `.gitignore` (build output, generated project)
-- [ ] Empty window builds and launches via `xcodebuild`
-- [x] `docs/design/` HTML mockups of Option B and Hub view
+Priorities shift with the user's wishes; reorder freely. Keep items one line, small enough for one PR.
 
-### M1 — Spike (prove the risky parts)
-- [ ] `TerminalBackend` protocol + SwiftTerm view (Metal renderer) in SwiftUI;
-      login shell runs, typing works
-- [ ] Two terminals side by side inside glass-framed cards (solid terminal background)
-- [ ] Each launches `claude -r` in a hard-coded folder
-- [ ] Window resize and focus switching between panes are smooth
-- [ ] Hide/show one pane without redraw glitches (stable size while hidden)
-- [ ] One Claude `Notification` hook → `shoji-hook` → socket → card turns orange
-- [ ] Terminal checklist with Claude Code (re-run after every SwiftTerm bump):
-  - [ ] Shift+Enter inserts a newline; Option+Enter works with Option as Meta
-  - [ ] Long reply + scrolling up: no drift, scroll wheel scrolls (no stray keystrokes)
-  - [ ] Heavy output (`docker compose up` logs) stays responsive
-  - [ ] Same PATH, env and MCP servers as in a normal terminal
-  - [ ] Cmd+click opens URLs and file paths correctly
-  - [ ] IME input, copy/paste, selection, emoji and wide characters render correctly
-- **Exit:** all of the above work in a single debug build. Record findings in Gotchas.
+### Now
+- [ ] Hands-on pass by the user: the terminal checklist below, plus pane resize / focus feel, split dragging, and shortcuts with a terminal focused
+- [ ] `threads.json` (schemaVersion 1) and restore threads, layout and splits on relaunch; keep the layout separate from the thread list so it can later belong to a window's workspace
+- [ ] New-thread sheet (group, folder, preset: claude / claude -r / codex / custom) on ⌘N and a minimal + button; drop the hard-coded spike threads
+- [ ] Close thread (card context menu, confirm while it's running), so added threads can be removed
 
-### M2 — Threads and shelf
-- [ ] `Thread`, `ThreadStore`, `threads.json` with schemaVersion + mock data
-- [ ] New thread sheet: group, folder picker, command preset (claude / claude -r /
-      codex / custom)
-- [ ] Card shelf with Agents | Tasks clusters, selection opens in a pane
-- [ ] Rename inline, context menu, drag to reorder, move between groups
-- [ ] Layouts: 1 / 2 / 2×2; Maximize; Minimize to shelf
-- [ ] Restore layout and open threads on relaunch
+### Next
+- [ ] Relaunch Claude threads with `--resume <id>` (the id is already captured from hooks; needs `threads.json`)
+- [ ] Recent-thread switcher: ⌃Tab / ⌃⇧Tab cycles threads in most-recently-used order, like ⌘Tab for apps; a quick tap returns to the previous thread. (⌘1–9 stays "card by shelf position"; check ⌃Tab doesn't collide with the CLIs.)
+- [ ] Keep waiting panes on screen: when opening a thread replaces a pane, never replace one whose agent needs you; take the least recently used other pane
+- [ ] Card context menu: rename, move left / right, move to other group, resume in new pane, open folder in Zed
+- [ ] Drag to reorder cards within a group
+- [ ] macOS notification for needs-you while Shoji is in the background
+- [ ] Codex `notify` and resume (decide the notify override first, see Open questions)
 
-### M3 — Status and resume
-- [ ] `shoji-hook` client (fast, silent when Shoji is down)
-- [ ] Per-launch hook injection for Claude Code (no global config edits)
-- [ ] Capture Claude resume id from `SessionStart`; relaunch with `--resume`
-- [ ] Codex `notify` wiring + resume
-- [ ] Terminal delegate callbacks → StatusEvent: title, bell, process exit
-- [ ] Full state machine from the table above, elapsed timers, unread counts
-- [ ] Native macOS notification for needs-you when the app is in the background
-
-### M4 — Hub view
-- [ ] Threads | Hub switch
-- [ ] Agent big cards sorted by attention, last 3 lines preview, actions
-- [ ] Task cards: last log line, Restart (SIGINT, wait, relaunch) / Stop / Open
-- [ ] Header totals pills
-- [ ] "Allow once" with guardrails (see Open questions)
-- [ ] Open folder in Zed
-
-### M5 — Hachi and polish
-- [ ] App icon: Hachi sitting behind a shoji panel
-- [ ] Hachi on needs-you cards; subtle appear animation
-- [ ] Shortcuts: ⌘1–9 jump, ⌘J next needs-you, ⌘N new thread, ⌘K quick jump
-- [ ] Settings: default folders, command presets, notifications on/off,
-      terminal font, theme, scrollback, Option as Meta
+### Later
+- [ ] Multiple windows in two styles: **full** (today's shelf and panes, made for near-fullscreen) and **sidebar** (a slim column of compact cards beside your editor that shows who needs you and opens a thread in one click)
+- [ ] Workspaces: a named set of threads with its layout (for example *gosta*, *home-lab*), one per window; every window comes back on relaunch with its workspace, style, size and position
+- [ ] Hub view: Threads | Hub switch, agent cards sorted by attention with the last 3 lines, task cards with Restart / Stop / Open, totals pills, open folder in Zed
+- [ ] "Allow once" from the Hub, with guardrails (see Open questions)
+- [ ] ⌘K quick jump
+- [ ] Settings: default folders, command presets, notifications, terminal font, theme, scrollback, Option as Meta
 - [ ] Devcontainer command presets
-- [ ] Developer ID signing + notarization
+- [ ] Push the first `v*` tag to try `release.yml`
 - [ ] Third-party notices in the app bundle (SwiftTerm MIT license text)
+- [ ] Developer ID signing and notarization (needs a paid Apple Developer account)
+
+### Done
+- Build: XcodeGen project, SwiftTerm 1.99.1 pinned, CI on GitHub (`xcode-27` runner), release workflow and `scripts/package.sh` (universal ad-hoc DMG)
+- Terminals: SwiftTerm panes (Metal) in glass cards, login-shell launch, 10k scrollback, Shift+Return fallback, hide / show without redraw glitches
+- Status: `shoji-hook` → socket → `ThreadStore`, per-launch Claude hooks, terminal title / bell / exit; working / needs you / done / idle with elapsed time and needs-you count; resume id captured
+- Shelf and panes: Agents | Tasks shelf, click a card to open it, 1 / 2 / 2×2 layouts, maximize / minimize, drag splits
+- Keyboard and zoom: one `Shortcut` catalog for menus and the ⌘/ sheet, app-wide zoom ⌘+ / ⌘− / ⌘0
+- Hachi: vector portrait on needs-you agent cards (zoom-aware, behind the count badge) and a layered Icon Composer app icon
+
+## Terminal checklist
+
+Run by hand with Claude Code in Shoji; re-run after every SwiftTerm bump (AGENTS invariant 1). Record findings in Gotchas.
+
+- [ ] Shift+Enter inserts a newline; Option+Enter works with Option as Meta
+- [ ] Long reply + scrolling up: no drift, scroll wheel scrolls (no stray keystrokes)
+- [ ] Heavy output (`docker compose up` logs) stays responsive
+- [ ] Same PATH, env and MCP servers as in a normal terminal
+- [ ] Cmd+click opens URLs and file paths correctly
+- [ ] IME input, copy/paste, selection, emoji and wide characters render correctly
+- [ ] Window resize and focus switching between panes are smooth
 
 ## Open questions
 
@@ -210,9 +212,20 @@ Resume ids: Claude from the `SessionStart` hook payload; Codex — to confirm (O
 - **Themes:** ship a few built-in themes, or import Ghostty/iTerm2 theme files?
 - **Task restart:** SIGINT then relaunch, or SIGTERM with a timeout? Per task setting?
 - **Git branch on Hub cards:** read `.git/HEAD` directly vs. shelling out to `git`.
+- **Codex notify:** `codex -c 'notify=["…/shoji-hook"]'` per launch replaces any `notify` program the user configured. Chain to theirs, or accept the override?
+- **Stable local signing identity:** a self-signed code-signing certificate (kept as a CI secret) would keep TCC grants across updates without a paid account. Worth it before daily use, or wait for Developer ID?
+- **Multiple windows:** a thread's terminal can be on screen in only one window at a time (one SwiftTerm view per thread). When a second window opens it, move it there, or show only its card?
+- **Sidebar window:** clicking a card opens the thread in a full window, or expands it in place?
+- **Quitting with live agents:** quitting closes every PTY (agents get SIGHUP). Confirm before quit while something is Working / Needs you?
 
 ## Decisions
 
+- **Name:** the app is **Shoji** (Dock, menus, repo, bundle id, code); **Hachi no Shoji** (ハチの障子) is the full name for places with room for the story, like the README header and an About box.
+- **Bundle id `fi.yan.shoji`**, ad-hoc signed until there's a Developer ID.
+- **The `.xcodeproj` is generated and not committed**; `project.yml` is the only source. Package.resolved therefore isn't committed either; SwiftTerm itself is pinned exactly.
+- **Shift+Return → ESC CR** (Meta+Return, a newline in Claude Code) for every thread whose program hasn't enabled the Kitty keyboard protocol.
+- **Shortcuts sheet on ⌘/** (the user suggested ⌘K): ⌘K is "clear" in every Mac terminal and is reserved for quick jump. It's a real sheet, not an overlay, so Esc closes it without reaching the focused terminal (Esc would interrupt Claude).
+- **Zoom is one factor for everything**, browser style, stored in UserDefaults (`zoom`). Terminal font = 13 pt × zoom, rounded to half points.
 - **Terminal engine: SwiftTerm** (chosen over libghostty). Pure Swift package, no Zig
   build, stable versioned API, Metal renderer, Kitty keyboard and graphics protocols,
   runs on iOS too, MIT license (compatible with Shoji's Apache 2.0). Accepted costs:

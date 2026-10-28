@@ -1,0 +1,49 @@
+{
+  "fill" : {
+    "solid" : "srgb:0.09020,0.12549,0.12157,1.00000"
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "glass" : true,
+          "image-name" : "04-shoji-rail.svg",
+          "name" : "04-shoji-rail"
+        },
+        {
+          "glass" : true,
+          "image-name" : "03-shoji-right.svg",
+          "name" : "03-shoji-right"
+        },
+        {
+          "glass" : true,
+          "image-name" : "02-shoji-left.svg",
+          "name" : "02-shoji-left"
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.4
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.2
+      }
+    },
+    {
+      "layers" : [
+        {
+          "glass" : false,
+          "image-name" : "01-hachi.svg",
+          "name" : "01-hachi"
+        }
+      ],
+      "specular" : false
+    }
+  ],
+  "supported-platforms" : {
+    "squares" : [
+      "macOS"
+    ]
+  }
+}
