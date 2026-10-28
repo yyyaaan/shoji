@@ -33,11 +33,11 @@ struct ShelfView: View {
             }
             .scrollIndicators(.automatic)
             .alert("Rename Thread", isPresented: Binding { renaming != nil } set: { if !$0 { renaming = nil } }, presenting: renaming) { thread in
-                TextField("Name", text: $draftTitle, prompt: Text(thread.displayFolder))
+                TextField("Name", text: $draftTitle, prompt: Text(thread.autoTitle))
                 Button("Rename") { store.rename(thread.id, to: draftTitle) }
                 Button("Cancel", role: .cancel) {}
             } message: { _ in
-                Text("Leave it empty to show the folder's name.")
+                Text("Leave it empty to show the folder and number.")
             }
             // Keyboard jumps can land on a card that is scrolled out of view.
             .onChange(of: store.focusedThreadId) { _, id in

@@ -74,7 +74,7 @@ struct ThreadStoreTests {
         let store = makeStore()
         send(.directory(NSHomeDirectory() + "/lab/shoji"), to: second.id, in: store)
         #expect(store.thread(second.id)?.folder == "~/lab/shoji")
-        #expect(store.thread(second.id)?.displayTitle == "shoji")
+        #expect(store.thread(second.id)?.displayTitle == "shoji 2")
         #expect(store.activity(for: second.id).isIntegrated)
     }
 
@@ -153,6 +153,19 @@ struct ThreadStoreTests {
         let empty = ThreadStore(threads: [])
         let home = empty.newThread()
         #expect(empty.thread(home)?.folder == "~")
+        #expect(empty.thread(home)?.displayTitle == "~ 1")
+    }
+
+    @Test func numbersStayLowAndStable() {
+        let store = makeStore()
+        #expect(store.shelfOrder.map(\.number) == [1, 2])
+        store.close(first.id)
+        let reused = store.newThread()
+        #expect(store.thread(reused)?.number == 1)
+        let next = store.newThread()
+        #expect(store.thread(next)?.number == 3)
+        store.move(next, by: -1)
+        #expect(store.thread(next)?.number == 3)
     }
 
     @Test func closeAsksOnlyWhenSomethingWouldBeLost() {
@@ -183,28 +196,28 @@ struct ThreadStoreTests {
         #expect(store.thread(second.id)?.displayTitle == "web")
         store.rename(second.id, to: "   ")
         #expect(store.thread(second.id)?.title == nil)
-        #expect(store.thread(second.id)?.displayTitle == "web")
+        #expect(store.thread(second.id)?.displayTitle == "web 2")
     }
 
     @Test func movingAcrossBarsJoinsTheNeighbouringGroup() {
         let third = ShojiThread(title: "third", group: 1, order: 0)
         let store = ThreadStore(threads: [first, second, third])
         let titles = { store.shelf.map { $0.map(\.displayTitle) } }
-        #expect(titles() == [["first", "web"], ["third"]])
+        #expect(titles() == [["first", "web 2"], ["third"]])
         #expect(!store.canMove(first.id, by: -1))
         #expect(!store.canMove(third.id, by: 1))
 
         store.move(second.id, by: 1)
-        #expect(titles() == [["first"], ["web", "third"]])
+        #expect(titles() == [["first"], ["web 2", "third"]])
         store.move(first.id, by: 1)
-        #expect(titles() == [["first", "web", "third"]])
+        #expect(titles() == [["first", "web 2", "third"]])
         store.move(third.id, by: -1)
-        #expect(titles() == [["first", "third", "web"]])
+        #expect(titles() == [["first", "third", "web 2"]])
 
         store.toggleBarBefore(third.id)
-        #expect(titles() == [["first"], ["third", "web"]])
+        #expect(titles() == [["first"], ["third", "web 2"]])
         #expect(store.hasBarBefore(third.id))
         store.toggleBarBefore(third.id)
-        #expect(titles() == [["first", "third", "web"]])
+        #expect(titles() == [["first", "third", "web 2"]])
     }
 }

@@ -23,6 +23,10 @@ final class ThreadStore {
 
     init(threads: [ShojiThread], layout: PaneLayout = PaneLayout(), now: Date = .now, fileURL: URL? = nil) {
         let ids = Set(threads.map(\.id))
+        var threads = threads
+        for index in threads.indices where threads[index].number < 1 {
+            threads[index].number = Self.lowestFreeNumber(in: threads)
+        }
         var layout = layout
         layout.openThreadIds.removeAll { !ids.contains($0) }
         if let maximized = layout.maximizedThreadId, !ids.contains(maximized) { layout.maximizedThreadId = nil }
@@ -130,7 +134,7 @@ final class ThreadStore {
     @discardableResult
     func newThread(at now: Date = .now) -> UUID {
         let focused = focusedThreadId.flatMap(thread)
-        let thread = ShojiThread(folder: focused?.folder ?? "~")
+        let thread = ShojiThread(number: Self.lowestFreeNumber(in: threads), folder: focused?.folder ?? "~")
         var groups = shelfIds
         if let focused, let place = position(of: focused.id, in: groups) {
             groups[place.group].insert(thread.id, at: place.index + 1)
@@ -144,6 +148,11 @@ final class ThreadStore {
         arrange(groups)
         open(thread.id)
         return thread.id
+    }
+
+    private static func lowestFreeNumber(in threads: [ShojiThread]) -> Int {
+        let used = Set(threads.map(\.number))
+        return (1...).first { !used.contains($0) }!
     }
 
     /// An empty name goes back to showing the folder.

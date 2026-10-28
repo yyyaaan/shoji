@@ -38,7 +38,7 @@ scripts/
   shoji.zsh, zshenv         zsh integration bundled into the app (folder, commands, claude hooks, resume)
   package.sh                Release build -> build/Shoji-<version>.dmg (used by release.yml)
 Sources/Shoji/
-  App/                      app entry (ShojiApp: wiring, window), MainView + toolbar,
+  App/                      app entry (ShojiApp: wiring, window), MainView + the top row's controls,
                             Shortcuts (catalog + menu commands)
   Threads/                  ShojiThread, ThreadStore, PaneLayout, launch building, Mock
   Terminal/                 TerminalBackend protocol, SwiftTerm implementation

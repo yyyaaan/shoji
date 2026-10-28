@@ -41,7 +41,13 @@ final class SwiftTermBackend: TerminalBackend, LocalProcessTerminalViewDelegate 
     }
 
     func focus() {
-        terminalView.window?.makeFirstResponder(terminalView)
+        guard let window = terminalView.window else { return }
+        if window.firstResponder === terminalView {
+            // AppKit reports nothing when focus doesn't move; say so, or the request never settles.
+            onEvent?(.focused)
+        } else {
+            window.makeFirstResponder(terminalView)
+        }
     }
 
     func setFontSize(_ size: CGFloat) {
@@ -78,6 +84,14 @@ final class ShojiTerminalView: LocalProcessTerminalView {
             super.hasFocus = newValue
             if newValue { onFocus?() }
         }
+    }
+
+    // AppKit focuses only the exact view clicked, which can be one of SwiftTerm's render subviews.
+    override func mouseDown(with event: NSEvent) {
+        if window?.firstResponder !== self {
+            window?.makeFirstResponder(self)
+        }
+        super.mouseDown(with: event)
     }
 
     override func viewDidMoveToWindow() {

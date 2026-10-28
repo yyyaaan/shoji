@@ -2,7 +2,7 @@
 
 ## Status
 
-- **Last session (daily-driver):** Shoji keeps your threads, and every thread is now a plain shell. ⌘N opens one at once next to the focused card, in its folder; you `cd` and run `claude`, `codex` or a dev server, and quit back to the prompt. A zsh integration reports folder and commands and gives typed `claude` the status hooks; a relaunch restores threads, layout and splits, resumes Claude sessions and leaves other last commands at the prompt. Shelf groups are just bars the user adds or removes (context menu: Move Left / Right, Add / Remove Bar Before, Rename, Restart, Close). ⌘W closes, confirming only when something is running. Verified the integration in a pty (events, resume autorun with a fake claude, ZDOTDIR restored) and in the Debug app (folder report reaches `threads.json`). 44 tests pass.
+- **Last session (daily-driver):** Shoji keeps your threads, and every thread is now a plain shell. ⌘N opens one at once next to the focused card, in its folder; you `cd` and run `claude`, `codex` or a dev server, and quit back to the prompt. A zsh integration reports folder and commands and gives typed `claude` the status hooks; a relaunch restores threads, layout and splits, resumes Claude sessions and leaves other last commands at the prompt. Shelf groups are just bars the user adds or removes (context menu: Move Left / Right, Add / Remove Bar Before, Rename, Restart, Close). ⌘W closes, confirming only when something is running. Verified the integration in a pty (events, resume autorun with a fake claude, ZDOTDIR restored) and in the Debug app (folder report reaches `threads.json`). Then: clicking a pane now always moves typing there, the toolbar row is gone (title bar hidden; + under the window buttons, layout and shortcuts at the shelf's right end), and unnamed threads read "<folder> <number>" with stable, lowest-free numbers. 45 tests pass.
 - **Next up:** the user's hands-on pass (Tasks › Now), then **Tasks › Next**.
 - **Blockers:** none
 
@@ -52,6 +52,8 @@ _Agents: update this section at the end of every session (what changed, what's n
 - **Typed `claude` only reports status through the zsh integration.** The `claude` function adds `--settings`; an alias still works (aliases expand first), but a script or other shell calling the binary directly gets no hooks. bash and fish have no integration yet.
 - **SwiftTerm's `registerOscHandler` isn't public** (the `Terminal` is internal to the view). Shell reports therefore use `OSC 1337 ; ShojiEvent=<kind>;<value>`: SwiftTerm hands unknown 1337 keys to `iTermContent`, in order, on the main thread.
 - **zsh integration hooks in on the first prompt**, after the user's `.zshrc`, and puts its precmd first so `$?` is the command's exit code. A `.zshrc` that resets `precmd_functions` wholesale disables it.
+- **Focus requests must always settle.** `makeFirstResponder` on a view that's already first responder fires no `becomeFirstResponder`, so `SwiftTermBackend.focus()` reports `.focused` itself; and `TerminalHost` only acts when a request arrives, so a pending one can't pull typing back after the user clicks another pane. Clicks focus explicitly in `ShojiTerminalView.mouseDown` because AppKit only focuses the exact view hit.
+- **Hidden title bar:** content ignores the top safe area so the shelf shares the row with the traffic lights; the leading 78 pt column stays clear for them. `windowBackgroundDragBehavior(.enabled)` keeps the window draggable.
 - **Only one Debug Shoji at a time.** A second instance (`open -n`) takes over `Shoji-Debug/hook.sock` and both write `threads.json`; quitting either removes the socket.
 - **⌘W is Close thread.** `ShojiCommands` replaces the `.saveItem` group, which also removes the system Close Window item, so ⌘W can't close the main window by accident.
 - **A restarted terminal's old process still reports its exit.** `TerminalSessions` ignores events from any backend that is no longer the thread's current one.
@@ -74,8 +76,9 @@ Chosen: **B · Card shelf + split** and **Hub view**, exported as standalone HTM
 private to Yan's account; agents can't open it, so the HTML files are what they read).
 
 **Threads screen (Option B)**
+- No toolbar row (user's call): the title bar is hidden and the shelf takes the top. Its left end holds the window buttons with + below them, its right end the layout switcher with the shortcuts button below; the window drags by its background.
 - Shelf of glass cards across the top in the user's order, split into groups by plain bars (no titles, no fixed meaning; user's call); scrolls sideways when cards overflow.
-- Card: status icon, a tag for what runs (CLAUDE / CODEX / the command's name, none at an idle prompt), name (the folder's name unless renamed), one-line status, command or folder, elapsed time.
+- Card: status icon, a tag for what runs (CLAUDE / CODEX / the command's name, none at an idle prompt), name (folder and number, like "~ 2", unless renamed), one-line status, command or folder, elapsed time.
 - Needs-you card: orange border + glow, count badge, Hachi.
 - Card context menu: Rename, Move Left / Right (across a bar joins that group), Add / Remove Bar Before, Restart (shell ended), Close Thread. Later: open folder in Zed.
 - No drag to reorder for now: a thread is a place to run things, so the user usually stops one command and runs the next in the same card.
@@ -114,6 +117,7 @@ private to Yan's account; agents can't open it, so the HTML files are what they 
   "threads": [
     {
       "id": "6F1C…",
+      "number": 1,
       "title": "auth-refactor",
       "folder": "~/code/gosta",
       "group": 0,
@@ -123,6 +127,7 @@ private to Yan's account; agents can't open it, so the HTML files are what they 
     },
     {
       "id": "9A2E…",
+      "number": 2,
       "folder": "~/code/gosta",
       "group": 1,
       "order": 0,
@@ -133,7 +138,7 @@ private to Yan's account; agents can't open it, so the HTML files are what they 
 }
 ```
 
-`title` is optional (the card shows the folder's name), `folder` follows the shell's working directory, and `group` / `order` place the card (a bar between groups). `command` is what was running at the last save and `resumeId` the Claude session in it: a relaunch runs `claude --resume <id>` at the first prompt, or leaves `command` at the prompt for Return.
+`number` is stable and the lowest free one at creation (a file without numbers gets them on load); `title` is optional (the card shows folder and number), `folder` follows the shell's working directory, and `group` / `order` place the card (a bar between groups). `command` is what was running at the last save and `resumeId` the Claude session in it: a relaunch runs `claude --resume <id>` at the first prompt, or leaves `command` at the prompt for Return.
 
 Runtime-only (not persisted): status, last activity, unread count, agent, terminal view.
 

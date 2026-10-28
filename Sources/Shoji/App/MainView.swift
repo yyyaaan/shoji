@@ -8,41 +8,28 @@ struct MainView: View {
     @State private var zoomToast: Double?
 
     var body: some View {
-        @Bindable var store = store
         VStack(spacing: 14) {
             if store.threads.isEmpty {
                 welcome
             } else {
-                ShelfView()
+                // No title bar or toolbar row: the shelf shares the top with the window buttons and Shoji's controls.
+                HStack(spacing: 0) {
+                    leadingControls
+                    ShelfView()
+                    trailingControls
+                }
+                .frame(height: 120 * zoom)
                 PaneGrid()
                     .padding(.horizontal, 18)
                     .padding(.bottom, 16)
             }
         }
+        .ignoresSafeArea(.container, edges: .top)
         .environment(\.zoom, zoom)
         .frame(minWidth: 640, minHeight: 480)
         .background(Backdrop())
         .overlay(alignment: .top) { zoomBadge }
         .preferredColorScheme(.dark)
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button("New Thread", systemImage: "plus") { store.newThread() }
-                    .help("New Thread (⌘N)")
-            }
-            ToolbarItem(placement: .primaryAction) {
-                Button("Keyboard Shortcuts", systemImage: "keyboard") { showsShortcuts = true }
-                    .help("Keyboard Shortcuts (⌘/)")
-            }
-            ToolbarItem(placement: .primaryAction) {
-                Picker("Layout", selection: $store.layout.mode) {
-                    Label("Single pane", systemImage: "rectangle").tag(PaneLayout.Mode.single)
-                    Label("Two columns", systemImage: "rectangle.split.2x1").tag(PaneLayout.Mode.twoColumns)
-                    Label("Grid of four", systemImage: "rectangle.split.2x2").tag(PaneLayout.Mode.grid)
-                }
-                .pickerStyle(.segmented)
-                .labelStyle(.iconOnly)
-            }
-        }
         .sheet(isPresented: $showsShortcuts) { ShortcutsSheet() }
         .focusedSceneValue(\.showsShortcuts, $showsShortcuts)
         .alert(
@@ -64,6 +51,49 @@ struct MainView: View {
             guard zoomToast != nil, (try? await Task.sleep(for: .seconds(1.2))) != nil else { return }
             withAnimation(.easeOut) { zoomToast = nil }
         }
+    }
+
+    private var controlSize: ControlSize {
+        zoom < 0.9 ? .small : zoom > 1.3 ? .large : .regular
+    }
+
+    /// The window's close, minimize and zoom buttons sit at the top of this column.
+    private var leadingControls: some View {
+        VStack {
+            Spacer(minLength: 0)
+            Button("New Thread", systemImage: "plus") { store.newThread() }
+                .help("New Thread (⌘N)")
+        }
+        .frame(width: 78)
+        .padding(.bottom, 6 * zoom)
+        .labelStyle(.iconOnly)
+        .buttonStyle(.glass)
+        .buttonBorderShape(.circle)
+        .controlSize(controlSize)
+    }
+
+    private var trailingControls: some View {
+        @Bindable var store = store
+        return VStack(alignment: .trailing) {
+            Picker("Layout", selection: $store.layout.mode) {
+                Label("Single pane", systemImage: "rectangle").tag(PaneLayout.Mode.single)
+                Label("Two columns", systemImage: "rectangle.split.2x1").tag(PaneLayout.Mode.twoColumns)
+                Label("Grid of four", systemImage: "rectangle.split.2x2").tag(PaneLayout.Mode.grid)
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .fixedSize()
+            Spacer(minLength: 0)
+            Button("Keyboard Shortcuts", systemImage: "keyboard") { showsShortcuts = true }
+                .help("Keyboard Shortcuts (⌘/)")
+                .buttonStyle(.glass)
+                .buttonBorderShape(.circle)
+        }
+        .labelStyle(.iconOnly)
+        .controlSize(controlSize)
+        .padding(.top, 10 * zoom)
+        .padding(.bottom, 6 * zoom)
+        .padding(.trailing, 18)
     }
 
     private var closing: ShojiThread? {

@@ -51,7 +51,8 @@ struct ShojiApp: App {
         }
         .defaultSize(width: 1360, height: 860)
         .windowResizability(.contentMinSize)
-        .windowToolbarStyle(.unified)
+        .windowStyle(.hiddenTitleBar)
+        .windowBackgroundDragBehavior(.enabled)
         .commands { ShojiCommands(store: store) }
     }
 
