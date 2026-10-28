@@ -3,8 +3,8 @@
 ## Status
 
 - **Last session (daily-driver, PR #2):** Shoji became a daily driver. Threads are the user's shells: ⌘N opens one instantly next to the focused card; a zsh integration reports folder and commands and gives typed `claude` its hooks; quitting an agent returns to the prompt. `threads.json` restores threads, layout and splits, resumes Claude and prefills the last command. Shelf: drag cards, user-placed bars, numbered names ("~ 2"). No toolbar row: hidden title bar, layout switcher at the shelf's right end, Hachi under the window buttons while anything needs you. Layouts 1 / 2 / 3 / 4 on ⌥⌘1–4. Click-to-focus fixed. 47 tests pass.
-- **This session (pane-control, PR #3):** names carry a number only when two unnamed threads would read the same ("shoji", "shoji 2"); `number` is gone from `threads.json`. Panes: a card opens in the pane you're in; panes keep their identity across layout switches (should end the blank terminals); switching keeps the pane you're in and pinned panes, and fills new panes. Drop a card on a pane to put it there (swaps if already on screen); pin a pane (header pin, ⇧⌘P); ⌃Tab / ⌃⇧Tab recent-thread switcher with a list while ⌃ is held. 57 tests pass.
-- **Next up:** the user's hands-on pass of this branch (Tasks › Now), then the PR; after it, macOS notifications and Codex from Tasks › Next.
+- **This session (pane-control, PR #3):** names carry a number only when two unnamed threads would read the same ("shoji", "shoji 2"); `number` is gone from `threads.json`. Panes: a card opens in the pane you're in; panes keep their identity across layout switches (should end the blank terminals); switching keeps the pane you're in and pinned panes, and fills new panes. Drop a card on a pane to put it there (swaps if already on screen); pin a pane (header pin, ⇧⌘P); ⌃Tab / ⌃⇧Tab recent-thread switcher with a list while ⌃ is held. Minimize (button and ⇧⌘M) removed. A card click (and ⌘1–9) brings an on-screen thread into your pane; ⌃Tab / ⌘J still go to it. Codex reports through its hooks like Claude (`-c hooks={…}` per launch) and resumes with `codex resume <id>`. Version 0.3.0. 61 tests pass.
+- **Next up:** finish the hands-on pass (Tasks › Now; ⌃Tab and card clicks already felt right to the user), then merge PR #3, which releases v0.3.0. After it, Tasks › Next.
 - **Blockers:** none
 
 _Agents: update this section at the end of every session (what changed, what's next), tick or move tasks, and add new wishes to the right bucket._
@@ -38,7 +38,7 @@ _Agents: update this section at the end of every session (what changed, what's n
   Code; its fixes are a good source of lessons. It uses tmux, which Shoji does not.
 - **App Sandbox must be off** (Shoji spawns shells and CLIs). Distribute outside the
   App Store, signed with Developer ID and notarized.
-- **Hidden or minimized terminals:** keep their size stable. Resizing a terminal to
+- **Hidden terminals:** keep their size stable. Resizing a terminal to
   zero makes TUIs like Claude Code redraw badly when restored.
 - **Glass behind terminal text hurts readability.** Solid terminal backgrounds only.
 - **Devcontainers can't reach a host Unix socket.** Threads that run CLIs inside a
@@ -50,7 +50,9 @@ _Agents: update this section at the end of every session (what changed, what's n
 - **Ad-hoc signatures change every build**, so macOS privacy grants (TCC, e.g. Files & Folders prompts that child CLIs trigger in Shoji's name) reset after each update.
 - **Icon Composer documents:** XcodeGen adds `AppIcon.icon` as one `wrapper.icon` file, and actool compiles it to `AppIcon.icns` + `Assets.car` with `ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon`. Check renders with `ictool <file>.icon --export-image --platform macOS --rendition Default|Dark|ClearLight|TintedDark …`; in `icon.json`, `groups` and `layers` list front to back.
 - **Visual checks of SwiftUI views without touching the live app:** render them with `ImageRenderer` from a throwaway test (the test host has the asset catalog). Glass renders flat there, so confirm glass ordering in the running app.
-- **Typed `claude` only reports status through the zsh integration.** The `claude` function adds `--settings`; an alias still works (aliases expand first), but a script or other shell calling the binary directly gets no hooks. bash and fish have no integration yet.
+- **Codex hooks need the user's trust once.** Codex skips any hook whose exact definition hasn't been trusted in `/hooks` (keyed by its hash), so the first Codex run in Shoji shows no status until the user trusts Shoji's hooks; Debug and installed builds have different hook paths, so each is trusted once. Keep `CodexHooks` stable: changing events, command or timeout asks for trust again. Shoji never passes `--dangerously-bypass-hook-trust`. `codex debug prompt-input -c '…'` validates an override without a model call (an unknown hook type fails; an unknown event is ignored). Unverified: whether the `-c` hooks add to hooks in the user's own `config.toml` or replace them (docs say layers add up).
+- **Codex `Stop` / `Interrupt` hooks expect JSON on stdout** when they print anything; `shoji-hook` prints nothing, which counts as success.
+- **Typed `claude` / `codex` only report status through the zsh integration.** The functions add `--settings` / `-c`; an alias still works (aliases expand first), but a script or other shell calling the binary directly gets no hooks. bash and fish have no integration yet.
 - **SwiftTerm's `registerOscHandler` isn't public** (the `Terminal` is internal to the view). Shell reports therefore use `OSC 1337 ; ShojiEvent=<kind>;<value>`: SwiftTerm hands unknown 1337 keys to `iTermContent`, in order, on the main thread.
 - **zsh integration hooks in on the first prompt**, after the user's `.zshrc`, and puts its precmd first so `$?` is the command's exit code. A `.zshrc` that resets `precmd_functions` wholesale disables it.
 - **Focus requests must always settle.** `makeFirstResponder` on a view that's already first responder fires no `becomeFirstResponder`, so `SwiftTermBackend.focus()` reports `.focused` itself; and `TerminalHost` only acts when a request arrives, so a pending one can't pull typing back after the user clicks another pane. Clicks focus explicitly in `ShojiTerminalView.mouseDown` because AppKit only focuses the exact view hit.
@@ -92,8 +94,7 @@ private to Yan's account; agents can't open it, so the HTML files are what they 
 - Layout switcher (macOS tiling icons, ⌥⌘1–4 by pane count): 1 pane / 2 columns / 3 panes (one tall left, two stacked right) / 2×2 grid, which shows 2 up 1 down with three open. Switching keeps the pane you're in on screen, and new panes show threads that were there before, then recent ones, then the shelf's.
 - Clicking a card shows it in a free pane, else in the pane you're in (with none focused: the one used longest ago that isn't waiting for you); the thread it replaces comes back first when the layout grows. Dropping a card on a pane puts it there (a thread already on screen trades places). A pinned pane is passed over by clicks until every pane is pinned; pins follow the thread and end when it leaves the panes.
 - ⌃Tab / ⌃⇧Tab: recent threads like ⌘Tab; a quick tap returns to the previous thread, holding ⌃ shows the list (after 150 ms), Esc cancels.
-- Pane header: name, folder, Pin,
-  Maximize, Minimize to shelf; Restart once the shell has ended.
+- Pane header: name, folder, Pin, Maximize; Restart once the shell has ended. No minimize (user's call): the layout sets how many panes, cards decide what's in them, ⌘W closes.
 
 **Hub view**
 - Header: Threads | Hub switch, totals pills (needs you / working / tasks down).
@@ -146,7 +147,7 @@ private to Yan's account; agents can't open it, so the HTML files are what they 
 }
 ```
 
-`title` is optional (the card shows the folder's name), `folder` follows the shell's working directory, and `group` / `order` place the card (a bar between groups). The array is in order of arrival in the current folder, which decides who carries the number among same-named threads. Files from v0.2 still load: their `number` is ignored, and every `layout` key may be missing (`pinnedThreadIds` is newer). `command` is what was running at the last save and `resumeId` the Claude session in it: a relaunch runs `claude --resume <id>` at the first prompt, or leaves `command` at the prompt for Return.
+`title` is optional (the card shows the folder's name), `folder` follows the shell's working directory, and `group` / `order` place the card (a bar between groups). The array is in order of arrival in the current folder, which decides who carries the number among same-named threads. Files from v0.2 still load: their `number` is ignored, and every `layout` key may be missing (`pinnedThreadIds` is newer). `command` is what was running at the last save and `resumeId` the agent session in it: a relaunch runs `claude --resume <id>` or `codex resume <id>` at the first prompt, or leaves `command` at the prompt for Return.
 
 Runtime-only (not persisted): status, last activity, unread count, agent, terminal view.
 
@@ -155,17 +156,17 @@ Runtime-only (not persisted): status, last activity, unread count, agent, termin
 | State | Source |
 |---|---|
 | Idle | at the shell prompt (launched, or a command finished with 0 / 130); Claude at its own prompt; Done or a failed command once focused |
-| Running | a command other than claude is running (zsh `preexec`) |
-| Working | Claude `UserPromptSubmit` / `PostToolUse` hook; typing into a needs-you thread |
-| Needs you | Claude `Notification` hook (not `idle_prompt`); bell while Working |
-| Done | Claude `Stop` hook; Codex `notify` `agent-turn-complete` |
+| Running | a command other than claude / codex is running (zsh `preexec`) |
+| Working | Claude or Codex `UserPromptSubmit` / `PostToolUse` hook; typing into a needs-you thread |
+| Needs you | Claude `Notification` hook (not `idle_prompt`); Codex `PermissionRequest`; bell while Working |
+| Done | Claude or Codex `Stop` hook; Codex `Interrupt` |
 | Exited(code) | a command failed (shell still alive, clears on focus), or the shell itself ended (Restart) |
 
 Shell reports from the zsh integration: `cwd;<path>` each prompt, `cmd;<line>` before a command, `done;<code>` after it.
 
 Files live in `~/Library/Application Support/Shoji` (`Shoji-Debug` for Debug builds): `threads.json`, saved half a second after a change and on quit, and `hook.sock`. A `threads.json` Shoji can't read (corrupt, or from a newer version) is renamed to `threads.unreadable-<time>.json`, never overwritten.
 
-Hook transport: `shoji-hook` sends one connection per event to `hook.sock` in that folder: the thread id on the first line, then the CLI's JSON (stdin for Claude, argv[1] for Codex `notify`). Resume ids: Claude from `session_id` in prompt/tool hooks; Codex — to confirm (Open questions).
+Hook transport: `shoji-hook` sends one connection per event to `hook.sock` in that folder: the thread id on the first line, then the CLI's JSON from stdin (Claude and Codex send the same core fields). Resume ids come from `session_id` in prompt/tool hooks for both; `command` tells which CLI resumes it.
 
 ## Tasks
 
@@ -176,13 +177,12 @@ Priorities shift with the user's wishes; reorder freely. Keep items one line, sm
 - [ ] Hands-on pass on daily-driver: ⌘N opens a shell beside the focused card; `cd` updates the card; typed `claude` shows status and `/exit` returns to the prompt; quit and reopen resumes Claude and prefills a stopped `pnpm dev`; Move Left / Right and bars; ⌘W confirm only while running
 
 - [ ] Open the v0.2.0 DMG once and check its first launch (Open Anyway); the automatic release itself worked (tag on the squash commit, DMG attached)
-- [ ] Hands-on pass on pane-control: switch layouts with busy terminals (no blank panes), click cards with a pane focused, drag a card onto a pane and onto another visible pane (swap), pin then click cards, ⌃Tab tap and hold / ⌃⇧Tab / Esc with Claude focused, names with two shells in one folder
+- [ ] Hands-on pass on pane-control: switch layouts with busy terminals (no blank panes), click cards with a pane focused, drag a card onto a pane and onto another visible pane (swap), pin then click cards, click a card that's on screen in another pane (it swaps in), ⌃Tab tap and hold / ⌃⇧Tab / Esc with Claude focused, names with two shells in one folder; Codex: trust Shoji's hooks in `/hooks`, then a turn shows Working / Done, an approval shows Needs you, and quit + reopen resumes it
 
 ### Next
 - [ ] Open folder in Zed from the card context menu
 - [ ] bash (and maybe fish) integration, so threads in those shells get folder, command and Claude status
 - [ ] macOS notification for needs-you while Shoji is in the background
-- [ ] Codex `notify` and resume through the zsh integration's `codex` function (decide the notify override first, see Open questions); until then Codex shows as running and a relaunch leaves `codex` at the prompt
 
 ### Later
 - [ ] Multiple windows in two styles: **full** (today's shelf and panes, made for near-fullscreen) and **sidebar** (a slim column of compact cards beside your editor that shows who needs you and opens a thread in one click)
@@ -199,10 +199,11 @@ Priorities shift with the user's wishes; reorder freely. Keep items one line, sm
 - Build: XcodeGen project, SwiftTerm 1.99.1 pinned, CI on GitHub (`xcode-27` runner), release workflow and `scripts/package.sh` (universal ad-hoc DMG)
 - Terminals: SwiftTerm panes (Metal) in glass cards, login-shell launch, 10k scrollback, Shift+Return fallback, hide / show without redraw glitches
 - Status: `shoji-hook` → socket → `ThreadStore`, per-launch Claude hooks, terminal title / bell / exit; working / needs you / done / idle with elapsed time and needs-you count; resume id captured
-- Shelf and panes: card shelf, click a card to open it, 1 / 2 / 3 / 2×2 layouts, maximize / minimize, drag splits
+- Shelf and panes: card shelf, click a card to open it, 1 / 2 / 3 / 2×2 layouts, maximize, drag splits
 - Keyboard and zoom: one `Shortcut` catalog for menus and the ⌘/ sheet, app-wide zoom ⌘+ / ⌘− / ⌘0
 - Hachi: vector portrait on needs-you cards (zoom-aware, behind the count badge) and in the window corner while anything needs you; a layered Icon Composer app icon
-- Pane control: a card opens in the pane you're in, or a free one, else the least recently used pane that isn't waiting; layout switches keep panes (no re-hosted terminals), the focused and pinned ones on screen, and fill new panes; drop a card on a pane; pin a pane; ⌃Tab recent-thread switcher; names number only same-named threads
+- Pane control: a card opens in the pane you're in, or a free one, else the least recently used pane that isn't waiting; layout switches keep panes (no re-hosted terminals), the focused and pinned ones on screen, and fill new panes; drop a card on a pane; pin a pane; a card click brings its thread to your pane; ⌃Tab recent-thread switcher; names number only same-named threads
+- Codex: status (working, needs you on `PermissionRequest`, done) and `codex resume` through its own hooks, like Claude
 - Daily driver: threads are shells (⌘N instant, welcome screen); zsh integration for folder, commands and Claude hooks; `threads.json` save and restore with Claude resume and last-command prefill; shelf bars with Move Left / Right; rename, restart, close (⌘W, confirm while running)
 
 ## Terminal checklist
@@ -225,20 +226,19 @@ Run by hand with Claude Code in Shoji; re-run after every SwiftTerm bump (AGENTS
 - **Devcontainers:** how do hooks inside a container reach Shoji? Options: localhost
   TCP listener with a per-launch token, reached via `host.docker.internal`; or mount
   the socket into the container.
-- **Codex:** does it expose a resume id and a needs-approval event we can hook, or do
-  we rely on the terminal bell?
 - **Performance:** how many live terminal views before it matters? Do hidden threads
   keep a live view, or keep only SwiftTerm's headless `Terminal` and reattach a view?
 - **Themes:** ship a few built-in themes, or import Ghostty/iTerm2 theme files?
 - **Task restart:** SIGINT then relaunch, or SIGTERM with a timeout? Per task setting?
 - **Git branch on Hub cards:** read `.git/HEAD` directly vs. shelling out to `git`.
-- **Codex notify:** `codex -c 'notify=["…/shoji-hook"]'` per launch replaces any `notify` program the user configured. Chain to theirs, or accept the override?
 - **Stable local signing identity:** a self-signed code-signing certificate (kept as a CI secret) would keep TCC grants across updates without a paid account. Worth it before daily use, or wait for Developer ID?
 - **Multiple windows:** a thread's terminal can be on screen in only one window at a time (one SwiftTerm view per thread). When a second window opens it, move it there, or show only its card?
 - **Sidebar window:** clicking a card opens the thread in a full window, or expands it in place?
 - **Quitting with live agents:** quitting closes every PTY (agents get SIGHUP). Confirm before quit while something is Working / Needs you?
 
 ## Decisions
+
+- **Codex through its hooks, not `notify`** (2026-10-28). Codex (checked on 0.164) has Claude-style hooks with the same stdin fields, passed per launch as `-c hooks={…}`, so `~/.codex` stays untouched and the user's own `notify` isn't overridden. Cost: the user trusts Shoji's hooks once in `/hooks`.
 
 - **Releases follow the version** (2026-10-28). Bumping `MARKETING_VERSION` in `project.yml` inside a PR is the decision to release; merging it makes `release.yml` build the DMG and publish `vX.Y.Z` with generated notes, creating the tag on that commit. Other merges don't release. No manual tags. Chosen over release-please / semantic-release (Conventional Commit titles, a bot PR, a changelog file) while Shoji has one maintainer; revisit if contributors join.
 

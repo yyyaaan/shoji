@@ -65,9 +65,6 @@ struct PaneView: View {
             Button(isMaximized ? "Restore" : "Maximize", systemImage: isMaximized ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right") {
                 store.toggleMaximize(thread.id)
             }
-            Button("Minimize to shelf", systemImage: "minus") {
-                store.minimize(thread.id)
-            }
         }
         .labelStyle(.iconOnly)
         .buttonStyle(.glass)

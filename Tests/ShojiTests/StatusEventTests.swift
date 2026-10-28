@@ -20,8 +20,16 @@ struct StatusEventTests {
         #expect(event(#"{"hook_event_name":"SessionStart","session_id":"s1"}"#) == nil)
     }
 
-    @Test func codexNotifyMarksTurnFinished() {
-        #expect(event(#"{"type":"agent-turn-complete","thread-id":"t1","last-assistant-message":"done"}"#)?.signal == .finished)
+    @Test func codexHooksMapToSignals() {
+        #expect(event(#"{"hook_event_name":"UserPromptSubmit","session_id":"c1","turn_id":"t1","model":"gpt-5"}"#)?.signal == .working(sessionId: "c1"))
+        #expect(event(#"{"hook_event_name":"PermissionRequest","session_id":"c1","tool_name":"Bash","tool_input":{"command":"uv run pytest"}}"#)?.signal
+            == .needsYou(message: "Allow Bash: uv run pytest"))
+        #expect(event(#"{"hook_event_name":"PermissionRequest","session_id":"c1","tool_name":"apply_patch","tool_input":{"patch":["a"]}}"#)?.signal
+            == .needsYou(message: "Allow apply_patch"))
+        #expect(event(#"{"hook_event_name":"PermissionRequest","session_id":"c1","tool_name":"Bash","tool_input":{"command":["ls","-la"]}}"#)?.signal
+            == .needsYou(message: "Allow Bash"))
+        #expect(event(#"{"hook_event_name":"Stop","session_id":"c1","stop_hook_active":false}"#)?.signal == .finished)
+        #expect(event(#"{"hook_event_name":"Interrupt","session_id":"c1"}"#)?.signal == .finished)
     }
 
     @Test func malformedMessagesAreDropped() {

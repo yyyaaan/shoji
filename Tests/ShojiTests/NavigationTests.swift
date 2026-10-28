@@ -39,11 +39,11 @@ struct NavigationTests {
         #expect(store.focusRequest == agents[0].id)
     }
 
-    @Test func minimizingTheFocusedPaneFocusesAnother() {
+    @Test func closingTheFocusedThreadFocusesAnotherPane() {
         let store = makeStore()
         store.layout = PaneLayout(mode: .twoColumns, openThreadIds: [agents[0].id, task.id])
         store.focus(task.id)
-        store.minimize(task.id)
+        store.close(task.id)
         #expect(store.focusedThreadId == nil)
         #expect(store.focusRequest == agents[0].id)
     }

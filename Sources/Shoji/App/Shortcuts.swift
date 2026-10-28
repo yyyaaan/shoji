@@ -28,7 +28,6 @@ extension Shortcut {
     static let nextPane = Shortcut(title: "Next pane", key: "]")
     static let previousPane = Shortcut(title: "Previous pane", key: "[")
     static let toggleMaximize = Shortcut(title: "Maximize or restore pane", key: .return, modifiers: [.command, .shift])
-    static let minimizePane = Shortcut(title: "Minimize pane to shelf", key: "m", modifiers: [.command, .shift])
     static let pinPane = Shortcut(title: "Pin or unpin pane", key: "p", modifiers: [.command, .shift])
     static let singlePane = Shortcut(title: "Single pane", key: "1", modifiers: [.command, .option])
     static let twoColumns = Shortcut(title: "Two columns", key: "2", modifiers: [.command, .option])
@@ -57,7 +56,7 @@ struct ShortcutSection: Identifiable {
     static let columns: [[ShortcutSection]] = [
         [
             ShortcutSection(title: "Threads", symbol: "rectangle.stack", shortcuts: [.newThread, .jumpToThread, .recentThread, .recentThreadReversed, .nextNeedingYou, .closeThread]),
-            ShortcutSection(title: "Panes", symbol: "rectangle.split.2x1", shortcuts: [.nextPane, .previousPane, .toggleMaximize, .minimizePane, .pinPane]),
+            ShortcutSection(title: "Panes", symbol: "rectangle.split.2x1", shortcuts: [.nextPane, .previousPane, .toggleMaximize, .pinPane]),
         ],
         [
             ShortcutSection(title: "Layout", symbol: "square.grid.2x2", shortcuts: [.singlePane, .twoColumns, .threePanes, .grid]),
@@ -108,7 +107,6 @@ struct ShojiCommands: Commands {
             button(.previousPane) { store.focusPane(offset: -1) }
             Group {
                 button(.toggleMaximize) { store.focusedThreadId.map(store.toggleMaximize) }
-                button(.minimizePane) { store.focusedThreadId.map(store.minimize) }
                 button(.pinPane) { store.focusedThreadId.map(store.togglePin) }
             }
             .disabled(store.focusedThreadId == nil)

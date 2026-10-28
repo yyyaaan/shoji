@@ -22,7 +22,7 @@ struct PaneLayout: Codable, Equatable, Sendable {
     var openThreadIds: [UUID] = []
     var maximizedThreadId: UUID?
     /// Kept on screen: opening other threads passes over their panes. Pins follow threads, and end when one
-    /// leaves the panes for good (minimized, closed or replaced).
+    /// leaves the panes for good (closed or replaced).
     var pinnedThreadIds: [UUID] = []
     /// Share of the width given to the left column, and of the height to the top row.
     var columnSplit = 0.5

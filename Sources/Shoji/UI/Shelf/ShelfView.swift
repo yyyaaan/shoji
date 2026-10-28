@@ -60,9 +60,9 @@ struct ShelfView: View {
                     isFocused: store.focusedThreadId == thread.id
                 )
                 .contentShape(.rect)
-                .onTapGesture { store.open(thread.id) }
+                .onTapGesture { store.bringHere(thread.id) }
                 .accessibilityAddTraits(.isButton)
-                .accessibilityAction { store.open(thread.id) }
+                .accessibilityAction { store.bringHere(thread.id) }
                 .onDrag { CardDrag.item(for: thread.id) }
                 .onDrop(of: [.plainText], delegate: CardDrop(target: thread.id, width: ThreadCard.width * zoom, spot: $dropSpot, store: store))
                 .overlay(alignment: dropSpot?.after == true ? .trailing : .leading) {

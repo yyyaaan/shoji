@@ -35,7 +35,7 @@ project.yml                 XcodeGen spec (source of truth for targets/settings)
 .github/workflows/          ci.yml (tests on PRs and main), release.yml (merged version bump -> vX.Y.Z release + DMG)
 scripts/
   shoji-hook                hook client bundled into the app: env + JSON -> Shoji socket
-  shoji.zsh, zshenv         zsh integration bundled into the app (folder, commands, claude hooks, resume)
+  shoji.zsh, zshenv         zsh integration bundled into the app (folder, commands, claude/codex hooks, resume)
   package.sh                Release build -> build/Shoji-<version>.dmg (used by release.yml)
 Sources/Shoji/
   App/                      app entry (ShojiApp: wiring, window), MainView + the top row's controls,
@@ -43,7 +43,7 @@ Sources/Shoji/
   Threads/                  ShojiThread, ThreadStore, PaneLayout, launch building, Mock
   Terminal/                 TerminalBackend protocol, SwiftTerm implementation
                             (only place importing SwiftTerm), TerminalSessions
-  Status/                   StatusEvent, HookServer (socket listener), ClaudeHooks
+  Status/                   StatusEvent, HookServer (socket listener), ClaudeHooks, CodexHooks
   UI/                       Theme (palette), StatusIcon, Backdrop, Zoom, ShortcutsSheet, RecentSwitch (⌃Tab)
   UI/Shelf/                 card shelf with bars between groups, context menu
   UI/Panes/                 pane layouts (1 / 2 / 3 / 4) with drag splits, pane header, TerminalHost
@@ -91,7 +91,7 @@ If a command here is wrong or missing, fix this file in the same change.
    main actor. UI never derives status by scraping output.
 6. **Never type into a terminal on the user's behalf** except through an explicit user
    action (e.g. Hub "Allow once"), sending exactly the keystroke the UI shows. Log it.
-   Relaunching is not typing: the zsh integration runs `claude --resume <id>` at a
+   Relaunching is not typing: the zsh integration runs `claude --resume <id>` or `codex resume <id>` at a
    restored shell's first prompt, and leaves any other last command at the prompt for
    the user to run with Return.
 7. **Hooks must never slow or break the CLIs.** `shoji-hook` exits 0 within ~100 ms
@@ -108,8 +108,8 @@ If a command here is wrong or missing, fix this file in the same change.
   environment match a normal terminal. A GUI app's own environment is not enough.
 - **zsh integration** (`scripts/shoji.zsh`): Shoji sets `ZDOTDIR` to a `.zshenv` that
   restores the user's and sources it, so their dotfiles load unchanged. On the first
-  prompt it adds precmd/preexec hooks and a `claude` function that passes `--settings`
-  with Shoji's hooks. Other shells run without it (no folder, command or Claude status).
+  prompt it adds precmd/preexec hooks and `claude` / `codex` functions that pass Shoji's
+  hooks (`--settings`, `-c hooks={…}`). Other shells run without it (no folder, command or agent status).
 - Set a **large scrollback** (default is only 500 lines; long agent replies overflow it).
 - **Shift+Enter** must insert a newline in Claude Code: if the CLI doesn't receive a
   distinct key, the view sends ESC + CR for Shift+Enter.
@@ -129,7 +129,7 @@ If a command here is wrong or missing, fix this file in the same change.
 - **Shortcuts:** add new ones to the `Shortcut` catalog in `App/Shortcuts.swift`; the menu bar and the ⌘/ sheet both read it. Leave ⌘K free (planned quick jump; it also means "clear" in Mac terminals).
 - Child processes get `SHOJI_THREAD_ID` and `SHOJI_SOCKET` in their environment so
   hooks can report which thread they belong to. The zsh integration also reads
-  `SHOJI_ZSH`, `SHOJI_USER_ZDOTDIR`, `SHOJI_CLAUDE_SETTINGS`, `SHOJI_RESUME_CLAUDE` and
+  `SHOJI_ZSH`, `SHOJI_USER_ZDOTDIR`, `SHOJI_CLAUDE_SETTINGS`, `SHOJI_CODEX_HOOKS`, `SHOJI_RESUME` and
   `SHOJI_PREFILL`; inherited `SHOJI_*` variables are stripped first.
 - Status is never color-only: every state has its own icon shape plus a text label.
 - Every view gets a SwiftUI preview backed by mock threads (`Threads/Mock.swift`).

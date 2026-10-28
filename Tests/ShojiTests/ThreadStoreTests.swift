@@ -350,4 +350,36 @@ struct ThreadStoreTests {
         store.stepRecent(by: -1)
         #expect(store.recentSwitch?.selected == ids[3])
     }
+
+    @Test func clickingACardOnScreenElsewhereBringsItToYourPane() {
+        let threads = (0..<3).map { ShojiThread(title: "\($0)", order: $0) }
+        let ids = threads.map(\.id)
+        let store = ThreadStore(threads: threads, layout: PaneLayout(mode: .threePanes, openThreadIds: ids))
+        store.focus(ids[0])
+        store.bringHere(ids[2])
+        #expect(store.layout.panes == [ids[2], ids[1], ids[0]])
+        #expect(store.focusRequest == ids[2])
+
+        // ⌃Tab and ⌘J go to the thread where it is.
+        store.focus(ids[2])
+        store.open(ids[1])
+        #expect(store.layout.panes == [ids[2], ids[1], ids[0]])
+        #expect(store.focusRequest == ids[1])
+    }
+
+    @Test func codexTurnLifecycleInsideTheShell() {
+        let store = makeStore()
+        send(.commandStarted("codex --full-auto"), to: first.id, in: store, at: start + 1)
+        #expect(store.activity(for: first.id).agent == .codex)
+        #expect(store.activity(for: first.id).status == .idle)
+
+        send(.working(sessionId: "c1"), to: first.id, in: store, at: start + 2)
+        #expect(store.activity(for: first.id).status == .working)
+        #expect(store.thread(first.id)?.resumeId == "c1")
+        #expect(store.activity(for: first.id).agent == .codex)
+        send(.needsYou(message: "Allow Bash: ls"), to: first.id, in: store, at: start + 3)
+        #expect(store.activity(for: first.id).detail == "Allow Bash: ls")
+        send(.finished, to: first.id, in: store, at: start + 4)
+        #expect(store.activity(for: first.id).status == .done)
+    }
 }

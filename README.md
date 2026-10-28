@@ -27,23 +27,23 @@ Shoji is deliberately not an editor, a diff viewer or an agent client. It never 
 
 ## Features
 
-- **Every thread is your shell.** ⌘N opens one next to the card you're on. `cd` anywhere, run `claude`, `codex` or `pnpm dev`, quit back to the prompt; the card follows along. Reopen Shoji and your threads, layout and Claude conversations come back.
+- **Every thread is your shell.** ⌘N opens one next to the card you're on. `cd` anywhere, run `claude`, `codex` or `pnpm dev`, quit back to the prompt; the card follows along. Reopen Shoji and your threads, layout and Claude or Codex conversations come back.
 - **Your shelf, your groups.** Drag cards into place and drop plain bars between them (right-click a card); groups mean whatever you want. Unnamed threads go by their folder's name, and get a number ("shoji 2") only when two would read the same.
 - **Know who needs you.** Cards show working, needs you, done, idle, running and exited, each with its own shape and label. A needs-you card turns orange, counts what's waiting and brings out Hachi, who also peeks out under the window buttons: one click opens the thread that's waiting.
 - **Status from the CLI itself.** Claude Code reports through its own hooks, injected per launch with `--settings`, so your `~/.claude` is never touched. Shoji never scrapes terminal output.
 - **Real terminals.** SwiftTerm with Metal rendering, your login shell's environment, 10,000 lines of scrollback, and Shift+Return for a new line in agent prompts.
-- **Panes that stay out of the way.** One, two, three (one tall beside two stacked) or four panes; drag the gap between them to resize; maximize one or send it back to the shelf. A clicked card opens in the pane you're in; drop a card on a pane to put it exactly there, and pin the panes you want to keep, like a dev server's log. Hidden threads keep running. No toolbar row: the shelf shares the top of the window with the window buttons.
+- **Panes that stay out of the way.** One, two, three (one tall beside two stacked) or four panes; drag the gap between them to resize; maximize one. A clicked card opens in the pane you're in; drop a card on a pane to put it exactly there, and pin the panes you want to keep, like a dev server's log. Hidden threads keep running. No toolbar row: the shelf shares the top of the window with the window buttons.
 - **Keyboard first.** ⌃Tab flips back to the thread you were just in; hold ⌃ to keep going, like ⌘Tab. Jump to any card, cycle panes, switch layouts or find the next agent waiting on you without touching the mouse. Press ⌘/ to see every shortcut.
 - **Zoom everything.** ⌘+ and ⌘− scale terminal text and the glass chrome together, from 75% to 200%.
 - **Native to macOS 26.** SwiftUI and Liquid Glass on the chrome, solid backgrounds behind terminal text.
 
 > [!NOTE]
-> Shoji is an early preview (v0). Folder, command and Claude status need zsh (the macOS default); Codex status and resume are on the [roadmap](#roadmap).
+> Shoji is an early preview (v0). Folder, command and agent status need zsh (the macOS default). For Codex, run `/hooks` once in a Codex session inside Shoji and trust Shoji's hooks: Codex runs no hook you haven't reviewed.
 
 ## Requirements
 
 - macOS 26 Tahoe or later
-- [Claude Code](https://github.com/anthropics/claude-code) for live agent status (Codex support is on the roadmap)
+- [Claude Code](https://github.com/anthropics/claude-code) and/or [Codex](https://github.com/openai/codex) (a version with hooks; checked with 0.164) for live agent status
 - To build: Xcode 27 (CI uses 27.1) and [XcodeGen](https://github.com/yonaskolb/XcodeGen)
 
 ## Install
@@ -71,10 +71,11 @@ Every version merged to `main` publishes a DMG on [Releases](https://github.com/
 | New thread (next to the current card) | ⌘N |
 | Close thread (asks while something runs) | ⌘W |
 | Jump to card 1–9 | ⌘1 … ⌘9 |
+| Previous thread (hold ⌃ to keep going, like ⌘Tab) | ⌃⇥ / ⌃⇧⇥ |
 | Next thread that needs you | ⌘J |
 | Next / previous pane | ⌘] / ⌘[ |
 | Maximize or restore pane | ⇧⌘↩ |
-| Minimize pane to shelf | ⇧⌘M |
+| Pin or unpin pane | ⇧⌘P |
 | One / two / three / four panes | ⌥⌘1 / ⌥⌘2 / ⌥⌘3 / ⌥⌘4 |
 | Zoom in / out / actual size | ⌘+ / ⌘− / ⌘0 |
 | All shortcuts | ⌘/ |
@@ -94,9 +95,9 @@ flowchart LR
 ```
 
 - Each thread is your login shell with `SHOJI_THREAD_ID` and `SHOJI_SOCKET` in its environment. For zsh, Shoji points `ZDOTDIR` at a tiny loader that restores yours, so your dotfiles load unchanged, then adds prompt hooks that report the folder and each command.
-- Typing `claude` in a thread runs it with Shoji's hooks for that run only (`--settings`). They call the bundled `shoji-hook`, which forwards the event to Shoji in about 10 ms and exits silently when Shoji isn't running, so it never slows the CLI.
+- Typing `claude` or `codex` in a thread runs it with Shoji's hooks for that run only (`--settings` for Claude, a `-c` override for Codex), so `~/.claude` and `~/.codex` are never touched. They call the bundled `shoji-hook`, which forwards the event to Shoji in about 10 ms and exits silently when Shoji isn't running, so it never slows the CLI.
 - Every status change, from a hook or from the terminal, goes through one path into `ThreadStore`.
-- No tmux, no multiplexer: threads persist through each CLI's own resume. On relaunch a Claude thread runs `claude --resume <id>` at its first prompt; any other last command waits at the prompt for you to press Return.
+- No tmux, no multiplexer: threads persist through each CLI's own resume. On relaunch an agent thread runs `claude --resume <id>` or `codex resume <id>` at its first prompt; any other last command waits at the prompt for you to press Return.
 - Shoji never types into a terminal on its own; anything it sends will come from an explicit click, showing exactly what it sends.
 
 ## Development
@@ -114,7 +115,7 @@ open build/Build/Products/Debug/Shoji.app
 ## Roadmap
 
 - **Now:** a hands-on polish pass on everyday use
-- **Next:** a recent-thread switcher, macOS notifications while Shoji is in the background, Codex status and resume, bash integration
+- **Next:** macOS notifications while Shoji is in the background, open a folder in Zed, bash integration
 - **Later:** multiple windows with a slim sidebar style, saved workspaces, a Hub view of every agent sorted by attention, "Allow once" from the Hub, quick jump, settings and themes
 
 The live list is in [PLAN.md](PLAN.md#tasks).

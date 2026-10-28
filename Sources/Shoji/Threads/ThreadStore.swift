@@ -70,8 +70,8 @@ final class ThreadStore {
             threads[index].command = line
             activity.agent = Agent(commandLine: line)
             activity.detail = nil
-            // Claude waits at its own prompt until a hook says otherwise; anything else is running.
-            activity.transition(to: activity.agent == .claude ? .idle : .running, at: now)
+            // An agent waits at its own prompt until a hook says otherwise; anything else is running.
+            activity.transition(to: activity.agent == nil ? .running : .idle, at: now)
         case .commandFinished(let code):
             // Whatever ran has ended, an agent included, so there is nothing left to resume.
             if threads[index].command != nil { threads[index].command = nil }
@@ -188,7 +188,11 @@ final class ThreadStore {
     /// Removes the thread; `TerminalSessions.sync` then stops its process.
     func close(_ id: UUID) {
         if closeRequest == id { closeRequest = nil }
-        minimize(id)
+        layout.close(id)
+        if focusedThreadId == id {
+            focusedThreadId = nil
+            focusRequest = layout.visibleThreadIds.first
+        }
         threads.removeAll { $0.id == id }
         activities[id] = nil
         recentThreadIds.removeAll { $0 == id }
@@ -307,6 +311,15 @@ final class ThreadStore {
         focusRequest = id
     }
 
+    /// A card click (or ⌘1–9): the thread comes to the pane you're in, trading places when it's on screen
+    /// elsewhere. ⌃Tab and ⌘J use `open` instead and go to the thread where it is.
+    func bringHere(_ id: UUID) {
+        guard let focusedThreadId, focusedThreadId != id, layout.panes.contains(focusedThreadId), layout.panes.contains(id) else {
+            return open(id)
+        }
+        show(id, inPaneOf: focusedThreadId)
+    }
+
     /// Drag and drop onto a pane: the thread takes that pane, even a pinned one.
     func show(_ id: UUID, inPaneOf target: UUID) {
         layout.put(id, inPaneOf: target)
@@ -343,13 +356,6 @@ final class ThreadStore {
         }
     }
 
-    func minimize(_ id: UUID) {
-        layout.close(id)
-        guard focusedThreadId == id else { return }
-        focusedThreadId = nil
-        focusRequest = layout.visibleThreadIds.first
-    }
-
     func toggleMaximize(_ id: UUID) {
         layout.toggleMaximize(id)
         focusRequest = id
@@ -360,7 +366,7 @@ final class ThreadStore {
     func openThread(at index: Int) {
         let order = shelfOrder
         guard order.indices.contains(index) else { return }
-        open(order[index].id)
+        bringHere(order[index].id)
     }
 
     /// Opens the next thread in shelf order that needs the user, wrapping around. False when none does.
