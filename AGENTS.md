@@ -1,14 +1,14 @@
 # AGENTS.md — Shoji
 
 Shoji is a native macOS app that organizes terminal sessions ("threads") into a
-Liquid Glass card shelf and a Hub view. Two groups of threads:
-
-- **Agents** — interactive coding-agent CLIs (`claude`, `codex`) running in a folder.
-- **Tasks** — long-running commands (`docker compose up`, `pnpm dev`, watchers).
+Liquid Glass card shelf and a Hub view. Every thread is the user's own shell: they `cd`
+anywhere and run coding-agent CLIs (`claude`, `codex`) or long-running commands
+(`docker compose up`, `pnpm dev`, watchers) in it, and quit back to the prompt as usual.
+Shoji shows what's running and what needs the user.
 
 Mascot: **Hachi**, an Akita who appears on a card when that thread needs the user.
 
-Words used everywhere (code, docs, chat): a **thread** is one hosted terminal session (an agent or a task); the **shelf** is the strip of **cards** across the top, one card per thread, agents then tasks split by a divider (no group titles); a **pane** shows an open thread's terminal below the shelf; the **Hub** (planned) shows big cards.
+Words used everywhere (code, docs, chat): a **thread** is one hosted shell session, whatever runs in it; the **shelf** is the strip of **cards** across the top, one card per thread in the user's order, with **bars** splitting it into groups that mean whatever the user wants (no titles); a **pane** shows an open thread's terminal below the shelf; the **Hub** (planned) shows big cards.
 
 Shoji is NOT an editor, diff viewer or file browser (the user keeps Zed/VS Code for
 those), and NOT an agent client: it never talks to models or APIs. It only hosts
@@ -35,16 +35,17 @@ project.yml                 XcodeGen spec (source of truth for targets/settings)
 .github/workflows/          ci.yml (tests on PRs and main), release.yml (DMG on v* tags)
 scripts/
   shoji-hook                hook client bundled into the app: env + JSON -> Shoji socket
+  shoji.zsh, zshenv         zsh integration bundled into the app (folder, commands, claude hooks, resume)
   package.sh                Release build -> build/Shoji-<version>.dmg (used by release.yml)
 Sources/Shoji/
-  App/                      app entry (ShojiApp: wiring, window), MainView + toolbar,
+  App/                      app entry (ShojiApp: wiring, window), MainView + the top row's controls,
                             Shortcuts (catalog + menu commands)
   Threads/                  ShojiThread, ThreadStore, PaneLayout, launch building, Mock
   Terminal/                 TerminalBackend protocol, SwiftTerm implementation
                             (only place importing SwiftTerm), TerminalSessions
   Status/                   StatusEvent, HookServer (socket listener), ClaudeHooks
   UI/                       Theme (palette), StatusIcon, Backdrop, Zoom, ShortcutsSheet
-  UI/Shelf/                 card shelf (Agents | Tasks), context menu, drag reorder
+  UI/Shelf/                 card shelf with bars between groups, context menu
   UI/Panes/                 pane layouts (1 / 2 / 4) with drag splits, pane header, TerminalHost
   UI/Hub/                   Hub view big cards
   UI/Hachi/                 HachiPortrait, Hachi.xcassets (vector PDF), AppIcon.icon
@@ -64,10 +65,12 @@ xcodebuild -scheme Shoji -derivedDataPath build -destination 'platform=macOS' -s
 xcodebuild -scheme Shoji -derivedDataPath build -destination 'platform=macOS' -skipPackagePluginValidation test
 open build/Build/Products/Debug/Shoji.app
 scripts/package.sh [version]     # universal Release app + DMG, ad-hoc signed
-git tag v0.1.0 && git push origin v0.1.0   # Release workflow publishes the DMG on GitHub
+# Releasing: bump MARKETING_VERSION in project.yml in a PR; merging it publishes vX.Y.Z (release.yml)
 ```
 
 `-skipPackagePluginValidation` is needed because SwiftTerm runs a build-tool plugin; in Xcode, click Trust & Enable once instead.
+
+`main` is protected: work on a branch, one PR per change, green `test` check, squash merge. Debug builds keep their threads and hook socket in `~/Library/Application Support/Shoji-Debug`, apart from the installed app's `Shoji` folder, so a dev build can run next to it.
 
 If a command here is wrong or missing, fix this file in the same change.
 
@@ -83,10 +86,14 @@ If a command here is wrong or missing, fix this file in the same change.
 4. **No tmux or any multiplexer.** Persistence = relaunch with the CLI's own resume
    (`claude --resume <id>`, `codex resume <id>`) using the thread's stored resume id.
 5. **One status path.** Every status change is a `StatusEvent` (from the socket or
-   from terminal delegate callbacks: title, bell, process exit) applied by
-   `ThreadStore` on the main actor. UI never derives status by scraping output.
+   from terminal delegate callbacks: title, bell, process exit, and the zsh
+   integration's `OSC 1337 ; ShojiEvent=…` reports) applied by `ThreadStore` on the
+   main actor. UI never derives status by scraping output.
 6. **Never type into a terminal on the user's behalf** except through an explicit user
    action (e.g. Hub "Allow once"), sending exactly the keystroke the UI shows. Log it.
+   Relaunching is not typing: the zsh integration runs `claude --resume <id>` at a
+   restored shell's first prompt, and leaves any other last command at the prompt for
+   the user to run with Return.
 7. **Hooks must never slow or break the CLIs.** `shoji-hook` exits 0 within ~100 ms
    and silently when Shoji isn't running.
 8. **Don't touch the user's global CLI config** (`~/.claude`, `~/.codex`) without an
@@ -97,8 +104,12 @@ If a command here is wrong or missing, fix this file in the same change.
 
 ## Terminal setup rules (known SwiftTerm pitfalls with Claude Code)
 
-- Launch every thread through the user's **login shell** (`$SHELL -l -c …`) so PATH and
+- Launch every thread as the user's **login shell** (`$SHELL -l -i`) so PATH and
   environment match a normal terminal. A GUI app's own environment is not enough.
+- **zsh integration** (`scripts/shoji.zsh`): Shoji sets `ZDOTDIR` to a `.zshenv` that
+  restores the user's and sources it, so their dotfiles load unchanged. On the first
+  prompt it adds precmd/preexec hooks and a `claude` function that passes `--settings`
+  with Shoji's hooks. Other shells run without it (no folder, command or Claude status).
 - Set a **large scrollback** (default is only 500 lines; long agent replies overflow it).
 - **Shift+Enter** must insert a newline in Claude Code: if the CLI doesn't receive a
   distinct key, the view sends ESC + CR for Shift+Enter.
@@ -117,7 +128,9 @@ If a command here is wrong or missing, fix this file in the same change.
 - **Zoom:** chrome metrics (font sizes, card and header sizes, radii, paddings) multiply by `@Environment(\.zoom)`, so ⌘+ / ⌘− scale the UI with the terminal text. New chrome must do the same.
 - **Shortcuts:** add new ones to the `Shortcut` catalog in `App/Shortcuts.swift`; the menu bar and the ⌘/ sheet both read it. Leave ⌘K free (planned quick jump; it also means "clear" in Mac terminals).
 - Child processes get `SHOJI_THREAD_ID` and `SHOJI_SOCKET` in their environment so
-  hooks can report which thread they belong to.
+  hooks can report which thread they belong to. The zsh integration also reads
+  `SHOJI_ZSH`, `SHOJI_USER_ZDOTDIR`, `SHOJI_CLAUDE_SETTINGS`, `SHOJI_RESUME_CLAUDE` and
+  `SHOJI_PREFILL`; inherited `SHOJI_*` variables are stripped first.
 - Status is never color-only: every state has its own icon shape plus a text label.
 - Every view gets a SwiftUI preview backed by mock threads (`Threads/Mock.swift`).
 - Keep changes small; one task per PR when practical.

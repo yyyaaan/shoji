@@ -5,14 +5,14 @@ import Testing
 
 @MainActor
 struct NavigationTests {
-    private let agents = (0..<2).map { ShojiThread(group: .agent, kind: .claude, title: "a\($0)", folder: "/tmp", command: ["claude"], order: $0) }
-    private let task = ShojiThread(group: .task, kind: .command, title: "t", folder: "/tmp", command: [])
+    private let agents = (0..<2).map { ShojiThread(title: "a\($0)", folder: "/tmp", group: 0, order: $0) }
+    private let task = ShojiThread(title: "t", folder: "/tmp", group: 1)
 
     private func makeStore() -> ThreadStore {
         ThreadStore(threads: [task] + agents.reversed())
     }
 
-    @Test func shelfOrderIsAgentsThenTasks() {
+    @Test func shelfOrderFollowsGroupsThenOrder() {
         #expect(makeStore().shelfOrder.map(\.title) == ["a0", "a1", "t"])
     }
 
@@ -59,7 +59,7 @@ struct NavigationTests {
 
     @Test func shortcutCapsFollowMacOrder() {
         #expect(Shortcut.toggleMaximize.caps == ["⇧", "⌘", "↩"])
-        #expect(Shortcut.grid.caps == ["⌥", "⌘", "3"])
+        #expect(Shortcut.grid.caps == ["⌥", "⌘", "4"])
         #expect(Shortcut.zoomIn.caps == ["⌘", "+"])
     }
 }

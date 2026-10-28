@@ -27,12 +27,16 @@ targets:
       - path: Sources/Shoji
       - path: scripts/shoji-hook
         buildPhase: resources
+      - path: scripts/shoji.zsh
+        buildPhase: resources
+      - path: scripts/zshenv
+        buildPhase: resources
     dependencies:
       - package: SwiftTerm
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: fi.yan.shoji
-        MARKETING_VERSION: "0.1.0"
+        MARKETING_VERSION: "0.2.0"
         CURRENT_PROJECT_VERSION: "1"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Shoji

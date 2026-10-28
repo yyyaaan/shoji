@@ -26,16 +26,33 @@ final class TerminalSessions {
         backends[id]
     }
 
-    func startAll() {
+    /// Starts a terminal for every new thread and stops the ones whose thread was closed.
+    func sync() {
+        let ids = Set(store.threads.map(\.id))
+        for (id, backend) in backends where !ids.contains(id) {
+            backend.terminate()
+            backends[id] = nil
+        }
         for thread in store.threads where backends[thread.id] == nil {
             start(thread)
         }
     }
 
+    /// Replaces the thread's terminal with a fresh launch (a Claude thread resumes its session).
+    func restart(_ id: UUID) {
+        guard let thread = store.thread(id) else { return }
+        backends.removeValue(forKey: id)?.terminate()
+        start(thread)
+    }
+
     private func start(_ thread: ShojiThread) {
         let backend = makeBackend()
         let id = thread.id
-        backend.onEvent = { [weak self] in self?.handle($0, from: id) }
+        // A restarted thread's old process still reports its exit; only the current backend speaks for the thread.
+        backend.onEvent = { [weak self, weak backend] event in
+            guard let self, let backend, self.backends[id] === backend else { return }
+            self.handle(event, from: id)
+        }
         backend.setFontSize(fontSize)
         backends[id] = backend
         backend.start(thread.launch(in: context))
@@ -51,6 +68,9 @@ final class TerminalSessions {
         case .input: signal = .userInput
         case .bell: signal = .bell
         case .title(let title): signal = .title(title)
+        case .commandStarted(let line): signal = .commandStarted(line)
+        case .commandFinished(let code): signal = .commandFinished(code: code)
+        case .directory(let path): signal = .directory(path)
         case .exited(let code): signal = .exited(code: code)
         }
         store.apply(StatusEvent(threadId: id, signal: signal))

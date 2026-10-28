@@ -2,8 +2,8 @@
 
 ## Status
 
-- **Last session (initial-sprint):** spike to a usable v0 (SwiftTerm panes, Claude hooks → status cards, layouts with drag splits, CI + release workflow, shortcuts with a ⌘/ sheet, app-wide zoom), shelf without group titles, then the Hachi integration from the design handoff (needs-you portrait, Icon Composer app icon; checked at 75/100/200%, counts 1/999, all statuses, every icon appearance, 16 pt). Handoffs are now local-only (gitignored). 25 Swift Testing tests pass.
-- **Next up:** top of **Tasks › Now**.
+- **Last session (daily-driver, PR #2):** Shoji became a daily driver. Threads are the user's shells: ⌘N opens one instantly next to the focused card; a zsh integration reports folder and commands and gives typed `claude` its hooks; quitting an agent returns to the prompt. `threads.json` restores threads, layout and splits, resumes Claude and prefills the last command. Shelf: drag cards, user-placed bars, numbered names ("~ 2"). No toolbar row: hidden title bar, layout switcher at the shelf's right end, Hachi under the window buttons while anything needs you. Layouts 1 / 2 / 3 / 4 on ⌥⌘1–4. Click-to-focus fixed. 47 tests pass.
+- **Next up:** the user's hands-on pass (Tasks › Now), then Tasks › Next: drop a card onto a pane, pin a pane, recent-thread switcher.
 - **Blockers:** none
 
 _Agents: update this section at the end of every session (what changed, what's next), tick or move tasks, and add new wishes to the right bucket._
@@ -49,6 +49,17 @@ _Agents: update this section at the end of every session (what changed, what's n
 - **Ad-hoc signatures change every build**, so macOS privacy grants (TCC, e.g. Files & Folders prompts that child CLIs trigger in Shoji's name) reset after each update.
 - **Icon Composer documents:** XcodeGen adds `AppIcon.icon` as one `wrapper.icon` file, and actool compiles it to `AppIcon.icns` + `Assets.car` with `ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon`. Check renders with `ictool <file>.icon --export-image --platform macOS --rendition Default|Dark|ClearLight|TintedDark …`; in `icon.json`, `groups` and `layers` list front to back.
 - **Visual checks of SwiftUI views without touching the live app:** render them with `ImageRenderer` from a throwaway test (the test host has the asset catalog). Glass renders flat there, so confirm glass ordering in the running app.
+- **Typed `claude` only reports status through the zsh integration.** The `claude` function adds `--settings`; an alias still works (aliases expand first), but a script or other shell calling the binary directly gets no hooks. bash and fish have no integration yet.
+- **SwiftTerm's `registerOscHandler` isn't public** (the `Terminal` is internal to the view). Shell reports therefore use `OSC 1337 ; ShojiEvent=<kind>;<value>`: SwiftTerm hands unknown 1337 keys to `iTermContent`, in order, on the main thread.
+- **zsh integration hooks in on the first prompt**, after the user's `.zshrc`, and puts its precmd first so `$?` is the command's exit code. A `.zshrc` that resets `precmd_functions` wholesale disables it.
+- **Focus requests must always settle.** `makeFirstResponder` on a view that's already first responder fires no `becomeFirstResponder`, so `SwiftTermBackend.focus()` reports `.focused` itself; and `TerminalHost` only acts when a request arrives, so a pending one can't pull typing back after the user clicks another pane. Clicks focus explicitly in `ShojiTerminalView.mouseDown` because AppKit only focuses the exact view hit.
+- **Hidden title bar:** content ignores the top safe area so the shelf shares the row with the traffic lights; the leading 78 pt column stays clear for them. `windowBackgroundDragBehavior(.enabled)` keeps the window draggable.
+- **A blank app icon in ⌘Tab or the Dock is a stale icon cache**, not a missing icon: macOS keys it on the bundle folder's date, which incremental builds don't touch. `touch build/Build/Products/Debug/Shoji.app` and `lsregister -f` it, then relaunch.
+- **Only one Debug Shoji at a time.** A second instance (`open -n`) takes over `Shoji-Debug/hook.sock` and both write `threads.json`; quitting either removes the socket.
+- **⌘W is Close thread.** `ShojiCommands` replaces the `.saveItem` group, which also removes the system Close Window item, so ⌘W can't close the main window by accident.
+- **A restarted terminal's old process still reports its exit.** `TerminalSessions` ignores events from any backend that is no longer the thread's current one.
+- **AX `set value` on a SwiftUI text field doesn't reach its binding until editing ends.** In accessibility-driven checks, move focus (set another field) before pressing a button.
+- **Tags pushed with `GITHUB_TOKEN` don't trigger other workflows**, so `release.yml` creates the tag and the release in one run (`gh release create --target`). The `v*` tag ruleset still blocks moving or deleting it afterwards.
 - **CI runs on the `xcode-27` runner label** (public preview) to match local Xcode 27.1; `macos-26` only has Xcode 26. Move to the GA label once it exists.
 
 ## Vision
@@ -67,15 +78,15 @@ Chosen: **B · Card shelf + split** and **Hub view**, exported as standalone HTM
 private to Yan's account; agents can't open it, so the HTML files are what they read).
 
 **Threads screen (Option B)**
-- Shelf of glass cards across the top: agents, a divider, then tasks. No group titles (user's call); scrolls sideways when cards overflow.
-- Agent card: status icon, CLI kind (CLAUDE / CODEX), name, folder or one-line status,
-  elapsed time. Task card: status, name, command, port.
+- No toolbar row (user's call): the title bar is hidden and the shelf takes the top. Its left end holds the window buttons and Hachi's corner below them (empty; Hachi and a count while anything needs you, click opens it), its right end the layout switcher; new threads come from ⌘N and shortcuts from ⌘/ or the Help menu, so neither has a button. The window drags by its background.
+- Shelf of glass cards across the top in the user's order, split into groups by plain bars (no titles, no fixed meaning; user's call); scrolls sideways when cards overflow.
+- Card: status icon, a tag for what runs (CLAUDE / CODEX / the command's name, none at an idle prompt), name (folder and number, like "~ 2", unless renamed), one-line status, command or folder, elapsed time.
 - Needs-you card: orange border + glow, count badge, Hachi.
-- Card context menu: Rename, Move left/right, Move to other group, Resume in new pane,
-  Open folder in Zed, Close thread.
-- Drag to reorder within a group.
-- Layout switcher: 1 pane / 2 columns / 2×2 grid. Pane header: name, folder,
-  Maximize, Minimize to shelf; tasks also get Restart.
+- Drag a card onto another to put it before or after it (by which half), joining that card's group; ⌘N plus a drag replaces any per-group + button.
+- Card context menu: Rename, Move Left / Right (the non-drag path, also for VoiceOver), Add / Remove Bar Before, Restart (shell ended), Close Thread. Later: open folder in Zed.
+- Bars are lanes for scanning (say agents left, servers right), not layout: where terminals sit on screen is the pane layout's job.
+- Layout switcher (macOS tiling icons, ⌥⌘1–4 by pane count): 1 pane / 2 columns / 3 panes (one tall left, two stacked right) / 2×2 grid, which shows 2 up 1 down with three open. Pane header: name, folder,
+  Maximize, Minimize to shelf; Restart once the shell has ended.
 
 **Hub view**
 - Header: Threads | Hub switch, totals pills (needs you / working / tasks down).
@@ -109,42 +120,47 @@ private to Yan's account; agents can't open it, so the HTML files are what they 
   "threads": [
     {
       "id": "6F1C…",
-      "group": "agent",
-      "kind": "claude",
+      "number": 1,
       "title": "auth-refactor",
-      "folder": "/Users/yan/code/gosta",
-      "command": ["claude"],
-      "resumeId": "abc123…",
-      "order": 0
+      "folder": "~/code/gosta",
+      "group": 0,
+      "order": 0,
+      "command": "claude",
+      "resumeId": "abc123…"
     },
     {
       "id": "9A2E…",
-      "group": "task",
-      "kind": "command",
-      "title": "api stack",
-      "folder": "/Users/yan/code/gosta",
-      "command": ["docker", "compose", "up"],
-      "order": 0
+      "number": 2,
+      "folder": "~/code/gosta",
+      "group": 1,
+      "order": 0,
+      "command": "docker compose up"
     }
   ],
   "layout": { "mode": "twoColumns", "openThreadIds": ["6F1C…", "9A2E…"], "columnSplit": 0.5, "rowSplit": 0.5 }
 }
 ```
 
-Runtime-only (not persisted): status, last activity, unread count, terminal view.
+`number` is stable and the lowest free one at creation (a file without numbers gets them on load); `title` is optional (the card shows folder and number), `folder` follows the shell's working directory, and `group` / `order` place the card (a bar between groups). `command` is what was running at the last save and `resumeId` the Claude session in it: a relaunch runs `claude --resume <id>` at the first prompt, or leaves `command` at the prompt for Return.
+
+Runtime-only (not persisted): status, last activity, unread count, agent, terminal view.
 
 ### Status states and sources
 
-| State | Agents | Tasks |
-|---|---|---|
-| Working | `UserPromptSubmit` / `PostToolUse` hook; typing into a needs-you thread | — |
-| Needs you | `Notification` hook (not `idle_prompt`); bell while Working | — |
-| Done | `Stop` hook; Codex `notify` `agent-turn-complete` | — |
-| Idle | launched, or Done and then focused | — |
-| Running | — | process alive |
-| Exited(code) | process exited | process exited (non-zero = error) |
+| State | Source |
+|---|---|
+| Idle | at the shell prompt (launched, or a command finished with 0 / 130); Claude at its own prompt; Done or a failed command once focused |
+| Running | a command other than claude is running (zsh `preexec`) |
+| Working | Claude `UserPromptSubmit` / `PostToolUse` hook; typing into a needs-you thread |
+| Needs you | Claude `Notification` hook (not `idle_prompt`); bell while Working |
+| Done | Claude `Stop` hook; Codex `notify` `agent-turn-complete` |
+| Exited(code) | a command failed (shell still alive, clears on focus), or the shell itself ended (Restart) |
 
-Hook transport: `shoji-hook` sends one connection per event to `~/Library/Application Support/Shoji/hook.sock`: the thread id on the first line, then the CLI's JSON (stdin for Claude, argv[1] for Codex `notify`). Resume ids: Claude from `session_id` in prompt/tool hooks; Codex — to confirm (Open questions).
+Shell reports from the zsh integration: `cwd;<path>` each prompt, `cmd;<line>` before a command, `done;<code>` after it.
+
+Files live in `~/Library/Application Support/Shoji` (`Shoji-Debug` for Debug builds): `threads.json`, saved half a second after a change and on quit, and `hook.sock`. A `threads.json` Shoji can't read (corrupt, or from a newer version) is renamed to `threads.unreadable-<time>.json`, never overwritten.
+
+Hook transport: `shoji-hook` sends one connection per event to `hook.sock` in that folder: the thread id on the first line, then the CLI's JSON (stdin for Claude, argv[1] for Codex `notify`). Resume ids: Claude from `session_id` in prompt/tool hooks; Codex — to confirm (Open questions).
 
 ## Tasks
 
@@ -152,18 +168,19 @@ Priorities shift with the user's wishes; reorder freely. Keep items one line, sm
 
 ### Now
 - [ ] Hands-on pass by the user: the terminal checklist below, plus pane resize / focus feel, split dragging, and shortcuts with a terminal focused
-- [ ] `threads.json` (schemaVersion 1) and restore threads, layout and splits on relaunch; keep the layout separate from the thread list so it can later belong to a window's workspace
-- [ ] New-thread sheet (group, folder, preset: claude / claude -r / codex / custom) on ⌘N and a minimal + button; drop the hard-coded spike threads
-- [ ] Close thread (card context menu, confirm while it's running), so added threads can be removed
+- [ ] Hands-on pass on daily-driver: ⌘N opens a shell beside the focused card; `cd` updates the card; typed `claude` shows status and `/exit` returns to the prompt; quit and reopen resumes Claude and prefills a stopped `pnpm dev`; Move Left / Right and bars; ⌘W confirm only while running
+
+- [ ] Merging daily-driver releases v0.2.0 by itself (its version bump): check the Actions run, the Releases page and the DMG's first launch (Open Anyway)
 
 ### Next
-- [ ] Relaunch Claude threads with `--resume <id>` (the id is already captured from hooks; needs `threads.json`)
 - [ ] Recent-thread switcher: ⌃Tab / ⌃⇧Tab cycles threads in most-recently-used order, like ⌘Tab for apps; a quick tap returns to the previous thread. (⌘1–9 stays "card by shelf position"; check ⌃Tab doesn't collide with the CLIs.)
 - [ ] Keep waiting panes on screen: when opening a thread replaces a pane, never replace one whose agent needs you; take the least recently used other pane
-- [ ] Card context menu: rename, move left / right, move to other group, resume in new pane, open folder in Zed
-- [ ] Drag to reorder cards within a group
+- [ ] Open folder in Zed from the card context menu
+- [ ] bash (and maybe fish) integration, so threads in those shells get folder, command and Claude status
+- [ ] Drop a card onto a pane to show it there (direct control over which pane a thread takes)
+- [ ] Pin a pane so opening other threads never replaces it (a dev server's log, a waiting agent)
 - [ ] macOS notification for needs-you while Shoji is in the background
-- [ ] Codex `notify` and resume (decide the notify override first, see Open questions)
+- [ ] Codex `notify` and resume through the zsh integration's `codex` function (decide the notify override first, see Open questions); until then Codex shows as running and a relaunch leaves `codex` at the prompt
 
 ### Later
 - [ ] Multiple windows in two styles: **full** (today's shelf and panes, made for near-fullscreen) and **sidebar** (a slim column of compact cards beside your editor that shows who needs you and opens a thread in one click)
@@ -173,7 +190,6 @@ Priorities shift with the user's wishes; reorder freely. Keep items one line, sm
 - [ ] ⌘K quick jump
 - [ ] Settings: default folders, command presets, notifications, terminal font, theme, scrollback, Option as Meta
 - [ ] Devcontainer command presets
-- [ ] Push the first `v*` tag to try `release.yml`
 - [ ] Third-party notices in the app bundle (SwiftTerm MIT license text)
 - [ ] Developer ID signing and notarization (needs a paid Apple Developer account)
 
@@ -181,9 +197,10 @@ Priorities shift with the user's wishes; reorder freely. Keep items one line, sm
 - Build: XcodeGen project, SwiftTerm 1.99.1 pinned, CI on GitHub (`xcode-27` runner), release workflow and `scripts/package.sh` (universal ad-hoc DMG)
 - Terminals: SwiftTerm panes (Metal) in glass cards, login-shell launch, 10k scrollback, Shift+Return fallback, hide / show without redraw glitches
 - Status: `shoji-hook` → socket → `ThreadStore`, per-launch Claude hooks, terminal title / bell / exit; working / needs you / done / idle with elapsed time and needs-you count; resume id captured
-- Shelf and panes: Agents | Tasks shelf, click a card to open it, 1 / 2 / 2×2 layouts, maximize / minimize, drag splits
+- Shelf and panes: card shelf, click a card to open it, 1 / 2 / 3 / 2×2 layouts, maximize / minimize, drag splits
 - Keyboard and zoom: one `Shortcut` catalog for menus and the ⌘/ sheet, app-wide zoom ⌘+ / ⌘− / ⌘0
-- Hachi: vector portrait on needs-you agent cards (zoom-aware, behind the count badge) and a layered Icon Composer app icon
+- Hachi: vector portrait on needs-you cards (zoom-aware, behind the count badge) and in the window corner while anything needs you; a layered Icon Composer app icon
+- Daily driver: threads are shells (⌘N instant, welcome screen); zsh integration for folder, commands and Claude hooks; `threads.json` save and restore with Claude resume and last-command prefill; shelf bars with Move Left / Right; rename, restart, close (⌘W, confirm while running)
 
 ## Terminal checklist
 
@@ -219,6 +236,10 @@ Run by hand with Claude Code in Shoji; re-run after every SwiftTerm bump (AGENTS
 - **Quitting with live agents:** quitting closes every PTY (agents get SIGHUP). Confirm before quit while something is Working / Needs you?
 
 ## Decisions
+
+- **Releases follow the version** (2026-10-28). Bumping `MARKETING_VERSION` in `project.yml` inside a PR is the decision to release; merging it makes `release.yml` build the DMG and publish `vX.Y.Z` with generated notes, creating the tag on that commit. Other merges don't release. No manual tags. Chosen over release-please / semantic-release (Conventional Commit titles, a bot PR, a changelog file) while Shoji has one maintainer; revisit if contributors join.
+
+- **Threads are shells** (2026-10-28, user's call). A thread no longer has a fixed command or an agent/task kind: it's the user's login shell, and the card reflects what runs in it. Quitting an agent returns to the prompt, `cd` replaces a folder picker, and the old Agents | Tasks split became user-placed bars.
 
 - **Name:** the app is **Shoji** (Dock, menus, repo, bundle id, code); **Hachi no Shoji** (ハチの障子) is the full name for places with room for the story, like the README header and an About box.
 - **Bundle id `fi.yan.shoji`**, ad-hoc signed until there's a Developer ID.

@@ -35,7 +35,7 @@ struct PaneView: View {
     private var header: some View {
         HStack(spacing: 10 * zoom) {
             StatusIcon(status: store.activity(for: thread.id).status, size: 16 * zoom)
-            Text(thread.title)
+            Text(thread.displayTitle)
                 .font(.system(size: 14 * zoom, weight: .semibold))
                 .lineLimit(1)
             Text(thread.displayFolder)
@@ -44,6 +44,11 @@ struct PaneView: View {
                 .lineLimit(1)
                 .truncationMode(.head)
             Spacer(minLength: 8)
+            if !store.activity(for: thread.id).isAlive {
+                Button("Restart", systemImage: "arrow.clockwise") {
+                    sessions?.restart(thread.id)
+                }
+            }
             Button(isMaximized ? "Restore" : "Maximize", systemImage: isMaximized ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right") {
                 store.toggleMaximize(thread.id)
             }

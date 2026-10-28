@@ -21,12 +21,6 @@ final class HookServer: Sendable {
         source.cancel()
     }
 
-    static var defaultPath: String {
-        let directory = URL.applicationSupportDirectory.appending(path: "Shoji", directoryHint: .isDirectory)
-        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        return directory.appending(path: "hook.sock").path(percentEncoded: false)
-    }
-
     private static func listen(at path: String) throws -> Int32 {
         var address = sockaddr_un()
         address.sun_family = sa_family_t(AF_UNIX)

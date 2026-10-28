@@ -19,6 +19,8 @@ struct Shortcut: Identifiable {
 }
 
 extension Shortcut {
+    static let newThread = Shortcut(title: "New thread", key: "n")
+    static let closeThread = Shortcut(title: "Close thread", key: "w")
     static let jumpToThread = Shortcut(title: "Jump to thread 1–9", key: "1", keyLabel: "1–9")
     static let nextNeedingYou = Shortcut(title: "Next thread that needs you", key: "j")
     static let nextPane = Shortcut(title: "Next pane", key: "]")
@@ -27,7 +29,8 @@ extension Shortcut {
     static let minimizePane = Shortcut(title: "Minimize pane to shelf", key: "m", modifiers: [.command, .shift])
     static let singlePane = Shortcut(title: "Single pane", key: "1", modifiers: [.command, .option])
     static let twoColumns = Shortcut(title: "Two columns", key: "2", modifiers: [.command, .option])
-    static let grid = Shortcut(title: "Grid of four", key: "3", modifiers: [.command, .option])
+    static let threePanes = Shortcut(title: "Three panes", key: "3", modifiers: [.command, .option])
+    static let grid = Shortcut(title: "Grid of four", key: "4", modifiers: [.command, .option])
     // ⌘= so no Shift is needed; shown as + like every zoom menu.
     static let zoomIn = Shortcut(title: "Zoom in", key: "=", keyLabel: "+")
     static let zoomOut = Shortcut(title: "Zoom out", key: "-", keyLabel: "−")
@@ -50,9 +53,9 @@ struct ShortcutSection: Identifiable {
 
     static let columns: [[ShortcutSection]] = [
         [
-            ShortcutSection(title: "Threads", symbol: "rectangle.stack", shortcuts: [.jumpToThread, .nextNeedingYou]),
+            ShortcutSection(title: "Threads", symbol: "rectangle.stack", shortcuts: [.newThread, .jumpToThread, .nextNeedingYou, .closeThread]),
             ShortcutSection(title: "Panes", symbol: "rectangle.split.2x1", shortcuts: [.nextPane, .previousPane, .toggleMaximize, .minimizePane]),
-            ShortcutSection(title: "Layout", symbol: "square.grid.2x2", shortcuts: [.singlePane, .twoColumns, .grid]),
+            ShortcutSection(title: "Layout", symbol: "square.grid.2x2", shortcuts: [.singlePane, .twoColumns, .threePanes, .grid]),
         ],
         [
             ShortcutSection(title: "View", symbol: "textformat.size", shortcuts: [.zoomIn, .zoomOut, .actualSize, .showShortcuts]),
@@ -71,9 +74,19 @@ struct ShojiCommands: Commands {
     @FocusedBinding(\.showsShortcuts) private var showsShortcuts
 
     var body: some Commands {
+        CommandGroup(replacing: .newItem) {
+            button(.newThread) { store.newThread() }
+        }
+
+        // Like closing a tab in a terminal app; confirms while the process runs.
+        CommandGroup(replacing: .saveItem) {
+            button(.closeThread) { store.focusedThreadId.map(store.requestClose) }
+                .disabled(store.focusedThreadId == nil)
+        }
+
         CommandMenu("Threads") {
             ForEach(Array(store.shelfOrder.prefix(9).enumerated()), id: \.element.id) { index, thread in
-                Button(thread.title) { store.openThread(at: index) }
+                Button(thread.displayTitle) { store.openThread(at: index) }
                     .keyboardShortcut(KeyEquivalent(Character("\(index + 1)")), modifiers: .command)
             }
             Divider()
@@ -91,6 +104,7 @@ struct ShojiCommands: Commands {
         CommandGroup(before: .toolbar) {
             button(.singlePane) { store.layout.mode = .single }
             button(.twoColumns) { store.layout.mode = .twoColumns }
+            button(.threePanes) { store.layout.mode = .threePanes }
             button(.grid) { store.layout.mode = .grid }
             Divider()
             button(.zoomIn) { zoom = Zoom.step(zoom, by: 1) }

@@ -10,6 +10,11 @@ struct StatusEvent: Equatable, Sendable {
         case userInput
         case bell
         case title(String)
+        /// From the shell integration: a command line starting, its exit code, the shell's folder.
+        case commandStarted(String)
+        case commandFinished(code: Int32)
+        case directory(String)
+        /// The shell itself ended.
         case exited(code: Int32?)
     }
 

@@ -2,49 +2,67 @@ import Foundation
 
 /// Machine-wide inputs for launching any thread.
 struct LaunchContext: Sendable {
+    /// Shoji's zsh integration: `dotDir` holds the `.zshenv` that restores the user's ZDOTDIR and sources `script`.
+    struct Zsh: Sendable {
+        var dotDir: String
+        var script: String
+    }
+
     var shell: String
     var socketPath: String
     var hookScript: String?
+    /// Nil for shells other than zsh, which run without integration.
+    var zsh: Zsh?
     var environment: [String: String]
 
-    static func current(socketPath: String) -> LaunchContext {
+    static func current(socketPath: String, supportFolder: URL) -> LaunchContext {
         let environment = ProcessInfo.processInfo.environment
         let accountShell = getpwuid(getuid()).flatMap { String(validatingCString: $0.pointee.pw_shell) }
+        let shell = environment["SHELL"] ?? accountShell ?? "/bin/zsh"
         return LaunchContext(
-            shell: environment["SHELL"] ?? accountShell ?? "/bin/zsh",
+            shell: shell,
             socketPath: socketPath,
             hookScript: Bundle.main.path(forResource: "shoji-hook", ofType: nil),
+            zsh: (shell as NSString).lastPathComponent == "zsh" ? installZsh(in: supportFolder) : nil,
             environment: environment
         )
+    }
+
+    /// Copies the bundled loader to `<support>/zsh/.zshenv` (a dotfile doesn't survive the resource copy).
+    private static func installZsh(in supportFolder: URL) -> Zsh? {
+        guard let loader = Bundle.main.url(forResource: "zshenv", withExtension: nil),
+              let script = Bundle.main.path(forResource: "shoji", ofType: "zsh"),
+              let contents = try? Data(contentsOf: loader)
+        else { return nil }
+        let dotDir = supportFolder.appending(path: "zsh", directoryHint: .isDirectory)
+        let target = dotDir.appending(path: ".zshenv")
+        if (try? Data(contentsOf: target)) != contents {
+            try? FileManager.default.createDirectory(at: dotDir, withIntermediateDirectories: true)
+            guard (try? contents.write(to: target, options: .atomic)) != nil else { return nil }
+        }
+        return Zsh(dotDir: dotDir.path(percentEncoded: false), script: script)
     }
 }
 
 extension ShojiThread {
-    /// Runs through the user's login shell (interactive too, so `.zshrc` PATH setup like nvm applies).
+    /// The user's login shell (interactive, so `.zshrc` PATH setup like nvm applies) in the thread's folder.
     func launch(in context: LaunchContext) -> TerminalLaunch {
-        let argv = launchArguments(hookScript: context.hookScript)
-        return TerminalLaunch(
+        TerminalLaunch(
             executable: context.shell,
-            arguments: argv.isEmpty ? ["-l"] : ["-l", "-i", "-c", "exec " + argv.map(\.shellQuoted).joined(separator: " ")],
+            arguments: ["-l", "-i"],
             environment: launchEnvironment(context),
-            directory: (folder as NSString).expandingTildeInPath
+            directory: startDirectory
         )
     }
 
-    private static let claudeSessionFlags: Set = ["-r", "--resume", "-c", "--continue", "--session-id"]
-    /// Set by Xcode, launchd or a parent Claude Code; children shouldn't inherit them.
-    private static let strippedVariablePrefixes = ["DYLD_", "__XCODE", "__CF", "XPC_", "CLAUDECODE", "CLAUDE_CODE_"]
+    /// Set by Xcode, launchd, a parent Claude Code or a Shoji that launched this one; children shouldn't inherit them.
+    private static let strippedVariablePrefixes = ["DYLD_", "__XCODE", "__CF", "XPC_", "CLAUDECODE", "CLAUDE_CODE_", "SHOJI_"]
 
-    private func launchArguments(hookScript: String?) -> [String] {
-        guard kind == .claude, let executable = command.first else { return command }
-        var flags: [String] = []
-        if let hookScript {
-            flags += ["--settings", ClaudeHooks.settingsJSON(hookCommand: hookScript.shellQuoted)]
-        }
-        if let resumeId, !command.contains(where: Self.claudeSessionFlags.contains) {
-            flags += ["--resume", resumeId]
-        }
-        return [executable] + flags + command.dropFirst()
+    /// The saved folder, or home when it no longer exists.
+    private var startDirectory: String {
+        let path = (folder as NSString).expandingTildeInPath
+        var isDirectory: ObjCBool = false
+        return FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory) && isDirectory.boolValue ? path : NSHomeDirectory()
     }
 
     private func launchEnvironment(_ context: LaunchContext) -> [String: String] {
@@ -57,6 +75,21 @@ extension ShojiThread {
         environment["LANG"] = environment["LANG"] ?? "en_US.UTF-8"
         environment["SHOJI_THREAD_ID"] = id.uuidString
         environment["SHOJI_SOCKET"] = context.socketPath
+        guard let zsh = context.zsh else { return environment }
+
+        if let userDotDir = environment["ZDOTDIR"] {
+            environment["SHOJI_USER_ZDOTDIR"] = userDotDir
+        }
+        environment["ZDOTDIR"] = zsh.dotDir
+        environment["SHOJI_ZSH"] = zsh.script
+        if let hookScript = context.hookScript {
+            environment["SHOJI_CLAUDE_SETTINGS"] = ClaudeHooks.settingsJSON(hookCommand: hookScript.shellQuoted)
+        }
+        if let resumeId {
+            environment["SHOJI_RESUME_CLAUDE"] = resumeId
+        } else if let command {
+            environment["SHOJI_PREFILL"] = command
+        }
         return environment
     }
 }

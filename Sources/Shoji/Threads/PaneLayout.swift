@@ -2,12 +2,14 @@ import Foundation
 
 struct PaneLayout: Codable, Equatable, Sendable {
     enum Mode: String, Codable, CaseIterable, Sendable {
-        case single, twoColumns, grid
+        /// `threePanes` is one tall pane on the left with two stacked on the right.
+        case single, twoColumns, threePanes, grid
 
         var capacity: Int {
             switch self {
             case .single: 1
             case .twoColumns: 2
+            case .threePanes: 3
             case .grid: 4
             }
         }
