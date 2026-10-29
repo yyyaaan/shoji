@@ -9,11 +9,12 @@ struct TerminalSessionsTests {
         var onEvent: ((TerminalEvent) -> Void)?
         var launches: [TerminalLaunch] = []
         var terminated = false
+        var fontSize: CGFloat = 0
 
         func start(_ launch: TerminalLaunch) { launches.append(launch) }
         func terminate() { terminated = true }
         func focus() {}
-        func setFontSize(_ size: CGFloat) {}
+        func setFontSize(_ size: CGFloat) { fontSize = size }
         func paste(_ text: String) {}
     }
 
@@ -56,6 +57,25 @@ struct TerminalSessionsTests {
         #expect(store.activity(for: task.id).isAlive)
         made[1].onEvent?(.exited(code: 1))
         #expect(store.activity(for: task.id).status == .exited(code: 1))
+    }
+
+    @Test func eachTerminalFollowsTheTextSizePlusItsThreadsSteps() {
+        let small = ShojiThread(folder: "/tmp", textSteps: -1)
+        let store = ThreadStore(threads: [task, small])
+        var made: [FakeBackend] = []
+        let sessions = TerminalSessions(store: store, context: context) {
+            let backend = FakeBackend()
+            made.append(backend)
+            return backend
+        }
+        sessions.sync()
+        #expect(made.map(\.fontSize) == [13, 11])
+
+        sessions.textZoom = 1.1
+        #expect(made.map(\.fontSize) == [14.5, 13])
+        store.stepTextSize(of: small.id, by: nil, global: 1.1)
+        sessions.applyTextSizes()
+        #expect(made.map(\.fontSize) == [14.5, 14.5])
     }
 
     @Test func quickTerminalEndsIdleOrJoinsTheShelfStillRunning() throws {

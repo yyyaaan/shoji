@@ -8,10 +8,13 @@ struct PaneView: View {
     @Environment(ThreadStore.self) private var store
     @Environment(TerminalSessions.self) private var sessions: TerminalSessions?
     @Environment(\.zoom) private var zoom
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @AppStorage(TextZoom.storageKey) private var textZoom = 1.0
     @State private var dropZone: DropZone?
+    /// Go-to glow, 0…1.
+    @State private var glow = 0.0
     @State private var size = CGSize.zero
     @State private var isHovering = false
-    @AppStorage(Editor.storageKey) private var editorChoice = Editor.zed.rawValue
 
     private var isFocused: Bool { store.focusedThreadId == thread.id }
     private var isMaximized: Bool { store.layout.maximizedThreadId == thread.id }
@@ -51,6 +54,27 @@ struct PaneView: View {
                     .allowsHitTesting(false)
             }
         }
+        // Go-to glow (`ThreadStore.paneGlow`).
+        .overlay {
+            RoundedRectangle(cornerRadius: 18 * zoom)
+                .strokeBorder(Palette.done.opacity(0.85 * glow), lineWidth: 2)
+                .shadow(color: Palette.done.opacity(0.55 * glow), radius: 14 * zoom)
+                .allowsHitTesting(false)
+        }
+        .onChange(of: store.paneGlow) { _, glowing in
+            guard glowing?.threadId == thread.id else { return }
+            if reduceMotion {
+                glow = 1
+                Task {
+                    try? await Task.sleep(for: .milliseconds(500))
+                    glow = 0
+                }
+            } else {
+                withAnimation(.easeOut(duration: 0.15)) { glow = 1 } completion: {
+                    withAnimation(.easeIn(duration: 0.55)) { glow = 0 }
+                }
+            }
+        }
         .onGeometryChange(for: CGSize.self) { $0.size } action: { size = $0 }
         .onDrop(of: PaneDrop.types, delegate: PaneDrop(target: thread.id, size: size, zone: $dropZone, store: store, terminal: sessions?.terminal(for: thread.id)))
     }
@@ -66,6 +90,13 @@ struct PaneView: View {
                 .foregroundStyle(.white.opacity(0.72))
                 .lineLimit(1)
                 .truncationMode(.head)
+            if let steps = thread.textSteps {
+                Text(TextZoom.level(textZoom, steps: steps), format: .percent.precision(.fractionLength(0)))
+                    .font(.system(size: 11 * zoom, weight: .medium))
+                    .monospacedDigit()
+                    .foregroundStyle(.white.opacity(0.55))
+                    .help("This pane's text size; ⌥⌘0 puts it back in line with the others")
+            }
             Spacer(minLength: 8)
             if !store.activity(for: thread.id).isAlive {
                 Button("Restart", systemImage: "arrow.clockwise") {
@@ -107,7 +138,13 @@ struct PaneView: View {
             splitItems
             Divider()
             Button(isMaximized ? "Restore" : "Maximize") { store.toggleMaximize(thread.id) }
-            if let editor = Editor.resolved(editorChoice) {
+            Menu("Text Size") {
+                Button("Bigger") { store.stepTextSize(of: thread.id, by: 1, global: textZoom) }
+                Button("Smaller") { store.stepTextSize(of: thread.id, by: -1, global: textZoom) }
+                Button("Same as Others") { store.stepTextSize(of: thread.id, by: nil, global: textZoom) }
+                    .disabled(thread.textSteps == nil)
+            }
+            ForEach(Editor.installed) { editor in
                 Button("Open in \(editor.name)") { editor.open(thread.folder) }
             }
         }
@@ -134,7 +171,7 @@ struct PaneView: View {
     }
 }
 
-/// Where a card dragged over a pane would land: on an edge it splits the pane there, in the middle it takes it.
+/// Where a dragged card lands: an edge splits the pane, the middle takes it.
 enum DropZone: Equatable {
     case center
     case edge(PaneLayout.Side)
@@ -161,8 +198,7 @@ enum DropZone: Equatable {
     }
 }
 
-/// Cards split or take the pane (see `DropZone`). Files and text from other apps paste into the terminal, like
-/// Terminal: a file as its path, so a dropped screenshot reaches Claude Code.
+/// Files and text from other apps paste like Terminal; a file as its path, so screenshots reach Claude Code.
 private struct PaneDrop: DropDelegate {
     static let types: [UTType] = [.shojiThread, .fileURL, .plainText]
 
@@ -229,7 +265,7 @@ private struct PaneDrop: DropDelegate {
 }
 
 enum FileDrop {
-    /// Paths as Terminal pastes dropped files: shell characters escaped with a backslash, a space after each.
+    /// As Terminal pastes dropped files: backslash-escaped, a space after each.
     static func text(for paths: [String]) -> String {
         paths.map { path in
             path.reduce(into: "") { escaped, character in

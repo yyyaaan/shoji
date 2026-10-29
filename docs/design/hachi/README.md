@@ -8,7 +8,6 @@ Final artwork and specification. Temporary comparison pages/screenshots have bee
 - Open Shoji app icon, face only: no paws or Torii.
 - Hachi appears on needs-you cards and optionally on agent turns finished unseen, using the existing Threads › Show Hachi When an Agent Finishes preference. The window corner counts the same `ThreadStore.wantsYou` set and opens the next waiting thread; otherwise it stays empty. No welcome illustration, terminal decoration or custom toolbar glyph.
 - Static artwork; existing status shapes, labels, badge, colors and click behavior remain authoritative.
-- Menu bar exception (2026-10-29, user's choice): the signed-off [seated dog with a white collar](../menubar/README.md), with the attention count beside it. Final SVG and vector PDF/template imageset are ready. The full ink portrait is not reduced into a menu bar glyph; toolbar and pane controls remain SF Symbols.
 - Idle uses the separately approved [Torii status glyph](../status/README.md). Finished unseen keeps its done checkmark even when Hachi appears. The app icon remains Torii-free.
 
 The base character and app-icon choices remain settled. For optional Hachi on unseen completion, the user selected [Quiet finish A with a subtle ivory halo](../completion/README.md). The unseen-completion halo remains even when Hachi on finish is disabled. Native card implementation is tracked in the handoff directory.

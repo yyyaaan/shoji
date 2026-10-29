@@ -10,7 +10,6 @@ struct ShelfView: View {
     @State private var renaming: ShojiThread?
     @State private var draftTitle = ""
     @State private var dropSpot: DropSpot?
-    @AppStorage(Editor.storageKey) private var editorChoice = Editor.zed.rawValue
 
     var body: some View {
         let groups = store.shelf
@@ -92,7 +91,7 @@ struct ShelfView: View {
     private func menu(for thread: ShojiThread) -> some View {
         Button("Show in This Pane") { store.bringHere(thread.id) }
             .disabled(store.focusedThreadId == nil || store.focusedThreadId == thread.id)
-        if let editor = Editor.resolved(editorChoice) {
+        ForEach(Editor.installed) { editor in
             Button("Open in \(editor.name)") { editor.open(thread.folder) }
         }
         Button("Rename…") {
@@ -124,7 +123,7 @@ private struct DropSpot: Equatable {
 
 /// A card being dragged, as Shoji's own text payload, so text dragged in from elsewhere is ignored.
 extension UTType {
-    /// A card being dragged; declared in Info.plist and never offered to other apps.
+    /// Declared in Info.plist; never offered to other apps.
     static let shojiThread = UTType(exportedAs: "fi.yan.shoji.thread")
 }
 

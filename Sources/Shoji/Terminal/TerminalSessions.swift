@@ -10,12 +10,9 @@ final class TerminalSessions {
     private(set) var backends: [UUID: any TerminalBackend] = [:]
     /// The ⌘K quick terminal while it's open.
     private(set) var popup: Popup?
-    /// Applied to every terminal, current and future (app zoom).
-    @ObservationIgnored var fontSize = baseFontSize {
-        didSet {
-            backends.values.forEach { $0.setFontSize(fontSize) }
-            popup?.backend.setFontSize(fontSize)
-        }
+    /// The global text level (⌘+ / ⌘−); threads offset from it.
+    @ObservationIgnored var textZoom = 1.0 {
+        didSet { applyTextSizes() }
     }
     @ObservationIgnored private let store: ThreadStore
     @ObservationIgnored private let context: LaunchContext
@@ -53,10 +50,20 @@ final class TerminalSessions {
     private func start(_ thread: ShojiThread) {
         let backend = makeBackend()
         connect(backend, to: thread.id)
-        backend.setFontSize(fontSize)
+        backend.setFontSize(fontSize(steps: thread.textSteps))
         backends[thread.id] = backend
         backend.start(thread.launch(in: context))
         store.apply(StatusEvent(threadId: thread.id, signal: .launched))
+    }
+
+    func applyTextSizes() {
+        for (id, backend) in backends { backend.setFontSize(fontSize(steps: store.thread(id)?.textSteps)) }
+        popup?.backend.setFontSize(fontSize(steps: nil))
+    }
+
+    /// Half-point steps keep terminal cells on whole pixels at 2x.
+    func fontSize(steps: Int?) -> CGFloat {
+        (Self.baseFontSize * TextZoom.level(textZoom, steps: steps ?? 0) * 2).rounded() / 2
     }
 
     private func connect(_ backend: any TerminalBackend, to id: UUID) {
@@ -69,12 +76,11 @@ final class TerminalSessions {
 
     // MARK: Quick terminal (⌘K)
 
-    /// A fresh shell floating over the panes, not a thread unless it's closed while running something.
+    /// Not a thread unless closed while running something.
     struct Popup {
-        /// What it becomes on the shelf; its id is the shell's `SHOJI_THREAD_ID` from the start.
+        /// Its id is the shell's `SHOJI_THREAD_ID` from the start, so hooks line up once it's adopted.
         var thread: ShojiThread
         let backend: any TerminalBackend
-        /// The command it's running, from the zsh integration.
         var running: String?
     }
 
@@ -82,7 +88,6 @@ final class TerminalSessions {
         if popup == nil { openPopup() } else { closePopup() }
     }
 
-    /// Opens in the focused thread's folder (home without one).
     func openPopup() {
         guard popup == nil else { return }
         let thread = ShojiThread(folder: store.focusedThreadId.flatMap(store.thread)?.folder ?? "~")
@@ -91,13 +96,12 @@ final class TerminalSessions {
             guard let self, let backend, self.popup?.backend === backend else { return }
             self.handlePopup(event)
         }
-        backend.setFontSize(fontSize)
+        backend.setFontSize(fontSize(steps: nil))
         popup = Popup(thread: thread, backend: backend)
         backend.start(thread.launch(in: context))
     }
 
-    /// ⌘K again, ⌘W, a click outside or `exit`. An idle shell ends; one still running a command becomes a thread
-    /// on the shelf, so closing never stops anything.
+    /// An idle shell ends; one running a command becomes a thread, so closing never stops anything.
     func closePopup() {
         guard let popup else { return }
         self.popup = nil
@@ -108,7 +112,7 @@ final class TerminalSessions {
         } else {
             popup.backend.terminate()
         }
-        // Back to the pane you were in, if it's still on screen.
+        // Never pulls a hidden thread back on screen.
         if let id = store.focusedThreadId, store.layout.visibleThreadIds.contains(id) { store.open(id) }
     }
 

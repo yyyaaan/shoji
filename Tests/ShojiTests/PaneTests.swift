@@ -14,13 +14,24 @@ struct PaneTests {
         store.open(ids[2])
         #expect(store.layout.panes == [ids[2], ids[1]])
         #expect(store.focusRequest == ids[2])
+        #expect(store.paneGlow == nil)
 
-        // Already on screen: only focus moves. A thread that's gone changes nothing.
+        // Already on screen: only focus moves, and that pane glows. A thread that's gone changes nothing.
         store.open(ids[1])
         #expect(store.layout.panes == [ids[2], ids[1]])
         #expect(store.focusRequest == ids[1])
+        #expect(store.paneGlow?.threadId == ids[1])
         store.open(UUID())
         #expect(store.layout.panes == [ids[2], ids[1]])
+
+        // Going where you already are doesn't glow; going back again glows again.
+        let glow = store.paneGlow
+        store.focus(ids[1])
+        store.open(ids[1])
+        #expect(store.paneGlow == glow)
+        store.focus(ids[2])
+        store.open(ids[1])
+        #expect(store.paneGlow?.threadId == ids[1] && store.paneGlow != glow)
     }
 
     @Test func withNoPaneFocusedOpenSparesPanesThatWantYou() {

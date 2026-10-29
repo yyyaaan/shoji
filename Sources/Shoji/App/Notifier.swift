@@ -2,19 +2,17 @@ import AppKit
 import Observation
 import UserNotifications
 
-/// Reaches you while Shoji is in the background. The Dock badge counts the threads that want you
-/// (`ThreadStore.wantingYou`), and each thread that starts wanting you posts a macOS notification
-/// (Threads › Notify Me When Shoji Is Away). Clicking one opens its thread; it goes once the thread is seen.
+/// Dock badge and macOS notifications for threads that want you while Shoji is in the background.
 @MainActor @Observable
 final class Notifier: NSObject, UNUserNotificationCenterDelegate {
     private static let storageKey = "notifyWhenAway"
 
     private(set) var isOn: Bool
-    /// Turned off in System Settings: the menu offers the way there instead of the toggle.
+    /// Denied in System Settings; the menu links there instead of the toggle.
     private(set) var isDenied = false
 
     @ObservationIgnored private let store: ThreadStore
-    /// The threads that wanted you last time, so only newcomers are announced.
+    /// So only newcomers are announced.
     @ObservationIgnored private var known: Set<UUID>
 
     init(store: ThreadStore) {
@@ -24,7 +22,7 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
         super.init()
         UNUserNotificationCenter.current().delegate = self
         if isOn { requestPermission() }
-        // Created in `ShojiApp.init`, before NSApp exists; the Dock badge has to wait for launch.
+        // Created before NSApp exists, so the Dock badge waits for launch.
         NotificationCenter.default.addObserver(forName: NSApplication.didFinishLaunchingNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.observe() }
         }
@@ -61,13 +59,12 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
         known = ids
     }
 
-    /// One per thread: a newer one replaces it.
+    /// Keyed by thread, so a newer one replaces it.
     private func post(_ thread: ShojiThread) {
         let activity = store.activity(for: thread.id)
         let content = UNMutableNotificationContent()
         content.title = store.name(of: thread)
         content.body = activity.status == .needsYou ? activity.detail ?? activity.status.label : activity.status.label
-        // A finished turn stays as quiet as its tick.
         content.sound = activity.status == .needsYou ? .default : nil
         UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: thread.id.uuidString, content: content, trigger: nil))
     }
@@ -90,7 +87,7 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
         await open(id)
     }
 
-    /// In front, Hachi already shows it.
+    /// In front, Hachi shows it already.
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
         []
     }

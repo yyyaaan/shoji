@@ -49,6 +49,6 @@ protocol TerminalBackend: AnyObject {
     func terminate()
     func focus()
     func setFontSize(_ size: CGFloat)
-    /// Sends text as a paste (bracketed when the program asked for it), as if from the clipboard.
+    /// A paste, bracketed when the program asked for it.
     func paste(_ text: String)
 }
