@@ -50,7 +50,7 @@ Sources/Shoji/
   Status/                   StatusEvent, HookServer (socket listener), ClaudeHooks, CodexHooks
   UI/                       Theme (palette), StatusIcon, Backdrop, Zoom (text and interface sizes), ShortcutsSheet, RecentSwitch (⌃Tab)
   UI/Shelf/                 card shelf with bars between groups, context menu
-  UI/Panes/                 PaneGrid (panes and split handles by frame), PaneView (header, compact thread picker, Split menu, edge drops), TerminalHost
+  UI/Panes/                 PaneGrid (panes and split handles by frame), PaneView (header, thread dropdown, Split menu, edge drops), TerminalHost
   UI/Hub/                   Hub view big cards
   UI/Hachi/                 HachiPortrait, HachiCorner, Hachi.xcassets (vector PDFs), AppIcon.icon
                             (Icon Composer; spec in docs/design/hachi/README.md)

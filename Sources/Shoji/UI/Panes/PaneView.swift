@@ -87,11 +87,35 @@ struct PaneView: View {
         HStack(spacing: 10 * zoom) {
             StatusIcon(status: store.activity(for: thread.id).status, size: 16 * zoom)
             if store.isCompact {
-                threadPicker
+                // No shelf here, so the name itself is the dropdown.
+                Menu {
+                    threadItems
+                } label: {
+                    HStack(spacing: 4 * zoom) {
+                        name
+                        chevron
+                    }
+                }
+                .menuStyle(.button)
+                .menuIndicator(.hidden)
+                .layoutPriority(1)
+                .help("Show another thread here")
             } else {
-                Text(store.name(of: thread))
-                    .font(.system(size: 14 * zoom, weight: .semibold))
-                    .lineLimit(1)
+                HStack(spacing: 4 * zoom) {
+                    name
+                    // Apart from the name, which still maximizes on a double-click.
+                    Menu {
+                        threadItems
+                    } label: {
+                        Label { Text("Show Thread") } icon: { chevron }
+                    }
+                    .menuStyle(.button)
+                    .menuIndicator(.hidden)
+                    .fixedSize()
+                    .help("Show another thread here")
+                    .opacity(isHovering ? 1 : 0)
+                    .allowsHitTesting(isHovering)
+                }
             }
             Text(thread.displayFolder)
                 .font(.system(size: 12 * zoom, weight: .medium, design: .monospaced))
@@ -160,36 +184,34 @@ struct PaneView: View {
         .glassEffect(.regular, in: .rect)
     }
 
-    /// The compact form has no shelf, so each row picks its thread here.
-    private var threadPicker: some View {
-        Menu {
-            Picker("Thread", selection: Binding { thread.id } set: { store.show($0, inPaneOf: thread.id) }) {
-                ForEach(Array(store.shelf.enumerated()), id: \.offset) { index, group in
-                    if index > 0 { Divider() }
-                    ForEach(group) { item in
-                        let status = store.activity(for: item.id).status
-                        Label(status == .idle ? store.name(of: item) : "\(store.name(of: item)) — \(status.label)", systemImage: status.symbol)
-                            .tag(item.id)
-                    }
+    private var name: some View {
+        Text(store.name(of: thread))
+            .font(.system(size: 14 * zoom, weight: .semibold))
+            .lineLimit(1)
+    }
+
+    private var chevron: some View {
+        Image(systemName: "chevron.down")
+            .font(.system(size: 10 * zoom, weight: .bold))
+    }
+
+    /// The shelf's cards; picking one puts it in this pane, trading places if it's on screen, like a drop.
+    @ViewBuilder
+    private var threadItems: some View {
+        Picker("Thread", selection: Binding { thread.id } set: { store.show($0, inPaneOf: thread.id) }) {
+            ForEach(Array(store.shelf.enumerated()), id: \.offset) { index, group in
+                if index > 0 { Divider() }
+                ForEach(group) { item in
+                    let status = store.activity(for: item.id).status
+                    Label(status == .idle ? store.name(of: item) : "\(store.name(of: item)) — \(status.label)", systemImage: status.symbol)
+                        .tag(item.id)
                 }
             }
-            .pickerStyle(.inline)
-            .labelsHidden()
-            Divider()
-            Button("New Thread", systemImage: "plus") { store.newThread(inPaneOf: thread.id) }
-        } label: {
-            HStack(spacing: 4 * zoom) {
-                Text(store.name(of: thread))
-                    .font(.system(size: 14 * zoom, weight: .semibold))
-                    .lineLimit(1)
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 10 * zoom, weight: .bold))
-            }
         }
-        .menuStyle(.button)
-        .menuIndicator(.hidden)
-        .layoutPriority(1)
-        .help("Pick the thread this row shows")
+        .pickerStyle(.inline)
+        .labelsHidden()
+        Divider()
+        Button("New Thread", systemImage: "plus") { store.newThread(inPaneOf: thread.id) }
     }
 
     @ViewBuilder
