@@ -8,7 +8,10 @@ struct PaneView: View {
     @Environment(ThreadStore.self) private var store
     @Environment(TerminalSessions.self) private var sessions: TerminalSessions?
     @Environment(\.zoom) private var zoom
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var dropZone: DropZone?
+    /// 0…1, the ivory glow after a go-to lands here.
+    @State private var glow = 0.0
     @State private var size = CGSize.zero
     @State private var isHovering = false
     @AppStorage(Editor.storageKey) private var editorChoice = Editor.zed.rawValue
@@ -49,6 +52,27 @@ struct PaneView: View {
                         height: side == .up || side == .down ? (size.height - PaneTiles.gap) / 2 : nil
                     )
                     .allowsHitTesting(false)
+            }
+        }
+        // "Here it is": a card click, ⌘1–9, ⌃Tab, ⌘J, Hachi or a notification moved focus to this pane.
+        .overlay {
+            RoundedRectangle(cornerRadius: 18 * zoom)
+                .strokeBorder(Palette.done.opacity(0.85 * glow), lineWidth: 2)
+                .shadow(color: Palette.done.opacity(0.55 * glow), radius: 14 * zoom)
+                .allowsHitTesting(false)
+        }
+        .onChange(of: store.paneGlow) { _, glowing in
+            guard glowing?.threadId == thread.id else { return }
+            if reduceMotion {
+                glow = 1
+                Task {
+                    try? await Task.sleep(for: .milliseconds(500))
+                    glow = 0
+                }
+            } else {
+                withAnimation(.easeOut(duration: 0.15)) { glow = 1 } completion: {
+                    withAnimation(.easeIn(duration: 0.55)) { glow = 0 }
+                }
             }
         }
         .onGeometryChange(for: CGSize.self) { $0.size } action: { size = $0 }

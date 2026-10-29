@@ -83,6 +83,10 @@ struct ShojiCommands: Commands {
     @FocusedBinding(\.showsShortcuts) private var showsShortcuts
 
     var body: some Commands {
+        CommandGroup(replacing: .appInfo) {
+            Button("About Shoji") { showAbout() }
+        }
+
         CommandGroup(replacing: .newItem) {
             button(.newThread) { store.newThread() }
             button(.quickTerminal) { sessions.togglePopup() }
@@ -170,6 +174,19 @@ struct ShojiCommands: Commands {
             button(.showShortcuts) { showsShortcuts?.toggle() }
                 .disabled(showsShortcuts == nil)
         }
+    }
+
+    /// The standard About panel, credits giving the full name and the bundled open-source notices.
+    private func showAbout() {
+        let notices = Bundle.main.url(forResource: "ThirdPartyNotices", withExtension: "txt").flatMap { try? String(contentsOf: $0, encoding: .utf8) } ?? ""
+        let centered = NSMutableParagraphStyle()
+        centered.alignment = .center
+        let credits = NSMutableAttributedString(
+            string: "Hachi no Shoji (ハチの障子)\nLicensed under the Apache License 2.0\n\n",
+            attributes: [.font: NSFont.systemFont(ofSize: 11), .foregroundColor: NSColor.labelColor, .paragraphStyle: centered]
+        )
+        credits.append(NSAttributedString(string: notices, attributes: [.font: NSFont.systemFont(ofSize: 10), .foregroundColor: NSColor.secondaryLabelColor]))
+        NSApp.orderFrontStandardAboutPanel(options: [.credits: credits])
     }
 
     private func button(_ shortcut: Shortcut, action: @escaping () -> Void) -> some View {

@@ -40,7 +40,8 @@ scripts/
   test-report.py            .xcresult -> Markdown test report (used by ci.yml)
 Sources/Shoji/
   Info.plist                merged with the generated keys; only what has no INFOPLIST_KEY_ setting (the card drag type)
-  App/                      app entry (ShojiApp: wiring, window), MainView + the top row's controls,
+  ThirdPartyNotices.txt     bundled open-source notices (SwiftTerm's MIT licence), shown in the About panel
+  App/                      app entry (ShojiApp: wiring, window, AppDelegate's quit check), MainView + the top row's controls,
                             Shortcuts (catalog + menu commands), Notifier (Dock badge, macOS notifications),
                             Editor (Open in Zed / VS Code)
   Threads/                  ShojiThread, ThreadStore, PaneLayout (split tree, presets, PaneTiles), launch building, Mock

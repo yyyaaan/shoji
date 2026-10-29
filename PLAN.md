@@ -2,8 +2,9 @@
 
 ## Status
 
-- **Last session (reach-out → v0.4.0):** Debug is its own app (`fi.yan.shoji.debug`); split panes (a split tree: header Split menu, ⌘D / ⇧⌘D, cards dropped on a pane's edge, Close Pane, View › Arrange ⌥⌘1–4) replace the fixed layouts and pins; quiet pane headers (hover icons, double-click to maximize); files and text dropped on a terminal paste like Terminal, and cards have their own drag type; Open in Zed / VS Code (⇧⌘E) with options at the bottom of the Threads menu; the menu bar Hachi (design's seated dog), Dock badge and macOS notifications for threads that want you; the ⌘K quick terminal (closing keeps a running command as a thread); agents named by their topic with the folder underneath. Self-review fixes in; 69 tests in 10 suites; `MARKETING_VERSION` 0.4.0.
-- **Next up:** open the `reach-out` PR (merging publishes v0.4.0), install it, allow its notifications once (it asks as "Shoji"), and later check the permission survives an update; the hands-on list in Now; design's review of the new chrome. Then pick the next sprint from Later with the user.
+- **Shipped:** v0.4.0 (reach-out, PR #4) released and installed, 2026-10-29: splits, quick terminal, menu bar Hachi, Dock badge and notifications, file drops, Open in Zed / VS Code, agents named by topic.
+- **This session (finishing-touches → v0.4.1):** a go-to glow on panes, ⌘Q asks only when something is busy, SwiftTerm's notice in the app and About panel, PLAN › Now cut down to what's unconfirmed. 70 tests; `MARKETING_VERSION` 0.4.1. No big features planned: the user wants a break from larger deliveries; Later stays as is until they pick something.
+- **Next up:** open the `finishing-touches` PR (merging publishes v0.4.1), install it, then the checks in Now; design's review of the v0.4 chrome is still open.
 - **Blockers:** none
 - **Design (reach-out):** seated menu bar dog signed off and integrated by app; `docs/design/README.md` indexes the accepted designs. Design's review of the pane header, edge-drop preview, shelf corner and quick terminal remains open (app-to-design handoff).
 
@@ -181,17 +182,16 @@ Hook transport: `shoji-hook` sends one connection per event to `hook.sock` in th
 Priorities shift with the user's wishes; reorder freely. Keep items one line, small enough for one PR.
 
 ### Now
-- [ ] Hands-on pass by the user: the terminal checklist below, plus pane resize / focus feel, split dragging, and shortcuts with a terminal focused
-- [ ] Hands-on pass on daily-driver: ⌘N opens a shell beside the focused card; `cd` updates the card; typed `claude` shows status and `/exit` returns to the prompt; quit and reopen resumes Claude and prefills a stopped `pnpm dev`; Move Left / Right and bars; ⌘W confirm only while running
-
-- [ ] Trust the installed v0.3.0's Codex hooks once in `/hooks` (installed path differs from Debug)
-- [ ] v0.4 panes by hand (Debug): hover a pane header (Split and Maximize appear plain), double-click it to maximize, the Split and right-click menus with their icons, ⌘D / ⇧⌘D, a card dragged to a pane's edge (half highlighted) and middle (swap), Close Pane, dragging nested split gaps, View › Arrange ⌥⌘1–4, ⌘W on the last pane, and the layout coming back after relaunch (first launch migrates the v0.3 layout); a screenshot dragged from Finder onto a pane running Claude Code (path pasted, image attached), text dragged in from a browser, and text dragged onto a pane no longer showing a card's edge highlight; the menu bar Hachi on a light menu bar, with its menu open and with counts of 10 or more, its menu (Wants You, Working, Show Shoji) jumping to threads, and the Dock badge; Open in Zed / VS Code (⇧⌘E, card and pane menus) and Threads › Open Folders In
-- [ ] Rest of the pane-control pass (⌃Tab and Codex status already confirmed): click a card on screen (focus only, line under the card), ⌥-click and Show in This Pane (swap), drag a card onto a pane and onto another visible pane (swap), two shells in one folder ("shoji", "shoji 2"), no blank panes when switching layouts with busy terminals, Codex quit + reopen resumes; an agent finishing in another pane or with Shoji in the background calls Hachi, focusing it clears, and the Threads menu toggle turns it off; the Torii gate on idle cards; the unseen-finish halo on native glass (faint, not clipped by the shelf, still there with Hachi off, gone once seen)
+Everyday use (shelf, panes and splits, ⌃Tab, quick terminal, notifications, Claude and Codex status) is confirmed by the user's daily driving; what's left is what hasn't been seen yet.
+- [ ] The terminal checklist below, item by item
+- [ ] v0.4: the menu bar Hachi on a light menu bar, with its menu open, and with counts of 10 or more; a screenshot dragged from Finder onto Claude Code (path pasted, image attached); Open in Zed / VS Code (⇧⌘E, card and pane menus); Codex quit and reopen resumes its session
+- [ ] v0.4.1: a card click, ⌘1–9, ⌃Tab or ⌘J landing on a pane already on screen makes it glow briefly (and not when it replaces your pane's thread); ⌘Q with something busy lists it and asks, with nothing busy quits at once; Shoji › About Shoji shows Hachi no Shoji and the SwiftTerm notice
+- [ ] After installing v0.4.1: notifications still allowed (the first update since v0.4.0 asked); re-grant anything in Privacy & Security that agents running in Shoji need (Accessibility, Screen Recording), and trust its Codex hooks in `/hooks` if Codex asks
 
 ### Next
 - [ ] Design: review the pane header, split drop preview, shelf corner and ⌘K quick terminal, now built (app-to-design handoff)
 - [x] README screenshot retaken for v0.4 with invented demo threads; how to redo it: `docs/images/README.md`
-- [ ] Next sprint: pick from Later with the user (candidates: a Settings window for terminal font, theme and scrollback, which the Threads menu options would move into; workspaces and multiple windows; the Hub)
+- No sprint planned (user's call, 2026-10-29): a break from bigger deliveries; Later keeps the candidates (workspaces and multiple windows, a Settings window, the Hub) until the user picks one
 
 ### Parked
 Only when the user asks for it.
@@ -205,10 +205,10 @@ Only when the user asks for it.
 - [ ] "Allow once" from the Hub, with guardrails (see Open questions)
 - [ ] Settings: default folders, command presets, notifications, terminal font, theme, scrollback, Option as Meta
 - [ ] Devcontainer command presets
-- [ ] Third-party notices in the app bundle (SwiftTerm MIT license text)
 - [ ] Developer ID signing and notarization (needs a paid Apple Developer account)
 
 ### Done
+- v0.4.1 finishing-touches: go-to glow on panes, ⌘Q asks only when something is busy, SwiftTerm notice in the app and About panel
 - v0.4.0 reach-out: Debug app id; split panes (tree, Split menu, ⌘D / ⇧⌘D, edge drops with a half preview, Close Pane, View › Arrange) instead of fixed layouts and pins; quiet pane header; dropped files and text paste into terminals; card drag type; Open in Zed / VS Code; options in the Threads menu; menu bar Hachi, Dock badge and macOS notifications; ⌘K quick terminal; agents named by their topic
 - Design documentation audit: accepted-design index, consistent menu bar asset/provenance layout, obsolete frame/composites/reference copy removed, links and exporter checked.
 - Menu bar Hachi design: signed-off seated dog with white collar; approved PNG, path-only SVG, 16 pt vector PDF/template imageset and integration handoff. Superseded menu bar studies and previews removed.
@@ -228,7 +228,7 @@ Only when the user asks for it.
 
 ## Terminal checklist
 
-Run by hand with Claude Code in Shoji; re-run after every SwiftTerm bump (AGENTS invariant 1). Record findings in Gotchas.
+Run by hand with Claude Code in Shoji; re-run after every SwiftTerm bump (AGENTS invariant 1), and refresh `Sources/Shoji/ThirdPartyNotices.txt` from the package's LICENSE. Record findings in Gotchas.
 
 - [ ] Shift+Enter inserts a newline; Option+Enter works with Option as Meta
 - [ ] Long reply + scrolling up: no drift, scroll wheel scrolls (no stray keystrokes)
@@ -252,10 +252,9 @@ Run by hand with Claude Code in Shoji; re-run after every SwiftTerm bump (AGENTS
 - **Themes:** ship a few built-in themes, or import Ghostty/iTerm2 theme files?
 - **Task restart:** SIGINT then relaunch, or SIGTERM with a timeout? Per task setting?
 - **Git branch on Hub cards:** read `.git/HEAD` directly vs. shelling out to `git`.
-- **Stable local signing identity:** a self-signed code-signing certificate (kept as a CI secret) would keep TCC grants across updates without a paid account. Worth it before daily use, or wait for Developer ID?
+- **Stable local signing identity:** a self-signed code-signing certificate (kept as a CI secret) would keep TCC grants across updates without a paid account. Worth it before daily use, or wait for Developer ID? Seen 2026-10-29: after installing v0.4.0, the Accessibility and Screen Recording access granted to the previous build was gone, so agents running in Shoji lost them until re-granted.
 - **Multiple windows:** a thread's terminal can be on screen in only one window at a time (one SwiftTerm view per thread). When a second window opens it, move it there, or show only its card?
 - **Sidebar window:** clicking a card opens the thread in a full window, or expands it in place?
-- **Quitting with live agents:** quitting closes every PTY (agents get SIGHUP). Confirm before quit while something is Working / Needs you?
 
 ## Decisions
 
@@ -272,6 +271,12 @@ Run by hand with Claude Code in Shoji; re-run after every SwiftTerm bump (AGENTS
 - **Reaching the user in the background** (2026-10-29): a Dock badge and menu bar Hachi for an always-visible count, plus macOS notifications for the moment something happens. Native notifications over Zed-style popups (Zed draws its own 450×72 window at the screen's top right with View / Dismiss): they follow Focus / Do Not Disturb, stay hidden while sharing the screen by default (a prompt like "Allow Tool: rm …" shouldn't show on a call), keep a history in Notification Center, and already wear Hachi as the app icon. Own popups stay an option if banners turn out too easy to miss, or for "Allow once" later. Every channel counts the same `wantsYou` set as Hachi: Show Hachi When an Agent Finishes decides whether unseen finishes count, and Notify Me When Shoji Is Away decides whether that set also reaches macOS notifications, so two toggles cover both events.
 
 - **Options live in the Threads menu** (2026-10-29, user's call). A bottom section holds Show Hachi When an Agent Finishes, Notify Me When Shoji Is Away and Open Folders In ▸ Zed / VS Code: one click each, lighter than a Settings window for three options. They move to a Settings window (⌘,) when fonts, themes and the other Later settings arrive.
+
+- **Quit asks only when something is busy** (2026-10-29, user's call). ⌘Q stops every shell, so it asks first, naming them, while a thread is working, needs you or runs a command (and the quick terminal runs one); an agent idle at its prompt doesn't count, since it resumes on relaunch. Otherwise it quits at once. `ThreadStore.busyThreads`, `AppDelegate.applicationShouldTerminate`.
+
+- **Go-to glow** (2026-10-29, user's call). When a card click, ⌘1–9, ⌃Tab, ⌘J, Hachi, the menu bar or a notification moves focus to a pane already on screen, that pane glows ivory (`Palette.done`, the Quiet finish tone; orange stays for needs-you) for about 0.7 s, or shows a plain border for half a second with Reduce Motion. Not when the thread replaces your pane's (that change is visible) and not when you're already there. `ThreadStore.paneGlow`.
+
+- **Open-source notices** (2026-10-29): SwiftTerm's MIT notice ships in the app as `ThirdPartyNotices.txt` and shows in the About panel's credits, under the full name Hachi no Shoji.
 
 - **Agents go by their topic** (2026-10-29, user's call). A thread running an agent is named by the agent's own terminal title (Claude's topic) unless you renamed it, so the card's subtitle can always show the folder it works in. A title that only names the agent or repeats its command line ("Claude Code", "codex resume …") doesn't count, and the topic goes when the agent exits or another command starts. The one exception: while an agent needs you, the subtitle shows its question. `ThreadStore.name(of:)` applies it everywhere (cards, pane headers, menus, ⌃Tab, notifications).
 

@@ -89,6 +89,22 @@ struct ActivityTests {
         #expect(store.activity(for: first.id).status == .idle)
     }
 
+    @Test func quittingWouldStopOnlyBusyThreads() {
+        let store = makeStore()
+        #expect(store.busyThreads.isEmpty)
+        // An agent at its own prompt resumes on relaunch, so it isn't busy.
+        store.send(.commandStarted("pnpm dev"), to: first.id)
+        store.send(.commandStarted("claude"), to: second.id)
+        #expect(store.busyThreads.map(\.id) == [first.id])
+        store.send(.working(sessionId: nil), to: second.id)
+        #expect(store.busyThreads.map(\.id) == [first.id, second.id])
+        store.send(.needsYou(message: nil), to: second.id)
+        #expect(store.busyThreads.map(\.id) == [first.id, second.id])
+        store.send(.finished, to: second.id)
+        store.send(.commandFinished(code: 130), to: first.id)
+        #expect(store.busyThreads.isEmpty)
+    }
+
     @Test func directoryReportsUpdateTheFolder() {
         let store = makeStore()
         store.send(.directory(NSHomeDirectory() + "/lab/shoji"), to: second.id)

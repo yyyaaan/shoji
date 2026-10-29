@@ -17,6 +17,8 @@ final class ThreadStore {
     private(set) var recentThreadIds: [UUID] = []
     /// A pane that should take keyboard focus once its terminal is on screen.
     private(set) var focusRequest: UUID?
+    /// The last "go to" that moved focus to a pane already on screen; that pane glows briefly (`PaneView`).
+    private(set) var paneGlow: PaneGlow?
     /// A busy thread the user asked to close; the window confirms before `close` runs.
     var closeRequest: UUID?
     /// ⌃Tab in progress (⌃ still held).
@@ -139,6 +141,12 @@ final class ThreadStore {
     func wantsYou(_ id: UUID) -> Bool {
         let activity = activity(for: id)
         return activity.status == .needsYou || (hachiOnFinish && activity.isUnseen)
+    }
+
+    /// What quitting would cut short: threads working, waiting on you, or running a command. An agent idle at its
+    /// prompt doesn't count; it resumes on relaunch.
+    var busyThreads: [ShojiThread] {
+        shelfOrder.filter { [.working, .needsYou, .running].contains(activity(for: $0.id).status) }
     }
 
     /// The threads that want you in shelf order, those waiting on an answer first: Hachi's count, the Dock badge
@@ -355,6 +363,9 @@ final class ThreadStore {
     /// click) is ignored.
     func open(_ id: UUID) {
         guard thread(id) != nil else { return }
+        if layout.panes.contains(id), id != focusedThreadId {
+            paneGlow = PaneGlow(threadId: id, serial: (paneGlow?.serial ?? 0) + 1)
+        }
         let panes = layout.panes
         let notWaiting = panes.filter { !wantsYou($0) }
         let replaced = panes.first { $0 == focusedThreadId }
@@ -469,6 +480,12 @@ final class ThreadStore {
     }
 
     // MARK: Recent threads
+
+    /// `serial` changes on every go-to, so the same pane can glow twice in a row.
+    struct PaneGlow: Equatable {
+        let threadId: UUID
+        let serial: Int
+    }
 
     struct RecentSwitch: Equatable {
         /// The thread you're in first, then the others in the order you last used them.
