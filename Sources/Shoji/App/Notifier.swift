@@ -2,7 +2,7 @@ import AppKit
 import Observation
 import UserNotifications
 
-/// Dock badge and macOS notifications for threads that want you while Shoji is in the background.
+/// Dock badge and macOS notifications for threads that want you while Shoji's window is out of sight.
 @MainActor @Observable
 final class Notifier: NSObject, UNUserNotificationCenterDelegate {
     private static let storageKey = "notifyWhenAway"
@@ -53,10 +53,15 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
         if !seen.isEmpty {
             UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: seen.map(\.uuidString))
         }
-        if isOn, !NSApp.isActive {
+        if isOn, !isInSight {
             for thread in waiting where !known.contains(thread.id) { post(thread) }
         }
         known = ids
+    }
+
+    /// In Split View beside an editor Shoji isn't the active app, but Hachi is right there.
+    private var isInSight: Bool {
+        NSApp.windows.contains { !($0 is NSPanel) && $0.isVisible && $0.occlusionState.contains(.visible) }
     }
 
     /// Keyed by thread, so a newer one replaces it.

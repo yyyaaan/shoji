@@ -3,7 +3,7 @@ import SwiftUI
 /// Terminal text levels (⌘+ / ⌘−); a thread's `textSteps` offset it.
 enum TextZoom {
     static let storageKey = "zoom"
-    static let levels: [Double] = [0.75, 0.85, 1, 1.1, 1.25, 1.4, 1.6, 1.8, 2]
+    static let levels: [Double] = [0.5, 0.6, 0.75, 0.85, 1, 1.1, 1.25, 1.4, 1.6, 1.8, 2]
 
     /// The next level above (direction > 0) or below `current`, staying put at the ends.
     static func step(_ current: Double, by direction: Int) -> Double {

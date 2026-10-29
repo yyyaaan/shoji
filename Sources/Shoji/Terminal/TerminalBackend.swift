@@ -49,6 +49,8 @@ protocol TerminalBackend: AnyObject {
     func terminate()
     func focus()
     func setFontSize(_ size: CGFloat)
+    /// The default background only; text and cells with their own background stay opaque.
+    func setBackgroundOpacity(_ opacity: Double)
     /// A paste, bracketed when the program asked for it.
     func paste(_ text: String)
 }

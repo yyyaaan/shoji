@@ -11,6 +11,8 @@ struct ThreadCard: View {
     var isOnScreen = false
     /// Needs you, or finished unseen with Hachi on finish (`ThreadStore.wantsYou`): shows Hachi.
     var wantsYou = false
+    /// Its ⌘1–9 number, while ⌘ is held.
+    var number: Int?
 
     @Environment(\.zoom) private var zoom
     @Environment(\.colorSchemeContrast) private var contrast
@@ -65,6 +67,17 @@ struct ThreadCard: View {
         .overlay {
             RoundedRectangle(cornerRadius: 18 * zoom)
                 .strokeBorder(borderColor, lineWidth: 1)
+        }
+        .overlay(alignment: .topLeading) {
+            if let number {
+                Text("\(number)")
+                    .font(.system(size: 12 * zoom, weight: .bold, design: .rounded))
+                    .foregroundStyle(Palette.terminalBackground)
+                    .frame(minWidth: 20 * zoom, minHeight: 20 * zoom)
+                    .background(Palette.text, in: .rect(cornerRadius: 6 * zoom))
+                    .offset(x: -6 * zoom, y: -6 * zoom)
+                    .transition(.opacity)
+            }
         }
         .overlay(alignment: .topTrailing) {
             if activity.attention > 0 {

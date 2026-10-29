@@ -34,7 +34,7 @@ struct ShojiApp: App {
         } else {
             let fileURL = Self.supportFolder.appending(path: "threads.json")
             let saved = ThreadFile.load(from: fileURL)
-            store = ThreadStore(threads: saved?.threads ?? [], layout: saved?.layout ?? PaneLayout(), fileURL: fileURL)
+            store = ThreadStore(threads: saved?.threads ?? [], layout: saved?.layout ?? PaneLayout(), compactLayout: saved?.compactLayout ?? PaneLayout(), fileURL: fileURL)
             store.hachiOnFinish = UserDefaults.standard.object(forKey: Self.hachiOnFinishKey) as? Bool ?? true
             NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { _ in
                 MainActor.assumeIsolated { store.saveNow() }

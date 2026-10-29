@@ -9,6 +9,7 @@ struct PaneView: View {
     @Environment(TerminalSessions.self) private var sessions: TerminalSessions?
     @Environment(\.zoom) private var zoom
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @AppStorage(TextZoom.storageKey) private var textZoom = 1.0
     @State private var dropZone: DropZone?
     /// Go-to glow, 0…1.
@@ -18,21 +19,24 @@ struct PaneView: View {
 
     private var isFocused: Bool { store.focusedThreadId == thread.id }
     private var isMaximized: Bool { store.layout.maximizedThreadId == thread.id }
+    private var opacity: Double { reduceTransparency ? 1 : Palette.paneOpacity }
+    private static let margin = CGSize(width: 10, height: 8)
 
     var body: some View {
         VStack(spacing: 0) {
             header
             Group {
                 if let terminal = sessions?.terminal(for: thread.id) {
-                    TerminalHost(terminal: terminal, wantsFocus: store.focusRequest == thread.id)
+                    TerminalHost(terminal: terminal, wantsFocus: store.focusRequest == thread.id, backgroundOpacity: opacity)
                 } else {
-                    Color.clear
+                    Palette.terminalBackground.opacity(opacity)
                 }
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 8)
+            .padding(.horizontal, Self.margin.width)
+            .padding(.vertical, Self.margin.height)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Palette.terminalBackground)
+            // Only around the terminal, which draws its own background: two translucent layers would stack.
+            .background(Palette.terminalBackground.opacity(opacity), in: Margin(inset: Self.margin), fillStyle: FillStyle(eoFill: true))
         }
         .clipShape(.rect(cornerRadius: 18 * zoom))
         .overlay {
@@ -82,21 +86,42 @@ struct PaneView: View {
     private var header: some View {
         HStack(spacing: 10 * zoom) {
             StatusIcon(status: store.activity(for: thread.id).status, size: 16 * zoom)
-            Text(store.name(of: thread))
-                .font(.system(size: 14 * zoom, weight: .semibold))
-                .lineLimit(1)
+            if store.isCompact {
+                // No shelf here, so the name itself is the dropdown.
+                Menu {
+                    threadItems
+                } label: {
+                    HStack(spacing: 4 * zoom) {
+                        name
+                        chevron
+                    }
+                }
+                .menuStyle(.button)
+                .menuIndicator(.hidden)
+                .layoutPriority(1)
+                .help("Show another thread here")
+            } else {
+                HStack(spacing: 4 * zoom) {
+                    name
+                    // Apart from the name, which still maximizes on a double-click.
+                    Menu {
+                        threadItems
+                    } label: {
+                        Label { Text("Show Thread") } icon: { chevron }
+                    }
+                    .menuStyle(.button)
+                    .menuIndicator(.hidden)
+                    .fixedSize()
+                    .help("Show another thread here")
+                    .opacity(isHovering ? 1 : 0)
+                    .allowsHitTesting(isHovering)
+                }
+            }
             Text(thread.displayFolder)
                 .font(.system(size: 12 * zoom, weight: .medium, design: .monospaced))
                 .foregroundStyle(.white.opacity(0.72))
                 .lineLimit(1)
                 .truncationMode(.head)
-            if let steps = thread.textSteps {
-                Text(TextZoom.level(textZoom, steps: steps), format: .percent.precision(.fractionLength(0)))
-                    .font(.system(size: 11 * zoom, weight: .medium))
-                    .monospacedDigit()
-                    .foregroundStyle(.white.opacity(0.55))
-                    .help("This pane's text size; ⌥⌘0 puts it back in line with the others")
-            }
             Spacer(minLength: 8)
             if !store.activity(for: thread.id).isAlive {
                 Button("Restart", systemImage: "arrow.clockwise") {
@@ -108,7 +133,7 @@ struct PaneView: View {
             Menu {
                 splitItems
             } label: {
-                Label("Split", systemImage: "rectangle.split.2x1")
+                Label("Split", systemImage: store.isCompact ? "rectangle.split.1x2" : "rectangle.split.2x1")
             }
             .menuStyle(.button)
             .menuIndicator(.hidden)
@@ -152,13 +177,48 @@ struct PaneView: View {
         .glassEffect(.regular, in: .rect)
     }
 
+    private var name: some View {
+        Text(store.name(of: thread))
+            .font(.system(size: 14 * zoom, weight: .semibold))
+            .lineLimit(1)
+    }
+
+    private var chevron: some View {
+        Image(systemName: "chevron.down")
+            .font(.system(size: 10 * zoom, weight: .bold))
+    }
+
+    /// The shelf's cards; picking one puts it in this pane, trading places if it's on screen, like a drop.
+    @ViewBuilder
+    private var threadItems: some View {
+        Picker("Thread", selection: Binding { thread.id } set: { store.show($0, inPaneOf: thread.id) }) {
+            ForEach(Array(store.shelf.enumerated()), id: \.offset) { index, group in
+                if index > 0 { Divider() }
+                ForEach(group) { item in
+                    let status = store.activity(for: item.id).status
+                    Label(status == .idle ? store.name(of: item) : "\(store.name(of: item)) — \(status.label)", systemImage: status.symbol)
+                        .tag(item.id)
+                }
+            }
+        }
+        .pickerStyle(.inline)
+        .labelsHidden()
+        Divider()
+        Button("New Thread", systemImage: "plus") { store.newThread(inPaneOf: thread.id) }
+    }
+
     @ViewBuilder
     private var splitItems: some View {
         Group {
-            Button("Split Right", systemImage: "rectangle.righthalf.inset.filled") { split(.right) }
-            Button("Split Left", systemImage: "rectangle.lefthalf.inset.filled") { split(.left) }
-            Button("Split Down", systemImage: "rectangle.bottomhalf.inset.filled") { split(.down) }
-            Button("Split Up", systemImage: "rectangle.tophalf.inset.filled") { split(.up) }
+            if !store.isCompact {
+                Button("Split Right", systemImage: "rectangle.righthalf.inset.filled") { split(.right) }
+                Button("Split Left", systemImage: "rectangle.lefthalf.inset.filled") { split(.left) }
+            }
+            Group {
+                Button("Split Down", systemImage: "rectangle.bottomhalf.inset.filled") { split(.down) }
+                Button("Split Up", systemImage: "rectangle.tophalf.inset.filled") { split(.up) }
+            }
+            .disabled(store.isCompact && store.layout.panes.count > 1)
             Divider()
             Button("Close Pane", systemImage: "xmark") { store.closePane(thread.id) }
                 .disabled(store.layout.panes.count < 2)
@@ -275,6 +335,17 @@ enum FileDrop {
         }
         .map { $0 + " " }
         .joined()
+    }
+}
+
+/// The frame around a terminal, filled even-odd so the middle stays empty.
+private struct Margin: Shape {
+    let inset: CGSize
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path(rect)
+        path.addRect(rect.insetBy(dx: inset.width, dy: inset.height))
+        return path
     }
 }
 

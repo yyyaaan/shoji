@@ -9,8 +9,28 @@ final class ThreadStore {
         didSet { scheduleSave() }
     }
     private(set) var activities: [UUID: ThreadActivity]
-    var layout: PaneLayout {
+    private(set) var fullLayout: PaneLayout {
         didSet { scheduleSave() }
+    }
+    /// One column of at most two rows.
+    private(set) var compactLayout: PaneLayout {
+        didSet { scheduleSave() }
+    }
+    /// The narrow form (Split View beside an editor), which keeps its own panes.
+    var isCompact = false {
+        didSet {
+            guard isCompact != oldValue else { return }
+            if layout.root == nil, let id = focusedThreadId ?? (recentThreadIds + shelfOrder.map(\.id)).first {
+                layout.show(id, replacing: nil)
+            }
+            let visible = layout.visibleThreadIds
+            focusRequest = focusedThreadId.flatMap { visible.contains($0) ? $0 : nil } ?? visible.first
+        }
+    }
+    /// The panes of the form on screen.
+    var layout: PaneLayout {
+        get { isCompact ? compactLayout : fullLayout }
+        set { if isCompact { compactLayout = newValue } else { fullLayout = newValue } }
     }
     private(set) var focusedThreadId: UUID?
     /// Most recently focused first.
@@ -23,6 +43,8 @@ final class ThreadStore {
     var closeRequest: UUID?
     /// ⌃Tab in progress (⌃ still held).
     private(set) var recentSwitch: RecentSwitch?
+    /// ⌘ held on its own: the first nine cards show their ⌘1–9 number.
+    var showsCardNumbers = false
     /// Threads › Show Hachi When an Agent Finishes: an unseen finished turn wants you too, not just its quiet tick.
     var hachiOnFinish = true
     /// False while another app is in front, when even the focused pane is out of sight.
@@ -40,12 +62,14 @@ final class ThreadStore {
     @ObservationIgnored private let fileURL: URL?
     @ObservationIgnored private var saveTask: Task<Void, Never>?
 
-    init(threads: [ShojiThread], layout: PaneLayout = PaneLayout(), now: Date = .now, fileURL: URL? = nil) {
+    init(threads: [ShojiThread], layout: PaneLayout = PaneLayout(), compactLayout: PaneLayout = PaneLayout(), now: Date = .now, fileURL: URL? = nil) {
         let ids = Set(threads.map(\.id))
-        var layout = layout
+        var (layout, compactLayout) = (layout, compactLayout)
         for id in layout.panes where !ids.contains(id) { layout.removePane(id) }
+        for id in compactLayout.panes where !ids.contains(id) { compactLayout.removePane(id) }
         self.threads = threads
-        self.layout = layout
+        fullLayout = layout
+        self.compactLayout = compactLayout
         self.fileURL = fileURL
         activities = Dictionary(uniqueKeysWithValues: threads.map { ($0.id, ThreadActivity(launchedAt: now)) })
     }
@@ -170,11 +194,12 @@ final class ThreadStore {
 
     // MARK: Adding and removing
 
-    /// Opens a fresh shell right after the focused card, in that thread's folder (home when nothing is focused).
+    /// Opens a fresh shell right after the focused card, in that thread's folder (home when nothing is focused);
+    /// with `target`, after that card and in its pane.
     @discardableResult
-    func newThread(at now: Date = .now) -> UUID {
-        let id = addThread(after: focusedThreadId, at: now)
-        open(id)
+    func newThread(inPaneOf target: UUID? = nil, at now: Date = .now) -> UUID {
+        let id = addThread(after: target ?? focusedThreadId, at: now)
+        if let target { show(id, inPaneOf: target) } else { open(id) }
         return id
     }
 
@@ -238,7 +263,8 @@ final class ThreadStore {
     func close(_ id: UUID) {
         if closeRequest == id { closeRequest = nil }
         let taker = layout.root?.sibling(of: id)?.panes.first
-        layout.removePane(id)
+        fullLayout.removePane(id)
+        compactLayout.removePane(id)
         recentThreadIds.removeAll { $0 == id }
         threads.removeAll { $0.id == id }
         activities[id] = nil
@@ -385,6 +411,7 @@ final class ThreadStore {
 
     /// Keeps your pane on screen and fills new panes from recent threads, then the shelf.
     func arrange(_ preset: PaneLayout.Preset) {
+        guard !isCompact || preset == .single else { return }
         var ids = layout.panes
         if let focused = focusedThreadId, let index = ids.firstIndex(of: focused), index >= preset.capacity {
             ids.swapAt(index, preset.capacity - 1)
@@ -429,6 +456,7 @@ final class ThreadStore {
 
     private func canSplit(_ target: UUID, side: PaneLayout.Side) -> Bool {
         guard layout.panes.contains(target) else { return false }
+        if isCompact, side == .left || side == .right || layout.panes.count > 1 { return false }
         guard paneAreaSize != .zero else { return true }
         guard let rect = PaneTiles(layout.root, in: CGRect(origin: .zero, size: paneAreaSize)).panes[target] else { return false }
         let minimum = Self.minimumPaneSize
@@ -534,7 +562,7 @@ final class ThreadStore {
         saveTask = nil
         guard let fileURL else { return }
         do {
-            try ThreadFile(threads: threads, layout: layout).write(to: fileURL)
+            try ThreadFile(threads: threads, layout: fullLayout, compactLayout: compactLayout.root == nil ? nil : compactLayout).write(to: fileURL)
         } catch {
             Logger(subsystem: "fi.yan.shoji", category: "threads").error("Couldn't save \(fileURL.path, privacy: .public): \(error)")
         }

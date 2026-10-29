@@ -13,6 +13,7 @@ struct ShelfView: View {
 
     var body: some View {
         let groups = store.shelf
+        let numbers = store.showsCardNumbers ? Dictionary(uniqueKeysWithValues: store.shelfOrder.prefix(9).enumerated().map { ($1.id, $0 + 1) }) : [:]
         ScrollViewReader { proxy in
             ScrollView(.horizontal) {
                 GlassEffectContainer {
@@ -24,13 +25,14 @@ struct ShelfView: View {
                                     .frame(width: 1, height: 104 * zoom)
                                     .accessibilityHidden(true)
                             }
-                            group(threads)
+                            group(threads, numbers: numbers)
                         }
                     }
                     .padding(.horizontal, 18)
                     .padding(.top, 10 * zoom)
                     .padding(.bottom, 6 * zoom)
                     .animation(.snappy, value: groups.map { $0.map(\.id) })
+                    .animation(.easeOut(duration: 0.15), value: store.showsCardNumbers)
                 }
             }
             .scrollIndicators(.automatic)
@@ -49,7 +51,7 @@ struct ShelfView: View {
         }
     }
 
-    private func group(_ threads: [ShojiThread]) -> some View {
+    private func group(_ threads: [ShojiThread], numbers: [UUID: Int]) -> some View {
         HStack(spacing: 10 * zoom) {
             ForEach(threads) { thread in
                 // A tap gesture rather than a Button: on macOS a Button swallows the drag.
@@ -59,7 +61,8 @@ struct ShelfView: View {
                     activity: store.activity(for: thread.id),
                     isFocused: store.focusedThreadId == thread.id,
                     isOnScreen: store.layout.visibleThreadIds.contains(thread.id),
-                    wantsYou: store.wantsYou(thread.id)
+                    wantsYou: store.wantsYou(thread.id),
+                    number: numbers[thread.id]
                 )
                 .contentShape(.rect)
                 // A click goes to the thread; ⌥-click brings it to the pane you're in.
@@ -113,6 +116,39 @@ struct ShelfView: View {
             Button("Restart") { sessions?.restart(thread.id) }
         }
         Button("Close Thread", role: .destructive) { store.requestClose(thread.id) }
+    }
+}
+
+/// Holding ⌘ alone for a moment numbers the cards for ⌘1–9; any key, another modifier or leaving Shoji hides them,
+/// so quick shortcuts never flash them.
+@MainActor
+enum CardNumberKeys {
+    private static var monitor: Any?
+    private static var pending: Task<Void, Never>?
+
+    static func install(store: ThreadStore) {
+        guard monitor == nil else { return }
+        monitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .flagsChanged]) { event in
+            MainActor.assumeIsolated {
+                hide(store)
+                let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask).subtracting(.capsLock)
+                if event.type == .flagsChanged, flags == .command {
+                    pending = Task {
+                        guard (try? await Task.sleep(for: .milliseconds(400))) != nil else { return }
+                        store.showsCardNumbers = true
+                    }
+                }
+            }
+            return event
+        }
+        NotificationCenter.default.addObserver(forName: NSApplication.didResignActiveNotification, object: nil, queue: .main) { _ in
+            MainActor.assumeIsolated { hide(store) }
+        }
+    }
+
+    private static func hide(_ store: ThreadStore) {
+        pending?.cancel()
+        if store.showsCardNumbers { store.showsCardNumbers = false }
     }
 }
 
