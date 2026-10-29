@@ -351,7 +351,7 @@ struct ThreadStoreTests {
         #expect(store.recentSwitch?.selected == ids[3])
     }
 
-    @Test func clickingACardOnScreenElsewhereBringsItToYourPane() {
+    @Test func optionClickBringsAThreadOnScreenElsewhereToYourPane() {
         let threads = (0..<3).map { ShojiThread(title: "\($0)", order: $0) }
         let ids = threads.map(\.id)
         let store = ThreadStore(threads: threads, layout: PaneLayout(mode: .threePanes, openThreadIds: ids))
@@ -360,7 +360,7 @@ struct ThreadStoreTests {
         #expect(store.layout.panes == [ids[2], ids[1], ids[0]])
         #expect(store.focusRequest == ids[2])
 
-        // ⌃Tab and ⌘J go to the thread where it is.
+        // A plain click, ⌘1–9, ⌃Tab and ⌘J go to the thread where it is.
         store.focus(ids[2])
         store.open(ids[1])
         #expect(store.layout.panes == [ids[2], ids[1], ids[0]])

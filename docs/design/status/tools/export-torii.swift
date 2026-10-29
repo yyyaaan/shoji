@@ -1,0 +1,26 @@
+import Foundation
+import CoreGraphics
+
+let destination = URL(fileURLWithPath: CommandLine.arguments[1])
+var mediaBox = CGRect(x: 0, y: 0, width: 24, height: 24)
+let context = CGContext(destination as CFURL, mediaBox: &mediaBox, nil)!
+context.beginPDFPage(nil)
+context.translateBy(x: 0, y: 24)
+context.scaleBy(x: 1, y: -1)
+context.setStrokeColor(CGColor(red: 226.0 / 255, green: 232.0 / 255, blue: 240.0 / 255, alpha: 1))
+context.setLineWidth(1.7)
+context.setLineCap(.round)
+context.setLineJoin(.round)
+context.move(to: CGPoint(x: 3, y: 4.5))
+context.addQuadCurve(to: CGPoint(x: 21, y: 4.5), control: CGPoint(x: 12, y: 7))
+context.move(to: CGPoint(x: 4.5, y: 9.5))
+context.addLine(to: CGPoint(x: 19.5, y: 9.5))
+context.move(to: CGPoint(x: 7, y: 6))
+context.addLine(to: CGPoint(x: 6, y: 20.5))
+context.move(to: CGPoint(x: 17, y: 6))
+context.addLine(to: CGPoint(x: 18, y: 20.5))
+context.move(to: CGPoint(x: 12, y: 6))
+context.addLine(to: CGPoint(x: 12, y: 9.5))
+context.strokePath()
+context.endPDFPage()
+context.closePDF()

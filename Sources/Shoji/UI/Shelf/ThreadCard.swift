@@ -7,6 +7,8 @@ struct ThreadCard: View {
     let name: String
     let activity: ThreadActivity
     var isFocused = false
+    /// Shown in a pane, so a click only moves focus there.
+    var isOnScreen = false
 
     @Environment(\.zoom) private var zoom
 
@@ -40,6 +42,14 @@ struct ThreadCard: View {
         .padding(.vertical, 12 * zoom)
         .frame(width: Self.width * zoom, height: 104 * zoom, alignment: .topLeading)
         // Overlays must precede the glass: inside a GlassEffectContainer the glass draws over later ones.
+        .overlay(alignment: .bottom) {
+            if isOnScreen {
+                Capsule()
+                    .fill(.white.opacity(isFocused ? 0.7 : 0.4))
+                    .frame(width: 24 * zoom, height: 3 * zoom)
+                    .padding(.bottom, 6 * zoom)
+            }
+        }
         .overlay(alignment: .topTrailing) {
             if needsYou {
                 HachiPortrait(size: 32 * zoom)
@@ -64,7 +74,7 @@ struct ThreadCard: View {
         }
         .glassEffect(.regular.tint(tint).interactive(), in: .rect(cornerRadius: 18 * zoom))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel([name, tag?.capitalized, activity.status.label, subtitle].compactMap(\.self).joined(separator: ", "))
+        .accessibilityLabel([name, tag?.capitalized, activity.status.label, subtitle, isOnScreen ? "in a pane" : nil].compactMap(\.self).joined(separator: ", "))
     }
 
     private var tint: Color {
@@ -129,7 +139,7 @@ struct ThreadCard: View {
     let store = Mock.store()
     HStack(spacing: 10) {
         ForEach(store.threads) { thread in
-            ThreadCard(thread: thread, name: store.name(of: thread), activity: store.activity(for: thread.id), isFocused: thread.id == Mock.threads[1].id)
+            ThreadCard(thread: thread, name: store.name(of: thread), activity: store.activity(for: thread.id), isFocused: thread.id == Mock.threads[1].id, isOnScreen: store.layout.visibleThreadIds.contains(thread.id))
         }
     }
     .padding(24)

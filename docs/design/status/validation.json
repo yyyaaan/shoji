@@ -1,0 +1,146 @@
+{
+  "scope": "Design export and browser size checks; native integration is pending.",
+  "sourceViewBox": "0 0 24 24",
+  "strokeWidth": 1.7,
+  "pdfImageObjects": 0,
+  "browserChecks": [
+    {
+      "devicePixelRatio": 1,
+      "samples": [
+        {
+          "expected": 16.5,
+          "width": 16.5,
+          "height": 16.5,
+          "loaded": true,
+          "passed": true
+        },
+        {
+          "expected": 22,
+          "width": 22,
+          "height": 22,
+          "loaded": true,
+          "passed": true
+        },
+        {
+          "expected": 44,
+          "width": 44,
+          "height": 44,
+          "loaded": true,
+          "passed": true
+        },
+        {
+          "expected": 12,
+          "width": 12,
+          "height": 12,
+          "loaded": true,
+          "passed": true
+        },
+        {
+          "expected": 16,
+          "width": 16,
+          "height": 16,
+          "loaded": true,
+          "passed": true
+        },
+        {
+          "expected": 32,
+          "width": 32,
+          "height": 32,
+          "loaded": true,
+          "passed": true
+        },
+        {
+          "expected": 13.5,
+          "width": 13.5,
+          "height": 13.5,
+          "loaded": true,
+          "passed": true
+        },
+        {
+          "expected": 18,
+          "width": 18,
+          "height": 18,
+          "loaded": true,
+          "passed": true
+        },
+        {
+          "expected": 36,
+          "width": 36,
+          "height": 36,
+          "loaded": true,
+          "passed": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "devicePixelRatio": 2,
+      "samples": [
+        {
+          "expected": 16.5,
+          "width": 16.5,
+          "height": 16.5,
+          "loaded": true,
+          "passed": true
+        },
+        {
+          "expected": 22,
+          "width": 22,
+          "height": 22,
+          "loaded": true,
+          "passed": true
+        },
+        {
+          "expected": 44,
+          "width": 44,
+          "height": 44,
+          "loaded": true,
+          "passed": true
+        },
+        {
+          "expected": 12,
+          "width": 12,
+          "height": 12,
+          "loaded": true,
+          "passed": true
+        },
+        {
+          "expected": 16,
+          "width": 16,
+          "height": 16,
+          "loaded": true,
+          "passed": true
+        },
+        {
+          "expected": 32,
+          "width": 32,
+          "height": 32,
+          "loaded": true,
+          "passed": true
+        },
+        {
+          "expected": 13.5,
+          "width": 13.5,
+          "height": 13.5,
+          "loaded": true,
+          "passed": true
+        },
+        {
+          "expected": 18,
+          "width": 18,
+          "height": 18,
+          "loaded": true,
+          "passed": true
+        },
+        {
+          "expected": 36,
+          "width": 36,
+          "height": 36,
+          "loaded": true,
+          "passed": true
+        }
+      ],
+      "passed": true
+    }
+  ]
+}

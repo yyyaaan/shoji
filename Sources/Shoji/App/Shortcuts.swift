@@ -23,6 +23,7 @@ extension Shortcut {
     static let closeThread = Shortcut(title: "Close thread", key: "w")
     static let jumpToThread = Shortcut(title: "Jump to thread 1–9", key: "1", keyLabel: "1–9")
     static let nextNeedingYou = Shortcut(title: "Next thread that needs you", key: "j")
+    static let showInYourPane = Shortcut(title: "Show a card in your pane", key: " ", modifiers: .option, keyLabel: "Click")
     static let recentThread = Shortcut(title: "Previous thread (hold ⌃ for more)", key: .tab, modifiers: .control)
     static let recentThreadReversed = Shortcut(title: "Recent threads, oldest first", key: .tab, modifiers: [.control, .shift])
     static let nextPane = Shortcut(title: "Next pane", key: "]")
@@ -55,7 +56,7 @@ struct ShortcutSection: Identifiable {
 
     static let columns: [[ShortcutSection]] = [
         [
-            ShortcutSection(title: "Threads", symbol: "rectangle.stack", shortcuts: [.newThread, .jumpToThread, .recentThread, .recentThreadReversed, .nextNeedingYou, .closeThread]),
+            ShortcutSection(title: "Threads", symbol: "rectangle.stack", shortcuts: [.newThread, .jumpToThread, .showInYourPane, .recentThread, .recentThreadReversed, .nextNeedingYou, .closeThread]),
             ShortcutSection(title: "Panes", symbol: "rectangle.split.2x1", shortcuts: [.nextPane, .previousPane, .toggleMaximize, .pinPane]),
         ],
         [

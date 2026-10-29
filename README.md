@@ -32,7 +32,7 @@ Shoji is deliberately not an editor, a diff viewer or an agent client. It never 
 - **Know who needs you.** Cards show working, needs you, done, idle, running and exited, each with its own shape and label. A needs-you card turns orange, counts what's waiting and brings out Hachi, who also peeks out under the window buttons: one click opens the thread that's waiting.
 - **Status from the CLI itself.** Claude Code reports through its own hooks, injected per launch with `--settings`, so your `~/.claude` is never touched. Shoji never scrapes terminal output.
 - **Real terminals.** SwiftTerm with Metal rendering, your login shell's environment, 10,000 lines of scrollback, and Shift+Return for a new line in agent prompts.
-- **Panes that stay out of the way.** One, two, three (one tall beside two stacked) or four panes; drag the gap between them to resize; maximize one. A clicked card opens in the pane you're in; drop a card on a pane to put it exactly there, and pin the panes you want to keep, like a dev server's log. Hidden threads keep running. No toolbar row: the shelf shares the top of the window with the window buttons.
+- **Panes that stay out of the way.** One, two, three (one tall beside two stacked) or four panes; drag the gap between them to resize; maximize one. Click a card to go to its thread (a line under the card means it's already in a pane); if it isn't on screen, it opens in the pane you're in. ⌥-click brings it to your pane, dropping a card on a pane puts it exactly there, and pinned panes stay put, like a dev server's log. Hidden threads keep running. No toolbar row: the shelf shares the top of the window with the window buttons.
 - **Keyboard first.** ⌃Tab flips back to the thread you were just in; hold ⌃ to keep going, like ⌘Tab. Jump to any card, cycle panes, switch layouts or find the next agent waiting on you without touching the mouse. Press ⌘/ to see every shortcut.
 - **Zoom everything.** ⌘+ and ⌘− scale terminal text and the glass chrome together, from 75% to 200%.
 - **Native to macOS 26.** SwiftUI and Liquid Glass on the chrome, solid backgrounds behind terminal text.
@@ -71,6 +71,7 @@ Every version merged to `main` publishes a DMG on [Releases](https://github.com/
 | New thread (next to the current card) | ⌘N |
 | Close thread (asks while something runs) | ⌘W |
 | Jump to card 1–9 | ⌘1 … ⌘9 |
+| Show a card in your pane (swaps if it's on screen) | ⌥-click the card |
 | Previous thread (hold ⌃ to keep going, like ⌘Tab) | ⌃⇥ / ⌃⇧⇥ |
 | Next thread that needs you | ⌘J |
 | Next / previous pane | ⌘] / ⌘[ |
@@ -86,7 +87,7 @@ Shortcuts work while a terminal has focus. In agent prompts, Shift+Return insert
 
 ```mermaid
 flowchart LR
-    CLI["Claude Code<br/>(in a Shoji pane)"] -- "hook event (JSON)" --> Hook["shoji-hook"]
+    CLI["Claude Code · Codex<br/>(in a Shoji pane)"] -- "hook event (JSON)" --> Hook["shoji-hook"]
     Hook -- "Unix socket" --> Server["HookServer"]
     Zsh["zsh integration"] -- "folder · command · exit code<br/>(OSC 1337)" --> PTY
     PTY["SwiftTerm PTY"] -- "title · bell · shell reports · exit" --> Store

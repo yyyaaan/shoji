@@ -311,8 +311,8 @@ final class ThreadStore {
         focusRequest = id
     }
 
-    /// A card click (or ⌘1–9): the thread comes to the pane you're in, trading places when it's on screen
-    /// elsewhere. ⌃Tab and ⌘J use `open` instead and go to the thread where it is.
+    /// ⌥-click on a card, or Show in This Pane: the thread comes to the pane you're in, trading places when
+    /// it's on screen elsewhere. A plain click uses `open` and goes to the thread where it is.
     func bringHere(_ id: UUID) {
         guard let focusedThreadId, focusedThreadId != id, layout.panes.contains(focusedThreadId), layout.panes.contains(id) else {
             return open(id)
@@ -366,7 +366,7 @@ final class ThreadStore {
     func openThread(at index: Int) {
         let order = shelfOrder
         guard order.indices.contains(index) else { return }
-        bringHere(order[index].id)
+        open(order[index].id)
     }
 
     /// Opens the next thread in shelf order that needs the user, wrapping around. False when none does.

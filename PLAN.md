@@ -2,9 +2,9 @@
 
 ## Status
 
-- **Last session (daily-driver, PR #2):** Shoji became a daily driver. Threads are the user's shells: ⌘N opens one instantly next to the focused card; a zsh integration reports folder and commands and gives typed `claude` its hooks; quitting an agent returns to the prompt. `threads.json` restores threads, layout and splits, resumes Claude and prefills the last command. Shelf: drag cards, user-placed bars, numbered names ("~ 2"). No toolbar row: hidden title bar, layout switcher at the shelf's right end, Hachi under the window buttons while anything needs you. Layouts 1 / 2 / 3 / 4 on ⌥⌘1–4. Click-to-focus fixed. 47 tests pass.
-- **This session (pane-control, PR #3):** names carry a number only when two unnamed threads would read the same ("shoji", "shoji 2"); `number` is gone from `threads.json`. Panes: a card opens in the pane you're in; panes keep their identity across layout switches (should end the blank terminals); switching keeps the pane you're in and pinned panes, and fills new panes. Drop a card on a pane to put it there (swaps if already on screen); pin a pane (header pin, ⇧⌘P); ⌃Tab / ⌃⇧Tab recent-thread switcher with a list while ⌃ is held. Minimize (button and ⇧⌘M) removed. A card click (and ⌘1–9) brings an on-screen thread into your pane; ⌃Tab / ⌘J still go to it. Codex reports through its hooks like Claude (`-c hooks={…}` per launch) and resumes with `codex resume <id>`. Version 0.3.0. 61 tests pass.
-- **Next up:** finish the hands-on pass (Tasks › Now; ⌃Tab and card clicks already felt right to the user), then merge PR #3, which releases v0.3.0. After it, Tasks › Next.
+- **Last session (pane-control, PR #3, releases v0.3.0):** panes are under the user's control. A card click goes to its thread (focus if on screen, else it opens in the pane you're in; a line under the card marks threads in panes); ⌥-click or Show in This Pane brings it to your pane, swapping if needed; drop a card on a pane; pin panes (⇧⌘P); layout switches keep panes in place (no re-hosted terminals), keep the focused and pinned ones, and fill new panes; minimize is gone. ⌃Tab / ⌃⇧Tab switches recent threads like ⌘Tab. Names carry a number only when two would read the same. Codex reports status and resumes through its own hooks, like Claude (tried live by the user, `/hooks` trust included). 61 tests pass.
+- **Next up:** after the merge, `release.yml` publishes v0.3.0; install it and trust its Codex hooks once (a new path). Then Tasks › Next, with macOS notifications as the likely v0.4 headline.
+- **Design update (idle Torii):** vector assets and zoom preview ready; native integration handed to app through `docs/handoffs/`.
 - **Blockers:** none
 
 _Agents: update this section at the end of every session (what changed, what's next), tick or move tasks, and add new wishes to the right bucket._
@@ -89,10 +89,10 @@ private to Yan's account; agents can't open it, so the HTML files are what they 
 - Card: status icon, a tag for what runs (CLAUDE / CODEX / the command's name, none at an idle prompt), name (the folder's name unless renamed; a number only when two unnamed threads would read the same, like "shoji 2", given to the one that arrived there later), one-line status, command or folder, elapsed time.
 - Needs-you card: orange border + glow, count badge, Hachi.
 - Drag a card onto another to put it before or after it (by which half), joining that card's group; ⌘N plus a drag replaces any per-group + button.
-- Card context menu: Rename, Move Left / Right (the non-drag path, also for VoiceOver), Add / Remove Bar Before, Restart (shell ended), Close Thread. Later: open folder in Zed.
+- Card context menu: Show in This Pane, Rename, Move Left / Right (the non-drag path, also for VoiceOver), Add / Remove Bar Before, Restart (shell ended), Close Thread. Later: open folder in Zed.
 - Bars are lanes for scanning (say agents left, servers right), not layout: where terminals sit on screen is the pane layout's job.
 - Layout switcher (macOS tiling icons, ⌥⌘1–4 by pane count): 1 pane / 2 columns / 3 panes (one tall left, two stacked right) / 2×2 grid, which shows 2 up 1 down with three open. Switching keeps the pane you're in on screen, and new panes show threads that were there before, then recent ones, then the shelf's.
-- Clicking a card shows it in a free pane, else in the pane you're in (with none focused: the one used longest ago that isn't waiting for you); the thread it replaces comes back first when the layout grows. Dropping a card on a pane puts it there (a thread already on screen trades places). A pinned pane is passed over by clicks until every pane is pinned; pins follow the thread and end when it leaves the panes.
+- Clicking a card goes to its thread: one already on screen just takes focus (a line under its card says so); otherwise it opens in a free pane, else in the pane you're in (with none focused: the one used longest ago that isn't waiting for you), and the thread it replaces comes back first when the layout grows. ⌥-click or the card menu's Show in This Pane brings it to your pane, swapping when it's on screen elsewhere (user's call: a click never rearranges panes). Dropping a card on a pane puts it there (a thread already on screen trades places). A pinned pane is passed over by clicks until every pane is pinned; pins follow the thread and end when it leaves the panes.
 - ⌃Tab / ⌃⇧Tab: recent threads like ⌘Tab; a quick tap returns to the previous thread, holding ⌃ shows the list (after 150 ms), Esc cancels.
 - Pane header: name, folder, Pin, Maximize; Restart once the shell has ended. No minimize (user's call): the layout sets how many panes, cards decide what's in them, ⌘W closes.
 
@@ -176,13 +176,15 @@ Priorities shift with the user's wishes; reorder freely. Keep items one line, sm
 - [ ] Hands-on pass by the user: the terminal checklist below, plus pane resize / focus feel, split dragging, and shortcuts with a terminal focused
 - [ ] Hands-on pass on daily-driver: ⌘N opens a shell beside the focused card; `cd` updates the card; typed `claude` shows status and `/exit` returns to the prompt; quit and reopen resumes Claude and prefills a stopped `pnpm dev`; Move Left / Right and bars; ⌘W confirm only while running
 
-- [ ] Open the v0.2.0 DMG once and check its first launch (Open Anyway); the automatic release itself worked (tag on the squash commit, DMG attached)
-- [ ] Hands-on pass on pane-control: switch layouts with busy terminals (no blank panes), click cards with a pane focused, drag a card onto a pane and onto another visible pane (swap), pin then click cards, click a card that's on screen in another pane (it swaps in), ⌃Tab tap and hold / ⌃⇧Tab / Esc with Claude focused, names with two shells in one folder; Codex: trust Shoji's hooks in `/hooks`, then a turn shows Working / Done, an approval shows Needs you, and quit + reopen resumes it
+- [ ] Open the v0.3.0 DMG once and check its first launch (Open Anyway)
+- [ ] Rest of the pane-control pass (⌃Tab and Codex status already confirmed): click a card on screen (focus only, line under the card), ⌥-click and Show in This Pane (swap), drag a card onto a pane and onto another visible pane (swap), pin then click cards, two shells in one folder ("shoji", "shoji 2"), no blank panes when switching layouts with busy terminals, Codex quit + reopen resumes
 
 ### Next
+- [ ] Replace the idle dashed circle with the approved Torii glyph; assets/spec in `docs/design/status/`, native checks in the design-to-app handoff
 - [ ] Open folder in Zed from the card context menu
 - [ ] bash (and maybe fish) integration, so threads in those shells get folder, command and Claude status
 - [ ] macOS notification for needs-you while Shoji is in the background
+- [ ] opencode status and resume (`opencode -s <id>`). Not hook-compatible with Claude / Codex: it takes in-process JS plugins with events (`session.status`, `permission.asked`, `session.idle`). Likely a small Shoji plugin loaded per launch through `OPENCODE_CONFIG_DIR`, forwarding to `shoji-hook`; but v2 runs plugins in a shared background service, so telling threads apart probably needs `--standalone` per thread. Prototype first
 
 ### Later
 - [ ] Multiple windows in two styles: **full** (today's shelf and panes, made for near-fullscreen) and **sidebar** (a slim column of compact cards beside your editor that shows who needs you and opens a thread in one click)
@@ -196,6 +198,7 @@ Priorities shift with the user's wishes; reorder freely. Keep items one line, sm
 - [ ] Developer ID signing and notarization (needs a paid Apple Developer account)
 
 ### Done
+- Idle Torii design: SVG, vector PDF/template image set, status mapping and 75/100/200% size previews at 1×/2×; native integration remains open
 - Build: XcodeGen project, SwiftTerm 1.99.1 pinned, CI on GitHub (`xcode-27` runner), release workflow and `scripts/package.sh` (universal ad-hoc DMG)
 - Terminals: SwiftTerm panes (Metal) in glass cards, login-shell launch, 10k scrollback, Shift+Return fallback, hide / show without redraw glitches
 - Status: `shoji-hook` → socket → `ThreadStore`, per-launch Claude hooks, terminal title / bell / exit; working / needs you / done / idle with elapsed time and needs-you count; resume id captured

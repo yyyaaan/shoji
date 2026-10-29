@@ -8,6 +8,7 @@
 - Open Shoji app icon, face only: no paws or Torii.
 - Hachi appears only on needs-you agent cards, and in the window's top-left corner (under the window buttons) while any thread needs you, with the count; a click there opens the next waiting thread. Otherwise that corner stays empty. No other status, welcome illustration, terminal decoration or custom toolbar glyph.
 - Static artwork; existing status shapes, labels, badge, colors and click behavior remain authoritative.
+- Idle now uses the separately approved [Torii status glyph](../status/README.md). Hachi stays needs-you only, and the app icon remains Torii-free.
 
 No design selection remains open. Native integration and Icon Composer checks are tracked separately.
 

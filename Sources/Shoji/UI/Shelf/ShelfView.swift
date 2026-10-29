@@ -57,12 +57,16 @@ struct ShelfView: View {
                     thread: thread,
                     name: store.name(of: thread),
                     activity: store.activity(for: thread.id),
-                    isFocused: store.focusedThreadId == thread.id
+                    isFocused: store.focusedThreadId == thread.id,
+                    isOnScreen: store.layout.visibleThreadIds.contains(thread.id)
                 )
                 .contentShape(.rect)
-                .onTapGesture { store.bringHere(thread.id) }
+                // A click goes to the thread; ⌥-click brings it to the pane you're in.
+                .onTapGesture {
+                    if NSEvent.modifierFlags.contains(.option) { store.bringHere(thread.id) } else { store.open(thread.id) }
+                }
                 .accessibilityAddTraits(.isButton)
-                .accessibilityAction { store.bringHere(thread.id) }
+                .accessibilityAction { store.open(thread.id) }
                 .onDrag { CardDrag.item(for: thread.id) }
                 .onDrop(of: [.plainText], delegate: CardDrop(target: thread.id, width: ThreadCard.width * zoom, spot: $dropSpot, store: store))
                 .overlay(alignment: dropSpot?.after == true ? .trailing : .leading) {
@@ -84,6 +88,8 @@ struct ShelfView: View {
 
     @ViewBuilder
     private func menu(for thread: ShojiThread) -> some View {
+        Button("Show in This Pane") { store.bringHere(thread.id) }
+            .disabled(store.focusedThreadId == nil || store.focusedThreadId == thread.id)
         Button("Rename…") {
             draftTitle = thread.title ?? ""
             renaming = thread
