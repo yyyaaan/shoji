@@ -60,6 +60,32 @@ struct ShelfTests {
         #expect(store.thread(b).map(store.name) == "shoji")
     }
 
+    @Test func agentsGoByTheirTopicWhileTheyRun() {
+        let store = ThreadStore(threads: [])
+        let a = store.newThread()
+        let b = store.newThread()
+        let names = { [a, b].map { store.thread($0).map(store.name) } }
+
+        // A title that only names the agent or repeats its command isn't a topic.
+        store.send(.commandStarted("claude"), to: b)
+        store.send(.title("✳ Claude Code"), to: b)
+        store.send(.commandStarted("codex resume 019a"), to: a)
+        store.send(.title("codex resume 019a"), to: a)
+        #expect(names() == ["~", "~ 2"])
+
+        store.send(.title("✳ Fix login flow"), to: b)
+        #expect(names() == ["~", "Fix login flow"])
+        store.rename(b, to: "auth")
+        #expect(names() == ["~", "auth"])
+        store.rename(b, to: "")
+
+        // Gone with the agent; the next one starts without it.
+        store.send(.commandFinished(code: 0), to: b)
+        #expect(names() == ["~", "~ 2"])
+        store.send(.commandStarted("claude"), to: b)
+        #expect(names() == ["~", "~ 2"])
+    }
+
     @Test func renameTrimsAndEmptyFallsBackToTheFolder() {
         let store = makeStore()
         store.rename(second.id, to: "  web  ")

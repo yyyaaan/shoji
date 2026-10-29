@@ -2,76 +2,98 @@ import Foundation
 import Testing
 @testable import Shoji
 
+/// The split tree on its own: showing, trading places, splitting, removing, ratios, presets and the saved shape.
 struct PaneLayoutTests {
     private let ids = (0..<5).map { _ in UUID() }
 
-    @Test func fillsFreePanesThenReplacesTheChosenOne() {
-        var layout = PaneLayout(mode: .twoColumns)
+    @Test func showReplacesTheChosenPaneOrStartsTheFirst() {
+        var layout = PaneLayout()
         layout.show(ids[0], replacing: nil)
-        layout.show(ids[1], replacing: nil)
-        #expect(layout.visibleThreadIds == [ids[0], ids[1]])
+        #expect(layout.panes == [ids[0]])
 
+        layout = PaneLayout(.twoColumns, [ids[0], ids[1]])
         layout.show(ids[2], replacing: ids[0])
-        #expect(layout.visibleThreadIds == [ids[2], ids[1]])
-        #expect(layout.openThreadIds == [ids[2], ids[1], ids[0]])
-
+        #expect(layout.panes == [ids[2], ids[1]])
         layout.show(ids[1], replacing: ids[2])
-        #expect(layout.visibleThreadIds == [ids[2], ids[1]])
-
+        #expect(layout.panes == [ids[2], ids[1]])
         layout.show(ids[3], replacing: nil)
-        #expect(layout.visibleThreadIds == [ids[2], ids[3]])
-    }
-
-    @Test func hiddenPanesReturnWhenTheLayoutGrows() {
-        var layout = PaneLayout(mode: .grid, openThreadIds: Array(ids.prefix(4)))
-        layout.mode = .single
-        #expect(layout.visibleThreadIds == [ids[0]])
-
-        layout.show(ids[4], replacing: ids[0])
-        #expect(layout.visibleThreadIds == [ids[4]])
-
-        // The replaced thread comes back first.
-        layout.mode = .grid
-        #expect(layout.visibleThreadIds == [ids[4], ids[0], ids[1], ids[2]])
+        #expect(layout.panes == [ids[2], ids[3]])
     }
 
     @Test func droppingACardTakesThatPaneOrTradesPlaces() {
-        var layout = PaneLayout(mode: .threePanes, openThreadIds: Array(ids.prefix(3)))
+        var layout = PaneLayout(.threePanes, Array(ids.prefix(3)))
         layout.put(ids[2], inPaneOf: ids[0])
         #expect(layout.panes == [ids[2], ids[1], ids[0]])
-
         layout.put(ids[3], inPaneOf: ids[1])
         #expect(layout.panes == [ids[2], ids[3], ids[0]])
-        #expect(layout.openThreadIds == [ids[2], ids[3], ids[0], ids[1]])
-
-        layout.put(ids[4], inPaneOf: ids[1])
+        layout.put(ids[3], inPaneOf: ids[4])
         #expect(layout.panes == [ids[2], ids[3], ids[0]])
     }
 
-    @Test func pinsEndWhenTheThreadLeavesThePanes() {
-        var layout = PaneLayout(mode: .twoColumns, openThreadIds: [ids[0], ids[1]])
-        layout.togglePin(ids[2])
-        #expect(layout.pinnedThreadIds.isEmpty)
+    @Test func splitsPutTheNewPaneOnTheChosenSide() {
+        var layout = PaneLayout(.single, [ids[0]])
+        layout.split(ids[0], side: .right, with: ids[1])
+        #expect(layout.root == .split(axis: .columns, ratio: 0.5, first: .pane(id: ids[0]), second: .pane(id: ids[1])))
+        layout.split(ids[1], side: .up, with: ids[2])
+        #expect(layout.panes == [ids[0], ids[2], ids[1]])
+        layout.split(ids[0], side: .left, with: ids[3])
+        #expect(layout.panes == [ids[3], ids[0], ids[2], ids[1]])
 
-        layout.togglePin(ids[0])
-        layout.togglePin(ids[1])
-        layout.put(ids[2], inPaneOf: ids[0])
-        #expect(layout.pinnedThreadIds == [ids[1]])
-        layout.close(ids[1])
-        #expect(layout.pinnedThreadIds.isEmpty)
+        // A thread already on screen moves to the new pane, and its old split closes up.
+        layout.split(ids[3], side: .down, with: ids[1])
+        #expect(layout.panes == [ids[3], ids[1], ids[0], ids[2]])
     }
 
-    @Test func maximizeAndClose() {
-        var layout = PaneLayout(mode: .twoColumns, openThreadIds: [ids[0], ids[1]])
+    @Test func removingAPaneGivesItsSpaceToTheOtherSide() {
+        var layout = PaneLayout(.grid, Array(ids.prefix(4)))
         layout.toggleMaximize(ids[1])
-        #expect(layout.visibleThreadIds == [ids[1]])
+        #expect(layout.root?.sibling(of: ids[1]) == .pane(id: ids[0]))
 
-        layout.mode = .grid
+        layout.removePane(ids[1])
+        #expect(layout.root == .split(
+            axis: .rows, ratio: 0.5,
+            first: .pane(id: ids[0]),
+            second: .split(axis: .columns, ratio: 0.5, first: .pane(id: ids[2]), second: .pane(id: ids[3]))
+        ))
         #expect(layout.maximizedThreadId == nil)
 
-        layout.toggleMaximize(ids[0])
-        layout.close(ids[0])
-        #expect(layout.maximizedThreadId == nil)
-        #expect(layout.visibleThreadIds == [ids[1]])
+        for id in [ids[0], ids[2], ids[3]] { layout.removePane(id) }
+        #expect(layout.root == nil)
+    }
+
+    @Test func ratiosFollowTheirSplit() {
+        var layout = PaneLayout(.threePanes, Array(ids.prefix(3)))
+        layout.setRatio(0.3, at: [])
+        layout.setRatio(0.7, at: [1])
+        #expect(layout.root?.ratio(at: []) == 0.3)
+        #expect(layout.root?.ratio(at: [1]) == 0.7)
+
+        let tiles = PaneTiles(layout.root, in: CGRect(x: 0, y: 0, width: 1014, height: 514))
+        #expect(tiles.panes[ids[0]] == CGRect(x: 0, y: 0, width: 300, height: 514))
+        #expect(tiles.panes[ids[1]] == CGRect(x: 314, y: 0, width: 700, height: 350))
+        #expect(tiles.panes[ids[2]] == CGRect(x: 314, y: 364, width: 700, height: 150))
+        #expect(tiles.handles.map(\.path) == [[1], []])
+    }
+
+    @Test func presetsFillWhatTheyCan() {
+        #expect(PaneLayout.Preset.grid.tree([]) == nil)
+        #expect(PaneLayout(.twoColumns, ids).panes == [ids[0], ids[1]])
+        // Three in a grid: two up, one down.
+        #expect(PaneLayout(.grid, Array(ids.prefix(3))).root == .split(
+            axis: .rows, ratio: 0.5,
+            first: .split(axis: .columns, ratio: 0.5, first: .pane(id: ids[0]), second: .pane(id: ids[1])),
+            second: .pane(id: ids[2])
+        ))
+    }
+
+    @Test func savesTheTreeWithAFixedLayoutForOlderShoji() throws {
+        var layout = PaneLayout(.threePanes, Array(ids.prefix(3)))
+        layout.toggleMaximize(ids[1])
+        let data = try JSONEncoder().encode(layout)
+        #expect(try JSONDecoder().decode(PaneLayout.self, from: data) == layout)
+
+        let json = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+        #expect(json["mode"] as? String == "threePanes")
+        #expect(json["openThreadIds"] as? [String] == ids.prefix(3).map(\.uuidString))
     }
 }

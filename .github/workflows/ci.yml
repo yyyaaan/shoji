@@ -32,6 +32,9 @@ jobs:
         run: xcodebuild -scheme Shoji -derivedDataPath build -destination 'platform=macOS' -skipPackagePluginValidation -resultBundlePath build/TestResults.xcresult test
       - name: Test report
         if: ${{ !cancelled() && hashFiles('build/TestResults.xcresult/Info.plist') != '' }}
+        env:
+          # On pull requests github.sha is GitHub's temporary merge commit, not one of the PR's commits.
+          REPORT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           scripts/test-report.py build/TestResults.xcresult > build/test-report.md
           cat build/test-report.md >> "$GITHUB_STEP_SUMMARY"

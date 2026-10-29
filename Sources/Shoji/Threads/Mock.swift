@@ -17,7 +17,7 @@ enum Mock {
         let now = Date.now
         let store = ThreadStore(
             threads: threads,
-            layout: PaneLayout(mode: .twoColumns, openThreadIds: [threads[1].id, threads[4].id]),
+            layout: PaneLayout(.twoColumns, [threads[1].id, threads[4].id]),
             now: now
         )
         for thread in threads {

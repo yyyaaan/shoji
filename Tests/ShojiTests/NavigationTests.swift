@@ -19,7 +19,7 @@ struct NavigationTests {
 
     @Test func paneFocusCyclesThroughVisiblePanes() {
         let (threads, ids) = numberedThreads(3)
-        let store = ThreadStore(threads: threads, layout: PaneLayout(mode: .twoColumns, openThreadIds: [ids[0], ids[2]]))
+        let store = ThreadStore(threads: threads, layout: PaneLayout(.twoColumns, [ids[0], ids[2]]))
         store.focusPane(offset: 1)
         #expect(store.focusRequest == ids[0])
         store.focus(ids[0])

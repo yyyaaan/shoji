@@ -89,6 +89,7 @@ struct ThreadCard: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel([name, tag?.capitalized, activity.status.label, finishedUnseen ? "not seen yet" : nil, subtitle, isOnScreen ? "in a pane" : nil].compactMap(\.self).joined(separator: ", "))
+        .help(thread.displayFolder)
     }
 
     private var tint: Color {
@@ -122,9 +123,10 @@ struct ThreadCard: View {
         return (String(executable) as NSString).lastPathComponent.uppercased()
     }
 
+    /// The folder, so you always see where a thread works; a plain command shows its command line instead (its
+    /// title is the folder already), and an agent that needs you shows its question.
     private var subtitle: String {
         if activity.status == .needsYou { return activity.detail ?? "Waiting for you" }
-        if activity.agent != nil, let title = activity.terminalTitle, !title.isEmpty { return title }
         if activity.agent == nil, let command = thread.command { return command }
         return thread.displayFolder
     }

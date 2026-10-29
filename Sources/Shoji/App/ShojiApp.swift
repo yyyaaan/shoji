@@ -5,6 +5,7 @@ import SwiftUI
 struct ShojiApp: App {
     @State private var store: ThreadStore
     @State private var sessions: TerminalSessions
+    @State private var notifier: Notifier?
     private let hookServer: HookServer?
 
     /// Unit tests and previews host the app binary; they must not spawn shells or take the socket.
@@ -41,6 +42,7 @@ struct ShojiApp: App {
         let socketPath = Self.isHeadless ? "" : Self.supportFolder.appending(path: "hook.sock").path(percentEncoded: false)
         hookServer = Self.isHeadless ? nil : Self.startHookServer(at: socketPath, feeding: store)
         _store = State(initialValue: store)
+        _notifier = State(initialValue: Self.isHeadless ? nil : Notifier(store: store))
         let context = LaunchContext.current(socketPath: socketPath, supportFolder: Self.isHeadless ? FileManager.default.temporaryDirectory : Self.supportFolder)
         _sessions = State(initialValue: TerminalSessions(store: store, context: context))
     }
@@ -59,7 +61,15 @@ struct ShojiApp: App {
         .windowResizability(.contentMinSize)
         .windowStyle(.hiddenTitleBar)
         .windowBackgroundDragBehavior(.enabled)
-        .commands { ShojiCommands(store: store) }
+        .commands { ShojiCommands(store: store, sessions: sessions, notifier: notifier) }
+
+        // macOS 26 lets the user hide it in System Settings › Menu Bar, so there's no setting of our own.
+        MenuBarExtra(isInserted: .constant(!Self.isHeadless)) {
+            HachiMenuBarMenu()
+                .environment(store)
+        } label: {
+            HachiMenuBarLabel(count: store.wantingYou.count)
+        }
     }
 
     private static func startHookServer(at path: String, feeding store: ThreadStore) -> HookServer? {

@@ -44,6 +44,13 @@ struct ThreadActivity: Equatable, Sendable {
     var terminalTitle: String?
     /// The agent CLI running in the shell right now.
     var agent: Agent?
+
+    /// What the agent says it's working on (its terminal title), unless the title only names the agent or
+    /// repeats its command line ("Claude Code", "codex resume …").
+    var topic: String? {
+        guard let agent, let title = terminalTitle, !title.isEmpty, !title.lowercased().hasPrefix(agent.rawValue) else { return nil }
+        return title
+    }
     /// The shell integration has reported in, so a thread without a command really sits at its prompt.
     var isIntegrated = false
     /// False once the shell itself has ended; Restart starts a new one.

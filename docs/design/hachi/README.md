@@ -8,6 +8,7 @@ Final artwork and specification. Temporary comparison pages/screenshots have bee
 - Open Shoji app icon, face only: no paws or Torii.
 - Hachi appears on needs-you cards and optionally on agent turns finished unseen, using the existing Threads › Show Hachi When an Agent Finishes preference. The window corner counts the same `ThreadStore.wantsYou` set and opens the next waiting thread; otherwise it stays empty. No welcome illustration, terminal decoration or custom toolbar glyph.
 - Static artwork; existing status shapes, labels, badge, colors and click behavior remain authoritative.
+- Menu bar exception (2026-10-29, user's choice): the signed-off [seated dog with a white collar](../menubar/README.md), with the attention count beside it. Final SVG and vector PDF/template imageset are ready. The full ink portrait is not reduced into a menu bar glyph; toolbar and pane controls remain SF Symbols.
 - Idle uses the separately approved [Torii status glyph](../status/README.md). Finished unseen keeps its done checkmark even when Hachi appears. The app icon remains Torii-free.
 
 The base character and app-icon choices remain settled. For optional Hachi on unseen completion, the user selected [Quiet finish A with a subtle ivory halo](../completion/README.md). The unseen-completion halo remains even when Hachi on finish is disabled. Native card implementation is tracked in the handoff directory.
@@ -20,9 +21,7 @@ The base character and app-icon choices remain settled. For optional Hachi on un
 | [hachi-c.pdf](assets/hachi-c.pdf) | Approximately 200 × 200 pt vector PDF for an asset catalog; preserve vector data |
 | [Icon Composer layers](assets/icon-layers/) | Full 1024 × 1024 aligned canvases; import foreground SVGs in numeric order |
 | [composition.json](assets/icon-layers/composition.json) | Background color, order and material intent; a manifest, not a native `.icon` file |
-| [shoji-app-icon.svg](assets/shoji-app-icon.svg) | Vector reference composite, not the production layered icon |
 | [hachi-c.png](assets/hachi-c.png) | Unchanged approved raster source for provenance/comparison only |
-| [shoji-app-icon-1024.png](assets/shoji-app-icon-1024.png) | Flattened reference/marketing preview only |
 
 The portrait is a four-tone contour trace of the approved source, retaining the eyes, muzzle and fur marks. Its white face is opaque; outside the silhouette is transparent. Use original colors, not template tint or inversion. Vector paths scale independently of display density; the PNG source is not the runtime export.
 
@@ -64,16 +63,14 @@ All layers use the same 1024-unit canvas, with no baked corner mask, blur, shado
 3. **02-shoji-left.svg** and **03-shoji-right.svg:** separate paper panels; retain color and alignment. Any restrained material effects belong in Icon Composer.
 4. **04-shoji-rail.svg:** front lower rail, without paws.
 
-The reference composite uses a flat fallback background. Native Icon Composer provides the platform material, lighting and mask. A flattened image or an SVG containing `<image>` is not the production delivery. Preview the native document on macOS at 16 pt and its relevant appearances before accepting it.
+The native document is `Sources/Shoji/UI/Hachi/AppIcon.icon`. Icon Composer provides the platform material, lighting and mask. A flattened image or an SVG containing `<image>` is not the production delivery. Preview the native document on macOS at 16 pt and its relevant appearances before accepting it.
 
 Apple recommends aligned SVG layers, meaningful back-to-front numbering, no exported canvas mask and effects applied in Icon Composer: [Creating your app icon using Icon Composer](https://developer.apple.com/documentation/xcode/creating-your-app-icon-using-icon-composer).
 
 ## Provenance and regeneration
 
-[Historical generation prompt](PROMPTS.md) describes the approved raster source. The earlier sparse-line request is superseded by the fuller sketch selection.
+[Generation provenance and prompt](PROMPTS.md) describe the approved raster source. Follow the approved artwork and this specification for regeneration.
 
 Export utilities in `tools/` use macOS CoreGraphics/ImageIO, Python's standard library and the local design tool Potrace 1.16. These are offline export tools, not application dependencies. Generate tone masks with `trace-masks.swift`, trace silhouette/light/mid/ink with Potrace, then run `build-vectors.py` on that trace directory. The original PNG is retained so the trace can be reproduced.
-
-2026-10-28: addressed app-side design constraints with genuine vector exports, separate icon layers and a badge-safe zoom-aware placement. Existing app code and `AGENTS.md` are untouched. Native integration and Icon Composer packaging are intentionally handed off. No commit or push.
 
 Export checks confirmed path-only production SVGs and no PDF image objects; all six original Retina-density HTML collision cases passed. These source-art checks do not establish native behavior.
