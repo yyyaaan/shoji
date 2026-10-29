@@ -32,11 +32,12 @@ its task list (Now / Next / Later / Done) when you finish a session.
 
 ```
 project.yml                 XcodeGen spec (source of truth for targets/settings)
-.github/workflows/          ci.yml (tests on PRs and main), release.yml (merged version bump -> vX.Y.Z release + DMG)
+.github/workflows/          ci.yml (tests on PRs and main, report comment on PRs), release.yml (merged version bump -> vX.Y.Z release + DMG)
 scripts/
   shoji-hook                hook client bundled into the app: env + JSON -> Shoji socket
   shoji.zsh, zshenv         zsh integration bundled into the app (folder, commands, claude/codex hooks, resume)
   package.sh                Release build -> build/Shoji-<version>.dmg (used by release.yml)
+  test-report.py            .xcresult -> Markdown test report (used by ci.yml)
 Sources/Shoji/
   App/                      app entry (ShojiApp: wiring, window), MainView + the top row's controls,
                             Shortcuts (catalog + menu commands)

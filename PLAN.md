@@ -61,6 +61,7 @@ _Agents: update this section at the end of every session (what changed, what's n
 - **Panes keep their identity across layouts.** `PaneGrid` places one `PaneView` per thread by frame (`PaneTiles`); it used to rebuild the split views on every layout switch, re-hosting every terminal, the likely cause of terminals going blank on a switch (confirm by hand).
 - **⌃Tab is read by a local key monitor** (`RecentSwitchKeys`), not the menu, because the switcher needs ⌃'s release (`flagsChanged`) and the keys must never reach the terminal. The menu items still show the shortcut, and a click switches at once. It stands down while a sheet or alert is up.
 - **Drops on a pane land on SwiftUI's `onDrop`**, because SwiftTerm's view registers no dragged types; the drop never reaches the shell.
+- **CI test report comment:** CI finds its earlier comment by the `<!-- shoji-test-report -->` first line and updates it in place. PRs from forks get a read-only token, so they only get the run summary. `xcresulttool get test-results summary|tests` (Xcode 16+) is the source; try it locally with `-resultBundlePath build/TestResults.xcresult` and `scripts/test-report.py build/TestResults.xcresult`.
 - **⌘W is Close thread.** `ShojiCommands` replaces the `.saveItem` group, which also removes the system Close Window item, so ⌘W can't close the main window by accident.
 - **A restarted terminal's old process still reports its exit.** `TerminalSessions` ignores events from any backend that is no longer the thread's current one.
 - **AX `set value` on a SwiftUI text field doesn't reach its binding until editing ends.** In accessibility-driven checks, move focus (set another field) before pressing a button.
@@ -200,7 +201,7 @@ Priorities shift with the user's wishes; reorder freely. Keep items one line, sm
 ### Done
 - Completion design: Quiet finish A + static ivory halo for unseen finishes, independent of the Hachi toggle (`docs/design/completion/`)
 - Idle Torii design: SVG, vector PDF/template image set, status mapping and 75/100/200% size previews at 1×/2×
-- Build: XcodeGen project, SwiftTerm 1.99.1 pinned, CI on GitHub (`xcode-27` runner), release workflow and `scripts/package.sh` (universal ad-hoc DMG)
+- Build: XcodeGen project, SwiftTerm 1.99.1 pinned, CI on GitHub (`xcode-27` runner), release workflow and `scripts/package.sh` (universal ad-hoc DMG), test report on PRs (`scripts/test-report.py`: one comment per PR, updated on each push, plus the run summary)
 - Terminals: SwiftTerm panes (Metal) in glass cards, login-shell launch, 10k scrollback, Shift+Return fallback, hide / show without redraw glitches
 - Status: `shoji-hook` → socket → `ThreadStore`, per-launch Claude hooks, terminal title / bell / exit; working / needs you / done / idle with elapsed time and needs-you count; resume id captured
 - Shelf and panes: card shelf, click a card to open it, 1 / 2 / 3 / 2×2 layouts, maximize, drag splits
