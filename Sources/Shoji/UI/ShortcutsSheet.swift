@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ShortcutsSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @AppStorage(Zoom.storageKey) private var zoom = 1.0
+    @AppStorage(TextZoom.storageKey) private var textZoom = 1.0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
@@ -49,7 +49,7 @@ struct ShortcutsSheet: View {
     private var footer: some View {
         HStack(spacing: 6) {
             Image(systemName: "textformat.size")
-            Text("Zoom \(zoom, format: .percent.precision(.fractionLength(0)))")
+            Text("Text \(textZoom, format: .percent.precision(.fractionLength(0)))")
                 .monospacedDigit()
             Text("·")
             Text("Press")
@@ -78,6 +78,11 @@ private struct SectionView: View {
                         Text(shortcut.title)
                             .font(.system(size: 13))
                             .foregroundStyle(.white.opacity(0.88))
+                        if let hint = shortcut.hint {
+                            Text(hint)
+                                .font(.system(size: 12))
+                                .foregroundStyle(.white.opacity(0.5))
+                        }
                         Spacer(minLength: 8)
                         HStack(spacing: 4) {
                             ForEach(Array(shortcut.caps.enumerated()), id: \.offset) { KeyCap(label: $0.element) }

@@ -68,14 +68,6 @@ struct ShojiApp: App {
         .windowStyle(.hiddenTitleBar)
         .windowBackgroundDragBehavior(.enabled)
         .commands { ShojiCommands(store: store, sessions: sessions, notifier: notifier) }
-
-        // macOS 26 lets the user hide it in System Settings › Menu Bar, so there's no setting of our own.
-        MenuBarExtra(isInserted: .constant(!Self.isHeadless)) {
-            HachiMenuBarMenu()
-                .environment(store)
-        } label: {
-            HachiMenuBarLabel(count: store.wantingYou.count)
-        }
     }
 
     private static func startHookServer(at path: String, feeding store: ThreadStore) -> HookServer? {

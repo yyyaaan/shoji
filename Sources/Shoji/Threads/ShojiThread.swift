@@ -18,6 +18,8 @@ struct ShojiThread: Identifiable, Codable, Hashable, Sendable {
     var resumeAgent: Agent?
     /// The command running when Shoji last saved; a relaunch leaves it at the prompt, ready to run again.
     var command: String?
+    /// Text size levels away from the other terminals (⌥⌘+ / ⌥⌘−); nil when the same.
+    var textSteps: Int?
 
     init(
         id: UUID = UUID(),
@@ -27,7 +29,8 @@ struct ShojiThread: Identifiable, Codable, Hashable, Sendable {
         order: Int = 0,
         resumeId: String? = nil,
         resumeAgent: Agent? = nil,
-        command: String? = nil
+        command: String? = nil,
+        textSteps: Int? = nil
     ) {
         self.id = id
         self.title = title
@@ -37,6 +40,7 @@ struct ShojiThread: Identifiable, Codable, Hashable, Sendable {
         self.resumeId = resumeId
         self.resumeAgent = resumeAgent
         self.command = command
+        self.textSteps = textSteps
     }
 
     /// What an unnamed thread goes by.

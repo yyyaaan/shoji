@@ -1,10 +1,9 @@
 import AppKit
 
-/// Threads › Open Folders In: where Open in Zed (or VS Code) opens a thread's folder.
-enum Editor: String, CaseIterable, Identifiable {
-    case zed, vsCode
+/// Open in VS Code / Open in Zed: the editors a thread's folder can open in, in menu order.
+enum Editor: CaseIterable, Identifiable {
+    case vsCode, zed
 
-    static let storageKey = "editor"
     /// Looked up once; an editor installed while Shoji runs shows up after a relaunch.
     static let installed = allCases.filter { $0.appURL != nil }
 
@@ -12,18 +11,13 @@ enum Editor: String, CaseIterable, Identifiable {
 
     var name: String {
         switch self {
-        case .zed: "Zed"
         case .vsCode: "VS Code"
+        case .zed: "Zed"
         }
     }
 
     private var appURL: URL? {
         NSWorkspace.shared.urlForApplication(withBundleIdentifier: self == .zed ? "dev.zed.Zed" : "com.microsoft.VSCode")
-    }
-
-    /// The chosen editor, else the first one installed; nil when there's none.
-    static func resolved(_ choice: String) -> Editor? {
-        installed.first { $0.rawValue == choice } ?? installed.first
     }
 
     func open(_ folder: String) {

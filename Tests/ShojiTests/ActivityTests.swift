@@ -184,7 +184,7 @@ struct ActivityTests {
         #expect(store.activity(for: first.id).status == .done)
         #expect(store.wantsYou(first.id))
 
-        // Waiting on an answer comes first wherever its card is: Hachi's count, the Dock badge, the menu bar.
+        // Waiting on an answer comes first wherever its card is: Hachi's count, the Dock badge, notifications.
         store.send(.needsYou(message: nil), to: second.id)
         #expect(store.wantingYou.map(\.id) == [second.id, first.id])
         store.send(.working(sessionId: nil), to: second.id)

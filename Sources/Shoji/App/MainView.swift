@@ -3,7 +3,9 @@ import SwiftUI
 struct MainView: View {
     @Environment(ThreadStore.self) private var store
     @Environment(TerminalSessions.self) private var sessions: TerminalSessions?
-    @AppStorage(Zoom.storageKey) private var zoom = 1.0
+    /// The interface size; terminal text sizes apart (`textZoom`).
+    @AppStorage(InterfaceSize.storageKey) private var zoom = 1.0
+    @AppStorage(TextZoom.storageKey) private var textZoom = 1.0
     @State private var showsShortcuts = false
     @State private var zoomToast: Double?
     @State private var showsRecentSwitch = false
@@ -58,11 +60,11 @@ struct MainView: View {
         } message: { thread in
             Text(closeMessage(for: thread))
         }
-        .onChange(of: zoom, initial: true) { old, zoom in
-            // Half-point steps keep terminal cells on whole pixels at 2x.
-            sessions?.fontSize = (TerminalSessions.baseFontSize * zoom * 2).rounded() / 2
-            if old != zoom { withAnimation(.snappy) { zoomToast = zoom } }
+        .onChange(of: textZoom, initial: true) { old, textZoom in
+            sessions?.textZoom = textZoom
+            if old != textZoom { withAnimation(.snappy) { zoomToast = textZoom } }
         }
+        .onChange(of: store.threads.map(\.textSteps)) { sessions?.applyTextSizes() }
         .onAppear { RecentSwitchKeys.install(store: store) }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)) { _ in
             store.cancelRecentSwitch()
@@ -137,7 +139,7 @@ struct MainView: View {
             .glassEffect(.regular, in: .capsule)
             .padding(.top, 8)
             .transition(.opacity.combined(with: .scale(scale: 0.9)))
-            .accessibilityLabel("Zoom \(Int((zoomToast * 100).rounded())) percent")
+            .accessibilityLabel("Text size \(Int((zoomToast * 100).rounded())) percent")
         }
     }
 }

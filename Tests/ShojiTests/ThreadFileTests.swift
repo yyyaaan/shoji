@@ -16,6 +16,7 @@ struct ThreadFileTests {
         let id = store.newThread()
         store.split(id, side: .right)
         store.layout.setRatio(0.3, at: [])
+        store.stepTextSize(of: id, by: -1, global: 1)
         store.apply(StatusEvent(threadId: id, signal: .directory("/tmp")))
         store.apply(StatusEvent(threadId: id, signal: .commandStarted("claude --model opus")))
         store.apply(StatusEvent(threadId: id, signal: .working(sessionId: "s1")))
@@ -27,6 +28,7 @@ struct ThreadFileTests {
         #expect(saved.threads.first?.folder == "/tmp")
         #expect(saved.threads.first?.resumeId == "s1")
         #expect(saved.threads.first?.command == "claude --model opus")
+        #expect(saved.threads.first?.textSteps == -1)
         #expect(saved.layout == store.layout)
     }
 

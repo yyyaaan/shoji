@@ -9,12 +9,12 @@ struct PaneView: View {
     @Environment(TerminalSessions.self) private var sessions: TerminalSessions?
     @Environment(\.zoom) private var zoom
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @AppStorage(TextZoom.storageKey) private var textZoom = 1.0
     @State private var dropZone: DropZone?
     /// 0…1, the ivory glow after a go-to lands here.
     @State private var glow = 0.0
     @State private var size = CGSize.zero
     @State private var isHovering = false
-    @AppStorage(Editor.storageKey) private var editorChoice = Editor.zed.rawValue
 
     private var isFocused: Bool { store.focusedThreadId == thread.id }
     private var isMaximized: Bool { store.layout.maximizedThreadId == thread.id }
@@ -90,6 +90,13 @@ struct PaneView: View {
                 .foregroundStyle(.white.opacity(0.72))
                 .lineLimit(1)
                 .truncationMode(.head)
+            if let steps = thread.textSteps {
+                Text(TextZoom.level(textZoom, steps: steps), format: .percent.precision(.fractionLength(0)))
+                    .font(.system(size: 11 * zoom, weight: .medium))
+                    .monospacedDigit()
+                    .foregroundStyle(.white.opacity(0.55))
+                    .help("This pane's text size; ⌥⌘0 puts it back in line with the others")
+            }
             Spacer(minLength: 8)
             if !store.activity(for: thread.id).isAlive {
                 Button("Restart", systemImage: "arrow.clockwise") {
@@ -131,7 +138,13 @@ struct PaneView: View {
             splitItems
             Divider()
             Button(isMaximized ? "Restore" : "Maximize") { store.toggleMaximize(thread.id) }
-            if let editor = Editor.resolved(editorChoice) {
+            Menu("Text Size") {
+                Button("Bigger") { store.stepTextSize(of: thread.id, by: 1, global: textZoom) }
+                Button("Smaller") { store.stepTextSize(of: thread.id, by: -1, global: textZoom) }
+                Button("Same as Others") { store.stepTextSize(of: thread.id, by: nil, global: textZoom) }
+                    .disabled(thread.textSteps == nil)
+            }
+            ForEach(Editor.installed) { editor in
                 Button("Open in \(editor.name)") { editor.open(thread.folder) }
             }
         }

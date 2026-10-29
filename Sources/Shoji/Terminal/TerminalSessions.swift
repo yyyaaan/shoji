@@ -10,12 +10,9 @@ final class TerminalSessions {
     private(set) var backends: [UUID: any TerminalBackend] = [:]
     /// The ⌘K quick terminal while it's open.
     private(set) var popup: Popup?
-    /// Applied to every terminal, current and future (app zoom).
-    @ObservationIgnored var fontSize = baseFontSize {
-        didSet {
-            backends.values.forEach { $0.setFontSize(fontSize) }
-            popup?.backend.setFontSize(fontSize)
-        }
+    /// The text size every terminal follows (⌘+ / ⌘−); a thread's own steps move it from there.
+    @ObservationIgnored var textZoom = 1.0 {
+        didSet { applyTextSizes() }
     }
     @ObservationIgnored private let store: ThreadStore
     @ObservationIgnored private let context: LaunchContext
@@ -53,10 +50,21 @@ final class TerminalSessions {
     private func start(_ thread: ShojiThread) {
         let backend = makeBackend()
         connect(backend, to: thread.id)
-        backend.setFontSize(fontSize)
+        backend.setFontSize(fontSize(steps: thread.textSteps))
         backends[thread.id] = backend
         backend.start(thread.launch(in: context))
         store.apply(StatusEvent(threadId: thread.id, signal: .launched))
+    }
+
+    /// After the global size or a thread's steps changed.
+    func applyTextSizes() {
+        for (id, backend) in backends { backend.setFontSize(fontSize(steps: store.thread(id)?.textSteps)) }
+        popup?.backend.setFontSize(fontSize(steps: nil))
+    }
+
+    /// Half-point steps keep terminal cells on whole pixels at 2x.
+    func fontSize(steps: Int?) -> CGFloat {
+        (Self.baseFontSize * TextZoom.level(textZoom, steps: steps ?? 0) * 2).rounded() / 2
     }
 
     private func connect(_ backend: any TerminalBackend, to id: UUID) {
@@ -91,7 +99,7 @@ final class TerminalSessions {
             guard let self, let backend, self.popup?.backend === backend else { return }
             self.handlePopup(event)
         }
-        backend.setFontSize(fontSize)
+        backend.setFontSize(fontSize(steps: nil))
         popup = Popup(thread: thread, backend: backend)
         backend.start(thread.launch(in: context))
     }

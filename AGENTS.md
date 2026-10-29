@@ -43,16 +43,16 @@ Sources/Shoji/
   ThirdPartyNotices.txt     bundled open-source notices (SwiftTerm's MIT licence), shown in the About panel
   App/                      app entry (ShojiApp: wiring, window, AppDelegate's quit check), MainView + the top row's controls,
                             Shortcuts (catalog + menu commands), Notifier (Dock badge, macOS notifications),
-                            Editor (Open in Zed / VS Code)
+                            Editor (Open in VS Code / Zed)
   Threads/                  ShojiThread, ThreadStore, PaneLayout (split tree, presets, PaneTiles), launch building, Mock
   Terminal/                 TerminalBackend protocol, SwiftTerm implementation
                             (only place importing SwiftTerm), TerminalSessions
   Status/                   StatusEvent, HookServer (socket listener), ClaudeHooks, CodexHooks
-  UI/                       Theme (palette), StatusIcon, Backdrop, Zoom, ShortcutsSheet, RecentSwitch (⌃Tab)
+  UI/                       Theme (palette), StatusIcon, Backdrop, Zoom (text and interface sizes), ShortcutsSheet, RecentSwitch (⌃Tab)
   UI/Shelf/                 card shelf with bars between groups, context menu
   UI/Panes/                 PaneGrid (panes and split handles by frame), PaneView (header, Split menu, edge drops), TerminalHost
   UI/Hub/                   Hub view big cards
-  UI/Hachi/                 HachiPortrait, HachiCorner, HachiMenuBar (menu bar item), Hachi.xcassets (vector PDFs), AppIcon.icon
+  UI/Hachi/                 HachiPortrait, HachiCorner, Hachi.xcassets (vector PDFs), AppIcon.icon
                             (Icon Composer; spec in docs/design/hachi/README.md)
 Tests/ShojiTests/           Swift Testing
 docs/design/                design reference as standalone HTML (open in a browser)
@@ -131,7 +131,7 @@ If a command here is wrong or missing, fix this file in the same change.
 - The thread model is `ShojiThread`; `Thread` would shadow `Foundation.Thread`.
 - Tests use Swift Testing. The test host runs the app headless (no shells, no socket); keep `ShojiApp.isHeadless` in sync if launch wiring changes. Suites follow features (Activity, Shelf, Panes, Navigation, PaneLayout, StatusEvent, ThreadFile, ThreadLaunch); `Support.swift` has `store.send(_:to:)` and `numberedThreads(_:)`. Extend a scenario before adding a near-duplicate test.
 - To check UI by hand, launch the built app and use `screencapture -l <windowid>`. Press controls with System Events `perform action "AXPress"`; never send keystrokes, because macOS keeps the user's frontmost app and keystrokes go there.
-- **Zoom:** chrome metrics (font sizes, card and header sizes, radii, paddings) multiply by `@Environment(\.zoom)`, so ⌘+ / ⌘− scale the UI with the terminal text. New chrome must do the same.
+- **Sizes:** chrome metrics (font sizes, card and header sizes, radii, paddings) multiply by `@Environment(\.zoom)`, the interface size (View › Interface Size); new chrome must do the same. Terminal text sizes apart: ⌘+ / ⌘− (`TextZoom`), plus a thread's own `textSteps` (⌥⌘+ / ⌥⌘−).
 - **Shortcuts:** add new ones to the `Shortcut` catalog in `App/Shortcuts.swift`; the menu bar and the ⌘/ sheet both read it. ⌘K opens the quick terminal (it means "clear" in other Mac terminals; Shoji chose this on purpose).
 - Child processes get `SHOJI_THREAD_ID` and `SHOJI_SOCKET` in their environment so
   hooks can report which thread they belong to. The zsh integration also reads

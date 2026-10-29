@@ -150,7 +150,7 @@ final class ThreadStore {
     }
 
     /// The threads that want you in shelf order, those waiting on an answer first: Hachi's count, the Dock badge
-    /// and the menu bar.
+    /// and notifications.
     var wantingYou: [ShojiThread] {
         let waiting = shelfOrder.filter { wantsYou($0.id) }
         let asking = waiting.filter { activity(for: $0.id).status == .needsYou }
@@ -446,6 +446,16 @@ final class ThreadStore {
         return side == .left || side == .right
             ? (rect.width - PaneTiles.gap) / 2 >= minimum.width
             : (rect.height - PaneTiles.gap) / 2 >= minimum.height
+    }
+
+    /// ⌥⌘+ / ⌥⌘−: the thread's terminal text a level bigger or smaller than the others (`global`), while a level
+    /// is left that way; ⌥⌘0 (`by: nil`) puts it back in line.
+    func stepTextSize(of id: UUID, by step: Int?, global: Double) {
+        guard let index = threads.firstIndex(where: { $0.id == id }) else { return }
+        let current = threads[index].textSteps ?? 0
+        guard let step else { return threads[index].textSteps = nil }
+        guard TextZoom.level(global, steps: current + step) != TextZoom.level(global, steps: current) else { return }
+        threads[index].textSteps = current + step == 0 ? nil : current + step
     }
 
     func toggleMaximize(_ id: UUID) {

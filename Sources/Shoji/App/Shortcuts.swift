@@ -7,6 +7,8 @@ struct Shortcut: Identifiable {
     var modifiers: EventModifiers = .command
     /// Shown in place of the key where that reads better ("1–9", "+").
     var keyLabel: String?
+    /// Extra words for the shortcuts sheet only; menus show the title alone.
+    var hint: String?
 
     var id: String { title }
 
@@ -19,35 +21,37 @@ struct Shortcut: Identifiable {
 }
 
 extension Shortcut {
-    static let newThread = Shortcut(title: "New thread", key: "n")
-    static let closeThread = Shortcut(title: "Close thread", key: "w")
-    static let jumpToThread = Shortcut(title: "Jump to thread 1–9", key: "1", keyLabel: "1–9")
-    static let nextNeedingYou = Shortcut(title: "Next thread that needs you", key: "j")
-    static let quickTerminal = Shortcut(title: "Quick terminal in this folder", key: "k")
-    static let openInEditor = Shortcut(title: "Open folder in Zed or VS Code", key: "e", modifiers: [.command, .shift])
-    static let showInYourPane = Shortcut(title: "Show a card in your pane", key: " ", modifiers: .option, keyLabel: "Click")
-    static let recentThread = Shortcut(title: "Previous thread (hold ⌃ for more)", key: .tab, modifiers: .control)
-    static let recentThreadReversed = Shortcut(title: "Recent threads, oldest first", key: .tab, modifiers: [.control, .shift])
-    static let nextPane = Shortcut(title: "Next pane", key: "]")
-    static let previousPane = Shortcut(title: "Previous pane", key: "[")
-    static let splitRight = Shortcut(title: "Split pane right", key: "d")
-    static let splitDown = Shortcut(title: "Split pane down", key: "d", modifiers: [.command, .shift])
-    static let toggleMaximize = Shortcut(title: "Maximize or restore pane", key: .return, modifiers: [.command, .shift])
-    static let singlePane = Shortcut(title: "Single pane", key: "1", modifiers: [.command, .option])
-    static let twoColumns = Shortcut(title: "Two columns", key: "2", modifiers: [.command, .option])
-    static let threePanes = Shortcut(title: "Three panes", key: "3", modifiers: [.command, .option])
-    static let grid = Shortcut(title: "Grid of four", key: "4", modifiers: [.command, .option])
+    static let newThread = Shortcut(title: "New Thread", key: "n")
+    static let closeThread = Shortcut(title: "Close Thread", key: "w")
+    static let jumpToThread = Shortcut(title: "Jump to Thread 1–9", key: "1", keyLabel: "1–9")
+    static let nextNeedingYou = Shortcut(title: "Next Thread That Needs You", key: "j")
+    static let quickTerminal = Shortcut(title: "Quick Terminal", key: "k", hint: "in this thread's folder")
+    static let showInYourPane = Shortcut(title: "Show a Card in Your Pane", key: " ", modifiers: .option, keyLabel: "Click")
+    static let recentThread = Shortcut(title: "Previous Thread", key: .tab, modifiers: .control, hint: "hold ⌃ for more")
+    static let recentThreadReversed = Shortcut(title: "Recent Threads, Oldest First", key: .tab, modifiers: [.control, .shift])
+    static let nextPane = Shortcut(title: "Next Pane", key: "]")
+    static let previousPane = Shortcut(title: "Previous Pane", key: "[")
+    static let splitRight = Shortcut(title: "Split Pane Right", key: "d")
+    static let splitDown = Shortcut(title: "Split Pane Down", key: "d", modifiers: [.command, .shift])
+    static let toggleMaximize = Shortcut(title: "Maximize or Restore Pane", key: .return, modifiers: [.command, .shift])
+    static let singlePane = Shortcut(title: "Single Pane", key: "1", modifiers: [.command, .option])
+    static let twoColumns = Shortcut(title: "Two Columns", key: "2", modifiers: [.command, .option])
+    static let threePanes = Shortcut(title: "Three Panes", key: "3", modifiers: [.command, .option])
+    static let grid = Shortcut(title: "Grid of Four", key: "4", modifiers: [.command, .option])
     // ⌘= so no Shift is needed; shown as + like every zoom menu.
-    static let zoomIn = Shortcut(title: "Zoom in", key: "=", keyLabel: "+")
-    static let zoomOut = Shortcut(title: "Zoom out", key: "-", keyLabel: "−")
-    static let actualSize = Shortcut(title: "Actual size", key: "0")
-    static let showShortcuts = Shortcut(title: "Keyboard shortcuts", key: "/")
+    static let zoomIn = Shortcut(title: "Bigger Text", key: "=", keyLabel: "+")
+    static let zoomOut = Shortcut(title: "Smaller Text", key: "-", keyLabel: "−")
+    static let actualSize = Shortcut(title: "Actual Text Size", key: "0")
+    static let paneZoomIn = Shortcut(title: "Bigger Text in Pane", key: "=", modifiers: [.command, .option], keyLabel: "+")
+    static let paneZoomOut = Shortcut(title: "Smaller Text in Pane", key: "-", modifiers: [.command, .option], keyLabel: "−")
+    static let paneActualSize = Shortcut(title: "Pane Text Like Others", key: "0", modifiers: [.command, .option])
+    static let showShortcuts = Shortcut(title: "Keyboard Shortcuts", key: "/")
 
     // Handled inside the terminal; listed for reference only.
-    static let newline = Shortcut(title: "New line in an agent prompt", key: .return, modifiers: .shift)
-    static let copy = Shortcut(title: "Copy selection", key: "c")
+    static let newline = Shortcut(title: "New Line in an Agent Prompt", key: .return, modifiers: .shift)
+    static let copy = Shortcut(title: "Copy Selection", key: "c")
     static let paste = Shortcut(title: "Paste", key: "v")
-    static let openLink = Shortcut(title: "Open link or path", key: " ", keyLabel: "Click")
+    static let openLink = Shortcut(title: "Open Link or Path", key: " ", keyLabel: "Click")
 }
 
 struct ShortcutSection: Identifiable {
@@ -59,12 +63,12 @@ struct ShortcutSection: Identifiable {
 
     static let columns: [[ShortcutSection]] = [
         [
-            ShortcutSection(title: "Threads", symbol: "rectangle.stack", shortcuts: [.newThread, .jumpToThread, .showInYourPane, .recentThread, .recentThreadReversed, .nextNeedingYou, .quickTerminal, .openInEditor, .closeThread]),
+            ShortcutSection(title: "Threads", symbol: "rectangle.stack", shortcuts: [.newThread, .jumpToThread, .showInYourPane, .recentThread, .recentThreadReversed, .nextNeedingYou, .quickTerminal, .closeThread]),
             ShortcutSection(title: "Panes", symbol: "rectangle.split.2x1", shortcuts: [.nextPane, .previousPane, .splitRight, .splitDown, .toggleMaximize]),
         ],
         [
             ShortcutSection(title: "Arrange", symbol: "square.grid.2x2", shortcuts: [.singlePane, .twoColumns, .threePanes, .grid]),
-            ShortcutSection(title: "View", symbol: "textformat.size", shortcuts: [.zoomIn, .zoomOut, .actualSize, .showShortcuts]),
+            ShortcutSection(title: "View", symbol: "textformat.size", shortcuts: [.zoomIn, .zoomOut, .actualSize, .paneZoomIn, .paneZoomOut, .paneActualSize, .showShortcuts]),
             ShortcutSection(title: "In a terminal", symbol: "terminal", shortcuts: [.newline, .copy, .paste, .openLink]),
         ],
     ]
@@ -78,8 +82,8 @@ struct ShojiCommands: Commands {
     let store: ThreadStore
     let sessions: TerminalSessions
     let notifier: Notifier?
-    @AppStorage(Zoom.storageKey) private var zoom = 1.0
-    @AppStorage(Editor.storageKey) private var editorChoice = Editor.zed.rawValue
+    @AppStorage(TextZoom.storageKey) private var textZoom = 1.0
+    @AppStorage(InterfaceSize.storageKey) private var interfaceSize = 1.0
     @FocusedBinding(\.showsShortcuts) private var showsShortcuts
 
     var body: some Commands {
@@ -119,22 +123,12 @@ struct ShojiCommands: Commands {
                 store.stepRecent(by: -1)
                 store.finishRecentSwitch()
             }
-            Divider()
-            button(.nextPane) { store.focusPane(offset: 1) }
-            button(.previousPane) { store.focusPane(offset: -1) }
-            Group {
-                button(.splitRight) { if !store.split(side: .right) { NSSound.beep() } }
-                button(.splitDown) { if !store.split(side: .down) { NSSound.beep() } }
-                Button("Close Pane") { store.focusedThreadId.map(store.closePane) }
-                    .disabled(store.layout.panes.count < 2)
-                button(.toggleMaximize) { store.focusedThreadId.map(store.toggleMaximize) }
-            }
-            .disabled(store.focusedThreadId == nil)
-            if let editor = Editor.resolved(editorChoice) {
+            if !Editor.installed.isEmpty {
                 Divider()
-                Button("Open in \(editor.name)") { store.focusedThreadId.flatMap(store.thread).map { editor.open($0.folder) } }
-                    .keyboardShortcut(Shortcut.openInEditor.key, modifiers: Shortcut.openInEditor.modifiers)
-                    .disabled(store.focusedThreadId == nil)
+                ForEach(Editor.installed) { editor in
+                    Button("Open in \(editor.name)") { store.focusedThreadId.flatMap(store.thread).map { editor.open($0.folder) } }
+                        .disabled(store.focusedThreadId == nil)
+                }
             }
             // Options, one click each (PLAN Decisions › Options live in the Threads menu).
             Divider()
@@ -149,24 +143,46 @@ struct ShojiCommands: Commands {
                     Toggle("Notify Me When Shoji Is Away", isOn: Binding { notifier.isOn } set: { notifier.setOn($0) })
                 }
             }
-            if !Editor.installed.isEmpty {
-                Picker("Open Folders In", selection: Binding { Editor.resolved(editorChoice)?.rawValue ?? "" } set: { editorChoice = $0 }) {
-                    ForEach(Editor.installed) { Text($0.name).tag($0.rawValue) }
-                }
-            }
         }
 
+        CommandMenu("Panes") {
+            button(.nextPane) { store.focusPane(offset: 1) }
+            button(.previousPane) { store.focusPane(offset: -1) }
+            Divider()
+            Group {
+                button(.splitRight) { if !store.split(side: .right) { NSSound.beep() } }
+                button(.splitDown) { if !store.split(side: .down) { NSSound.beep() } }
+                Button("Close Pane") { store.focusedThreadId.map(store.closePane) }
+                    .disabled(store.layout.panes.count < 2)
+                button(.toggleMaximize) { store.focusedThreadId.map(store.toggleMaximize) }
+            }
+            .disabled(store.focusedThreadId == nil)
+            Divider()
+            button(.singlePane) { store.arrange(.single) }
+            button(.twoColumns) { store.arrange(.twoColumns) }
+            button(.threePanes) { store.arrange(.threePanes) }
+            button(.grid) { store.arrange(.grid) }
+        }
+
+        // How things look: sizes here, Enter Full Screen below from the system.
         CommandGroup(before: .toolbar) {
-            Menu("Arrange") {
-                button(.singlePane) { store.arrange(.single) }
-                button(.twoColumns) { store.arrange(.twoColumns) }
-                button(.threePanes) { store.arrange(.threePanes) }
-                button(.grid) { store.arrange(.grid) }
+            Section("Interface Size") {
+                Picker("Interface Size", selection: $interfaceSize) {
+                    ForEach(InterfaceSize.allCases) { Text($0.name).tag($0.rawValue) }
+                }
+                .pickerStyle(.inline)
+                .labelsHidden()
             }
             Divider()
-            button(.zoomIn) { zoom = Zoom.step(zoom, by: 1) }
-            button(.zoomOut) { zoom = Zoom.step(zoom, by: -1) }
-            button(.actualSize) { zoom = 1 }
+            button(.zoomIn) { textZoom = TextZoom.step(textZoom, by: 1) }
+            button(.zoomOut) { textZoom = TextZoom.step(textZoom, by: -1) }
+            button(.actualSize) { textZoom = 1 }
+            Group {
+                button(.paneZoomIn) { store.focusedThreadId.map { store.stepTextSize(of: $0, by: 1, global: textZoom) } }
+                button(.paneZoomOut) { store.focusedThreadId.map { store.stepTextSize(of: $0, by: -1, global: textZoom) } }
+                button(.paneActualSize) { store.focusedThreadId.map { store.stepTextSize(of: $0, by: nil, global: textZoom) } }
+            }
+            .disabled(store.focusedThreadId == nil)
             Divider()
         }
 
