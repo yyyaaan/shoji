@@ -84,9 +84,13 @@ extension ShojiThread {
         environment["SHOJI_ZSH"] = zsh.script
         if let hookScript = context.hookScript {
             environment["SHOJI_CLAUDE_SETTINGS"] = ClaudeHooks.settingsJSON(hookCommand: hookScript.shellQuoted)
+            environment["SHOJI_CODEX_HOOKS"] = CodexHooks.configOverride(hookCommand: hookScript.shellQuoted)
         }
         if let resumeId {
-            environment["SHOJI_RESUME_CLAUDE"] = resumeId
+            // The agent's own resume; files from before `resumeAgent` fall back to the saved command, then Claude.
+            environment["SHOJI_RESUME"] = (resumeAgent ?? Agent(commandLine: command ?? "")) == .codex
+                ? "codex resume \(resumeId.shellQuoted)"
+                : "claude --resume \(resumeId.shellQuoted)"
         } else if let command {
             environment["SHOJI_PREFILL"] = command
         }

@@ -34,30 +34,46 @@ extension StatusEvent {
     }
 }
 
-/// The fields Shoji reads from Claude Code hook input and Codex `notify` payloads.
+/// The fields Shoji reads from Claude Code and Codex hook input; both send the same core fields.
 private struct HookPayload: Decodable {
     let hookEventName: String?
-    let type: String?
     let sessionId: String?
     let message: String?
     let notificationType: String?
+    let toolName: String?
+    let toolInput: ToolInput?
 
     enum CodingKeys: String, CodingKey {
         case hookEventName = "hook_event_name"
-        case type
         case sessionId = "session_id"
         case message
         case notificationType = "notification_type"
+        case toolName = "tool_name"
+        case toolInput = "tool_input"
+    }
+
+    /// Only a shell command is shown; other tools' input has any shape.
+    struct ToolInput: Decodable {
+        let command: String?
+
+        enum CodingKeys: String, CodingKey { case command }
+
+        init(from decoder: any Decoder) throws {
+            command = try? decoder.container(keyedBy: CodingKeys.self).decode(String.self, forKey: .command)
+        }
     }
 
     var signal: StatusEvent.Signal? {
-        switch hookEventName ?? type {
+        switch hookEventName {
         case "UserPromptSubmit", "PostToolUse":
             .working(sessionId: sessionId)
         case "Notification":
             // idle_prompt repeats "waiting for input" after a finished turn; that's Done, not Needs you.
             ["idle_prompt", "auth_success"].contains(notificationType) ? nil : .needsYou(message: message)
-        case "Stop", "agent-turn-complete":
+        case "PermissionRequest":
+            // Codex, about to ask for approval.
+            .needsYou(message: toolName.map { name in toolInput?.command.map { "Allow \(name): \($0)" } ?? "Allow \(name)" })
+        case "Stop", "Interrupt":
             .finished
         default:
             nil

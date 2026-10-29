@@ -12,10 +12,22 @@ final class ThreadStore {
         didSet { scheduleSave() }
     }
     private(set) var focusedThreadId: UUID?
+    /// Most recently focused first.
+    private(set) var recentThreadIds: [UUID] = []
     /// A pane that should take keyboard focus once its terminal is on screen.
     private(set) var focusRequest: UUID?
     /// A busy thread the user asked to close; the window confirms before `close` runs.
     var closeRequest: UUID?
+    /// ⌃Tab in progress (⌃ still held).
+    private(set) var recentSwitch: RecentSwitch?
+    /// Threads › Show Hachi When an Agent Finishes: an unseen finished turn wants you too, not just its quiet tick.
+    var hachiOnFinish = true
+    /// False while another app is in front, when even the focused pane is out of sight.
+    var isAppActive = true {
+        didSet {
+            if isAppActive, !oldValue, let focusedThreadId { focus(focusedThreadId) }
+        }
+    }
 
     /// Where `threads.json` lives; nil keeps everything in memory (tests, previews).
     @ObservationIgnored private let fileURL: URL?
@@ -23,12 +35,9 @@ final class ThreadStore {
 
     init(threads: [ShojiThread], layout: PaneLayout = PaneLayout(), now: Date = .now, fileURL: URL? = nil) {
         let ids = Set(threads.map(\.id))
-        var threads = threads
-        for index in threads.indices where threads[index].number < 1 {
-            threads[index].number = Self.lowestFreeNumber(in: threads)
-        }
         var layout = layout
         layout.openThreadIds.removeAll { !ids.contains($0) }
+        layout.pinnedThreadIds.removeAll { !ids.contains($0) }
         if let maximized = layout.maximizedThreadId, !ids.contains(maximized) { layout.maximizedThreadId = nil }
         self.threads = threads
         self.layout = layout
@@ -64,23 +73,27 @@ final class ThreadStore {
             threads[index].command = line
             activity.agent = Agent(commandLine: line)
             activity.detail = nil
-            // Claude waits at its own prompt until a hook says otherwise; anything else is running.
-            activity.transition(to: activity.agent == .claude ? .idle : .running, at: now)
+            // An agent waits at its own prompt until a hook says otherwise; anything else is running.
+            activity.transition(to: activity.agent == nil ? .running : .idle, at: now)
         case .commandFinished(let code):
             // Whatever ran has ended, an agent included, so there is nothing left to resume.
             if threads[index].command != nil { threads[index].command = nil }
-            if threads[index].resumeId != nil { threads[index].resumeId = nil }
+            if threads[index].resumeId != nil {
+                threads[index].resumeId = nil
+                threads[index].resumeAgent = nil
+            }
             activity.agent = nil
             activity.detail = nil
             activity.attention = 0
             // 130 is Ctrl-C: stopping a dev server on purpose isn't an error.
             activity.transition(to: code == 0 || code == 130 ? .idle : .exited(code: code), at: now)
         case .working(let sessionId):
-            // Prompt and tool hooks only come from a session with content, so its id is safe to resume.
-            if let sessionId, threads[index].resumeId != sessionId {
-                threads[index].resumeId = sessionId
-            }
             activity.agent = activity.agent ?? .claude
+            // Prompt and tool hooks only come from a session with content, so its id is safe to resume.
+            if let sessionId, threads[index].resumeId != sessionId || threads[index].resumeAgent != activity.agent {
+                threads[index].resumeId = sessionId
+                threads[index].resumeAgent = activity.agent
+            }
             activity.transition(to: .working, at: now)
             activity.detail = nil
         case .needsYou(let message):
@@ -91,6 +104,7 @@ final class ThreadStore {
         case .finished:
             activity.transition(to: .done, at: now)
             activity.detail = nil
+            activity.isUnseen = !(isAppActive && focusedThreadId == event.threadId)
         case .userInput where activity.status == .needsYou:
             // Typing into a waiting agent answers it; no hook fires until the approved tool finishes.
             activity.transition(to: .working, at: now)
@@ -115,10 +129,17 @@ final class ThreadStore {
         }
     }
 
+    /// Waiting on an answer, or (with `hachiOnFinish`) done while you weren't looking: Hachi, orange card, ⌘J.
+    func wantsYou(_ id: UUID) -> Bool {
+        let activity = activity(for: id)
+        return activity.status == .needsYou || (hachiOnFinish && activity.isUnseen)
+    }
+
     /// Called when a thread's terminal takes keyboard focus.
     func focus(_ id: UUID, at now: Date = .now) {
         if focusedThreadId != id { focusedThreadId = id }
         if focusRequest == id { focusRequest = nil }
+        if recentThreadIds.first != id { recentThreadIds = [id] + recentThreadIds.filter { $0 != id } }
         guard var activity = activities[id] else { return }
         let current = activity
         activity.attention = 0
@@ -134,7 +155,7 @@ final class ThreadStore {
     @discardableResult
     func newThread(at now: Date = .now) -> UUID {
         let focused = focusedThreadId.flatMap(thread)
-        let thread = ShojiThread(number: Self.lowestFreeNumber(in: threads), folder: focused?.folder ?? "~")
+        let thread = ShojiThread(folder: focused?.folder ?? "~")
         var groups = shelfIds
         if let focused, let place = position(of: focused.id, in: groups) {
             groups[place.group].insert(thread.id, at: place.index + 1)
@@ -150,9 +171,13 @@ final class ThreadStore {
         return thread.id
     }
 
-    private static func lowestFreeNumber(in threads: [ShojiThread]) -> Int {
-        let used = Set(threads.map(\.number))
-        return (1...).first { !used.contains($0) }!
+    /// The user's name for the thread, else its folder's name. Unnamed threads in folders of the same name
+    /// are numbered oldest first ("shoji", "shoji 2"), so a `cd` into a subfolder and back changes nothing.
+    func name(of thread: ShojiThread) -> String {
+        if let title = thread.title { return title }
+        let twins = threads.filter { $0.title == nil && $0.folderName == thread.folderName }
+        let place = twins.firstIndex { $0.id == thread.id } ?? 0
+        return place == 0 ? thread.folderName : "\(thread.folderName) \(place + 1)"
     }
 
     /// An empty name goes back to showing the folder.
@@ -177,9 +202,14 @@ final class ThreadStore {
     /// Removes the thread; `TerminalSessions.sync` then stops its process.
     func close(_ id: UUID) {
         if closeRequest == id { closeRequest = nil }
-        minimize(id)
+        layout.close(id)
+        if focusedThreadId == id {
+            focusedThreadId = nil
+            focusRequest = layout.visibleThreadIds.first
+        }
         threads.removeAll { $0.id == id }
         activities[id] = nil
+        recentThreadIds.removeAll { $0 == id }
     }
 
     // MARK: Shelf
@@ -282,16 +312,60 @@ final class ThreadStore {
 
     // MARK: Panes
 
+    /// Shows the thread in a free pane, else in the pane you're in (or, with none, the one used longest ago that
+    /// isn't waiting for you), and focuses it. Pinned panes are passed over unless every pane is pinned.
+    /// A thread already on screen just takes focus.
     func open(_ id: UUID) {
-        layout.open(id, keeping: focusedThreadId)
+        let unpinned = layout.panes.filter { !layout.pinnedThreadIds.contains($0) }
+        let candidates = unpinned.isEmpty ? layout.panes : unpinned
+        let notWaiting = candidates.filter { !wantsYou($0) }
+        let replaced = candidates.first { $0 == focusedThreadId }
+            ?? (notWaiting.isEmpty ? candidates : notWaiting).reversed().max { recency($0) < recency($1) }
+        layout.show(id, replacing: replaced)
         focusRequest = id
     }
 
-    func minimize(_ id: UUID) {
-        layout.close(id)
-        guard focusedThreadId == id else { return }
-        focusedThreadId = nil
-        focusRequest = layout.visibleThreadIds.first
+    /// ⌥-click on a card, or Show in This Pane: the thread comes to the pane you're in, trading places when
+    /// it's on screen elsewhere. A plain click uses `open` and goes to the thread where it is.
+    func bringHere(_ id: UUID) {
+        guard let focusedThreadId, focusedThreadId != id, layout.panes.contains(focusedThreadId) else { return open(id) }
+        show(id, inPaneOf: focusedThreadId)
+    }
+
+    /// Drag and drop onto a pane: the thread takes that pane, even a pinned one.
+    func show(_ id: UUID, inPaneOf target: UUID) {
+        layout.put(id, inPaneOf: target)
+        focusRequest = id
+    }
+
+    func togglePin(_ id: UUID) {
+        layout.togglePin(id)
+    }
+
+    /// Position in `recentThreadIds`; threads never focused count as oldest.
+    private func recency(_ id: UUID) -> Int {
+        recentThreadIds.firstIndex(of: id) ?? .max
+    }
+
+    /// Switching layouts keeps the pane you're in and pinned panes on screen, and fills new panes with
+    /// the threads shown there before, then your most recent ones, then the shelf's.
+    var layoutMode: PaneLayout.Mode {
+        get { layout.mode }
+        set {
+            var layout = self.layout
+            layout.mode = newValue
+            let keep = (focusedThreadId.map { [$0] } ?? []) + layout.pinnedThreadIds
+            for id in keep {
+                guard let index = layout.openThreadIds.firstIndex(of: id), index >= newValue.capacity,
+                      let slot = layout.openThreadIds.prefix(newValue.capacity).lastIndex(where: { !keep.contains($0) })
+                else { continue }
+                layout.openThreadIds.swapAt(index, slot)
+            }
+            for id in recentThreadIds + shelfOrder.map(\.id) where layout.openThreadIds.count < newValue.capacity {
+                if !layout.openThreadIds.contains(id) { layout.openThreadIds.append(id) }
+            }
+            self.layout = layout
+        }
     }
 
     func toggleMaximize(_ id: UUID) {
@@ -307,13 +381,13 @@ final class ThreadStore {
         open(order[index].id)
     }
 
-    /// Opens the next thread in shelf order that needs the user, wrapping around. False when none does.
+    /// Opens the next thread in shelf order that wants the user, wrapping around. False when none does.
     @discardableResult
     func openNextNeedingYou() -> Bool {
         let order = shelfOrder
         let start = order.firstIndex { $0.id == focusedThreadId }.map { $0 + 1 } ?? 0
         let rotated = order[start...] + order[..<start]
-        guard let next = rotated.first(where: { activity(for: $0.id).status == .needsYou }) else { return false }
+        guard let next = rotated.first(where: { wantsYou($0.id) }) else { return false }
         open(next.id)
         return true
     }
@@ -323,6 +397,40 @@ final class ThreadStore {
         guard !visible.isEmpty else { return }
         let current = visible.firstIndex { $0 == focusedThreadId } ?? (offset > 0 ? -1 : 0)
         focusRequest = visible[(current + offset + visible.count) % visible.count]
+    }
+
+    // MARK: Recent threads
+
+    struct RecentSwitch: Equatable {
+        /// The thread you're in first, then the others in the order you last used them.
+        var threadIds: [UUID]
+        var index: Int
+        var selected: UUID { threadIds[index] }
+    }
+
+    /// ⌃Tab steps through threads in the order you last used them, ⌃⇧Tab the other way, like ⌘Tab for apps.
+    /// The first ⌃Tab picks the previous thread; `finishRecentSwitch` opens the pick once ⌃ is released.
+    func stepRecent(by offset: Int) {
+        if var current = recentSwitch {
+            current.index = (current.index + offset + current.threadIds.count) % current.threadIds.count
+            recentSwitch = current
+            return
+        }
+        var ids = focusedThreadId.map { [$0] } ?? []
+        for id in recentThreadIds + shelfOrder.map(\.id) where !ids.contains(id) { ids.append(id) }
+        let start = focusedThreadId == nil ? 0 : 1
+        guard ids.count > start else { return }
+        recentSwitch = RecentSwitch(threadIds: ids, index: offset > 0 ? start : ids.count - 1)
+    }
+
+    func finishRecentSwitch() {
+        guard let recentSwitch else { return }
+        self.recentSwitch = nil
+        if thread(recentSwitch.selected) != nil { open(recentSwitch.selected) }
+    }
+
+    func cancelRecentSwitch() {
+        if recentSwitch != nil { recentSwitch = nil }
     }
 
     // MARK: Saving

@@ -6,6 +6,7 @@ struct MainView: View {
     @AppStorage(Zoom.storageKey) private var zoom = 1.0
     @State private var showsShortcuts = false
     @State private var zoomToast: Double?
+    @State private var showsRecentSwitch = false
 
     var body: some View {
         VStack(spacing: 14) {
@@ -33,11 +34,17 @@ struct MainView: View {
         .frame(minWidth: 640, minHeight: 480)
         .background(Backdrop())
         .overlay(alignment: .top) { zoomBadge }
+        .overlay {
+            if showsRecentSwitch, let recentSwitch = store.recentSwitch {
+                RecentSwitchPanel(recentSwitch: recentSwitch)
+                    .environment(\.zoom, zoom)
+            }
+        }
         .preferredColorScheme(.dark)
         .sheet(isPresented: $showsShortcuts) { ShortcutsSheet() }
         .focusedSceneValue(\.showsShortcuts, $showsShortcuts)
         .alert(
-            "Close “\(closing?.displayTitle ?? "")”?",
+            "Close “\(closing.map(store.name) ?? "")”?",
             isPresented: Binding { store.closeRequest != nil } set: { if !$0 { store.closeRequest = nil } },
             presenting: closing
         ) { thread in
@@ -50,6 +57,20 @@ struct MainView: View {
             // Half-point steps keep terminal cells on whole pixels at 2x.
             sessions?.fontSize = (TerminalSessions.baseFontSize * zoom * 2).rounded() / 2
             if old != zoom { withAnimation(.snappy) { zoomToast = zoom } }
+        }
+        .onAppear { RecentSwitchKeys.install(store: store) }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)) { _ in
+            store.cancelRecentSwitch()
+            store.isAppActive = false
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            store.isAppActive = true
+        }
+        // Like ⌘Tab: a quick ⌃Tab switches without flashing the list.
+        .task(id: store.recentSwitch != nil) {
+            showsRecentSwitch = false
+            guard store.recentSwitch != nil, (try? await Task.sleep(for: .milliseconds(150))) != nil else { return }
+            showsRecentSwitch = true
         }
         .task(id: zoomToast) {
             guard zoomToast != nil, (try? await Task.sleep(for: .seconds(1.2))) != nil else { return }
@@ -65,7 +86,7 @@ struct MainView: View {
     private var trailingControls: some View {
         @Bindable var store = store
         return VStack(alignment: .trailing) {
-            Picker("Layout", selection: $store.layout.mode) {
+            Picker("Layout", selection: $store.layoutMode) {
                 // The macOS window-tiling family, so the four read as one set.
                 Label("Single pane", systemImage: "rectangle.inset.filled").tag(PaneLayout.Mode.single)
                 Label("Two columns", systemImage: "inset.filled.leadinghalf.trailinghalf.rectangle").tag(PaneLayout.Mode.twoColumns)

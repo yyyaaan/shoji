@@ -16,6 +16,7 @@ struct ThreadFileTests {
         let id = store.newThread()
         store.layout.mode = .grid
         store.layout.columnSplit = 0.3
+        store.togglePin(id)
         store.apply(StatusEvent(threadId: id, signal: .directory("/tmp")))
         store.apply(StatusEvent(threadId: id, signal: .commandStarted("claude --model opus")))
         store.apply(StatusEvent(threadId: id, signal: .working(sessionId: "s1")))
@@ -30,6 +31,7 @@ struct ThreadFileTests {
         #expect(saved.layout.mode == .grid)
         #expect(saved.layout.columnSplit == 0.3)
         #expect(saved.layout.openThreadIds == [id])
+        #expect(saved.layout.pinnedThreadIds == [id])
     }
 
     @Test func missingFileLoadsAsNothing() {
@@ -49,6 +51,20 @@ struct ThreadFileTests {
         try Data(#"{"schemaVersion": 99, "threads": [], "layout": {}}"#.utf8).write(to: url)
         #expect(ThreadFile.load(from: url) == nil)
         #expect(try FileManager.default.contentsOfDirectory(atPath: folder.path).count == 1)
+    }
+
+    /// v0.2 files have thread numbers and no pins or resume agents; a layout may miss any key.
+    @Test func olderFilesStillLoad() throws {
+        let id = UUID()
+        let json = #"{"schemaVersion": 1, "threads": [{"id": "\#(id)", "number": 2, "folder": "~/lab/shoji", "group": 0, "order": 0, "resumeId": "s1"}], "layout": {"mode": "single", "openThreadIds": ["\#(id)"], "columnSplit": 0.5, "rowSplit": 0.5}}"#
+        try Data(json.utf8).write(to: url)
+        let file = try #require(ThreadFile.load(from: url))
+        #expect(file.threads.map(\.id) == [id])
+        #expect(file.threads.first?.resumeAgent == nil)
+        #expect(file.layout.pinnedThreadIds.isEmpty)
+
+        let layout = try JSONDecoder().decode(PaneLayout.self, from: Data(#"{"mode": "grid", "openThreadIds": []}"#.utf8))
+        #expect(layout.mode == .grid && layout.columnSplit == 0.5 && layout.pinnedThreadIds.isEmpty)
     }
 
     @Test func layoutDropsThreadsThatNoLongerExist() {

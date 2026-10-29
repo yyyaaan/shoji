@@ -1,15 +1,16 @@
 # Hachi — signed-off design specification
 
-[Visual reference and zoom checks](preview.html). Active coding work lives in [the handoff directory](../../handoffs/); remove addressed handoff content rather than accumulating completed notes.
+Final artwork and specification. Temporary comparison pages/screenshots have been removed. Active coding work lives in [the handoff directory](../../handoffs/); remove addressed handoff content rather than accumulating completed notes.
 
 ## Decisions
 
 - Quiet Balance C throughout, retaining the fuller ink sketch and relaxed ear tip.
 - Open Shoji app icon, face only: no paws or Torii.
-- Hachi appears only on needs-you agent cards, and in the window's top-left corner (under the window buttons) while any thread needs you, with the count; a click there opens the next waiting thread. Otherwise that corner stays empty. No other status, welcome illustration, terminal decoration or custom toolbar glyph.
+- Hachi appears on needs-you cards and optionally on agent turns finished unseen, using the existing Threads › Show Hachi When an Agent Finishes preference. The window corner counts the same `ThreadStore.wantsYou` set and opens the next waiting thread; otherwise it stays empty. No welcome illustration, terminal decoration or custom toolbar glyph.
 - Static artwork; existing status shapes, labels, badge, colors and click behavior remain authoritative.
+- Idle uses the separately approved [Torii status glyph](../status/README.md). Finished unseen keeps its done checkmark even when Hachi appears. The app icon remains Torii-free.
 
-No design selection remains open. Native integration and Icon Composer checks are tracked separately.
+The base character and app-icon choices remain settled. For optional Hachi on unseen completion, the user selected [Quiet finish A with a subtle ivory halo](../completion/README.md). The unseen-completion halo remains even when Hachi on finish is disabled. Native card implementation is tracked in the handoff directory.
 
 ## Production artwork
 
@@ -25,7 +26,7 @@ No design selection remains open. Native integration and Icon Composer checks ar
 
 The portrait is a four-tone contour trace of the approved source, retaining the eyes, muzzle and fur marks. Its white face is opaque; outside the silhouette is transparent. Use original colors, not template tint or inversion. Vector paths scale independently of display density; the PNG source is not the runtime export.
 
-The trace suppresses isolated speckles up to two source pixels and quantizes gray to four tones. Compare the reference pair in the preview if regenerating. Source and trace are not pixel-identical, and no character redesign is intended.
+The trace suppresses isolated speckles up to two source pixels and quantizes gray to four tones. Compare regenerated vectors against the approved PNG source. Source and trace are not pixel-identical, and no character redesign is intended.
 
 ## Geometry — points at 100% zoom
 
@@ -41,11 +42,11 @@ The trace suppresses isolated speckles up to two source pixels and quantizes gra
 
 Every chrome dimension and offset uses the existing `@Environment(\.zoom)` scale. Shelf portrait bounds at 100% are x=118…150, y=6…38. The title begins at y=40 in the current layout. The portrait moves left from the previous proposal so a **999** count badge can grow left without touching it. The ring and CLI kind retain the leading header area. Pixel density is independent of zoom; vector assets cover 75–200% at 1×/2× without a bitmap upscale.
 
-The preview measures portrait-vs-status, portrait-vs-badge and portrait-vs-title intersections for counts 1 and 999 at 75%, 100% and 200%. It also checks that the portrait stays inside its card. These are HTML geometry checks; native SwiftUI validation remains necessary.
+Design geometry checks covered portrait-vs-status, portrait-vs-badge and portrait-vs-title spacing for counts 1 and 999 at 75/100/200%, plus portrait containment. Native SwiftUI validation is the app agent's responsibility.
 
 ## Rendering and behavior
 
-- Condition: existing `activity.status == .needsYou` (only an agent raises it). No scraping, extra status source or state change.
+- Condition: existing `ThreadStore.wantsYou(id)`, which includes needs-you and optionally unseen agent completion. No scraping, extra status source or state change.
 - Attach the decorative overlay **before** `.glassEffect(...)` inside `GlassEffectContainer`.
 - `.allowsHitTesting(false)` and `.accessibilityHidden(true)` on the illustration. Preserve the existing card accessibility label and actions.
 - Static appearance is the supplied Reduce Motion version and default. If a later implementation adds an appearance fade, keep it subtle, disable it under Reduce Motion and do not repeat it on count/hook updates.
@@ -75,4 +76,4 @@ Export utilities in `tools/` use macOS CoreGraphics/ImageIO, Python's standard l
 
 2026-10-28: addressed app-side design constraints with genuine vector exports, separate icon layers and a badge-safe zoom-aware placement. Existing app code and `AGENTS.md` are untouched. Native integration and Icon Composer packaging are intentionally handed off. No commit or push.
 
-[Export and geometry evidence](validation.json): path-only production SVGs, no PDF image objects, and all six Retina-density HTML collision cases passed. Native checks are deliberately not reported as complete.
+Export checks confirmed path-only production SVGs and no PDF image objects; all six original Retina-density HTML collision cases passed. These source-art checks do not establish native behavior.

@@ -4,12 +4,20 @@ struct ThreadCard: View {
     static let width: CGFloat = 188
 
     let thread: ShojiThread
+    let name: String
     let activity: ThreadActivity
     var isFocused = false
+    /// Shown in a pane, so a click only moves focus there.
+    var isOnScreen = false
+    /// Needs you, or finished unseen with Hachi on finish (`ThreadStore.wantsYou`): shows Hachi.
+    var wantsYou = false
 
     @Environment(\.zoom) private var zoom
+    @Environment(\.colorSchemeContrast) private var contrast
 
     private var needsYou: Bool { activity.status == .needsYou }
+    /// Quiet ivory chrome and halo whatever the Hachi setting (docs/design/completion); orange stays with needs-you.
+    private var finishedUnseen: Bool { activity.status == .done && activity.isUnseen }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6 * zoom) {
@@ -25,7 +33,7 @@ struct ThreadCard: View {
                 Spacer(minLength: 0)
                 trailing
             }
-            Text(thread.displayTitle)
+            Text(name)
                 .font(.system(size: 15 * zoom, weight: .semibold))
                 .lineLimit(1)
             Text(subtitle)
@@ -39,8 +47,16 @@ struct ThreadCard: View {
         .padding(.vertical, 12 * zoom)
         .frame(width: Self.width * zoom, height: 104 * zoom, alignment: .topLeading)
         // Overlays must precede the glass: inside a GlassEffectContainer the glass draws over later ones.
+        .overlay(alignment: .bottom) {
+            if isOnScreen {
+                Capsule()
+                    .fill(.white.opacity(isFocused ? 0.7 : 0.4))
+                    .frame(width: 24 * zoom, height: 3 * zoom)
+                    .padding(.bottom, 6 * zoom)
+            }
+        }
         .overlay(alignment: .topTrailing) {
-            if needsYou {
+            if wantsYou {
                 HachiPortrait(size: 32 * zoom)
                     .padding(.top, 6 * zoom)
                     .padding(.trailing, 38 * zoom)
@@ -62,12 +78,22 @@ struct ThreadCard: View {
             }
         }
         .glassEffect(.regular.tint(tint).interactive(), in: .rect(cornerRadius: 18 * zoom))
+        // The halo comes from the card's shape behind the glass, so no text or glyph gets its own shadow.
+        .background {
+            if finishedUnseen {
+                RoundedRectangle(cornerRadius: 18 * zoom)
+                    .fill(Palette.done.opacity(0.07))
+                    .blur(radius: 8 * zoom)
+                    .allowsHitTesting(false)
+            }
+        }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel([thread.displayTitle, tag?.capitalized, activity.status.label, subtitle].compactMap(\.self).joined(separator: ", "))
+        .accessibilityLabel([name, tag?.capitalized, activity.status.label, finishedUnseen ? "not seen yet" : nil, subtitle, isOnScreen ? "in a pane" : nil].compactMap(\.self).joined(separator: ", "))
     }
 
     private var tint: Color {
         if needsYou { return Palette.needsYou.opacity(0.22) }
+        if finishedUnseen { return Palette.done.opacity(isFocused ? 0.1 : 0.03) }
         return .white.opacity(isFocused ? 0.1 : 0)
     }
 
@@ -97,14 +123,15 @@ struct ThreadCard: View {
     }
 
     private var subtitle: String {
-        if needsYou { return activity.detail ?? "Waiting for you" }
+        if activity.status == .needsYou { return activity.detail ?? "Waiting for you" }
         if activity.agent != nil, let title = activity.terminalTitle, !title.isEmpty { return title }
         if activity.agent == nil, let command = thread.command { return command }
         return thread.displayFolder
     }
 
     private var borderColor: Color {
-        switch activity.status {
+        if finishedUnseen { return Palette.done.opacity(contrast == .increased ? 0.6 : 0.36) }
+        return switch activity.status {
         case .needsYou: Palette.needsYouStroke.opacity(0.85)
         case .done: Palette.working.opacity(0.7)
         case .exited(code: let code) where code != 0: Palette.exited.opacity(0.6)
@@ -128,7 +155,7 @@ struct ThreadCard: View {
     let store = Mock.store()
     HStack(spacing: 10) {
         ForEach(store.threads) { thread in
-            ThreadCard(thread: thread, activity: store.activity(for: thread.id), isFocused: thread.id == Mock.threads[1].id)
+            ThreadCard(thread: thread, name: store.name(of: thread), activity: store.activity(for: thread.id), isFocused: thread.id == Mock.threads[1].id, isOnScreen: store.layout.visibleThreadIds.contains(thread.id), wantsYou: store.wantsYou(thread.id))
         }
     }
     .padding(24)

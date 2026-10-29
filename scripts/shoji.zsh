@@ -2,8 +2,8 @@
 # Your own dotfiles load exactly as usual; this hooks in on the first prompt, after your .zshrc.
 #
 # - Reports the folder and each command to Shoji (iTerm2-style OSC 1337 sequences, never output scraping).
-# - Gives `claude` Shoji's status hooks for this shell only (--settings; ~/.claude is untouched).
-# - After a relaunch, resumes the thread's Claude session, or leaves its last command at the prompt.
+# - Gives `claude` and `codex` Shoji's status hooks for this shell only (--settings, -c; ~/.claude and ~/.codex are untouched).
+# - After a relaunch, resumes the thread's agent session, or leaves its last command at the prompt.
 
 typeset -gi _shoji_running=0
 
@@ -27,8 +27,8 @@ _shoji_preexec() {
 
 _shoji_autorun() {
   add-zle-hook-widget -d line-init _shoji_autorun
-  BUFFER="claude --resume ${(q)SHOJI_RESUME_CLAUDE}"
-  unset SHOJI_RESUME_CLAUDE
+  BUFFER=$SHOJI_RESUME
+  unset SHOJI_RESUME
   zle accept-line
 }
 
@@ -38,8 +38,11 @@ _shoji_init() {
   if [[ -n ${SHOJI_CLAUDE_SETTINGS-} ]]; then
     claude() { command claude --settings "$SHOJI_CLAUDE_SETTINGS" "$@" }
   fi
+  if [[ -n ${SHOJI_CODEX_HOOKS-} ]]; then
+    codex() { command codex -c "$SHOJI_CODEX_HOOKS" "$@" }
+  fi
   _shoji_precmd
-  if [[ -n ${SHOJI_RESUME_CLAUDE-} ]]; then
+  if [[ -n ${SHOJI_RESUME-} ]]; then
     # Accepted like a typed line, so it lands in history and runs through preexec.
     autoload -Uz add-zle-hook-widget
     zle -N _shoji_autorun

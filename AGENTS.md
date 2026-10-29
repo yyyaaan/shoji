@@ -6,7 +6,7 @@ anywhere and run coding-agent CLIs (`claude`, `codex`) or long-running commands
 (`docker compose up`, `pnpm dev`, watchers) in it, and quit back to the prompt as usual.
 Shoji shows what's running and what needs the user.
 
-Mascot: **Hachi**, an Akita who appears on a card when that thread needs the user.
+Mascot: **Hachi**, an Akita who appears on a card, and in the window's top-left corner, when a thread needs the user.
 
 Words used everywhere (code, docs, chat): a **thread** is one hosted shell session, whatever runs in it; the **shelf** is the strip of **cards** across the top, one card per thread in the user's order, with **bars** splitting it into groups that mean whatever the user wants (no titles); a **pane** shows an open thread's terminal below the shelf; the **Hub** (planned) shows big cards.
 
@@ -32,23 +32,24 @@ its task list (Now / Next / Later / Done) when you finish a session.
 
 ```
 project.yml                 XcodeGen spec (source of truth for targets/settings)
-.github/workflows/          ci.yml (tests on PRs and main), release.yml (DMG on v* tags)
+.github/workflows/          ci.yml (tests on PRs and main, report comment on PRs), release.yml (merged version bump -> vX.Y.Z release + DMG)
 scripts/
   shoji-hook                hook client bundled into the app: env + JSON -> Shoji socket
-  shoji.zsh, zshenv         zsh integration bundled into the app (folder, commands, claude hooks, resume)
+  shoji.zsh, zshenv         zsh integration bundled into the app (folder, commands, claude/codex hooks, resume)
   package.sh                Release build -> build/Shoji-<version>.dmg (used by release.yml)
+  test-report.py            .xcresult -> Markdown test report (used by ci.yml)
 Sources/Shoji/
   App/                      app entry (ShojiApp: wiring, window), MainView + the top row's controls,
                             Shortcuts (catalog + menu commands)
   Threads/                  ShojiThread, ThreadStore, PaneLayout, launch building, Mock
   Terminal/                 TerminalBackend protocol, SwiftTerm implementation
                             (only place importing SwiftTerm), TerminalSessions
-  Status/                   StatusEvent, HookServer (socket listener), ClaudeHooks
-  UI/                       Theme (palette), StatusIcon, Backdrop, Zoom, ShortcutsSheet
+  Status/                   StatusEvent, HookServer (socket listener), ClaudeHooks, CodexHooks
+  UI/                       Theme (palette), StatusIcon, Backdrop, Zoom, ShortcutsSheet, RecentSwitch (⌃Tab)
   UI/Shelf/                 card shelf with bars between groups, context menu
-  UI/Panes/                 pane layouts (1 / 2 / 4) with drag splits, pane header, TerminalHost
+  UI/Panes/                 pane layouts (1 / 2 / 3 / 4) with drag splits, pane header, TerminalHost
   UI/Hub/                   Hub view big cards
-  UI/Hachi/                 HachiPortrait, Hachi.xcassets (vector PDF), AppIcon.icon
+  UI/Hachi/                 HachiPortrait, HachiCorner, Hachi.xcassets (vector PDF), AppIcon.icon
                             (Icon Composer; spec in docs/design/hachi/README.md)
 Tests/ShojiTests/           Swift Testing
 docs/design/                design reference as standalone HTML (open in a browser)
@@ -91,7 +92,7 @@ If a command here is wrong or missing, fix this file in the same change.
    main actor. UI never derives status by scraping output.
 6. **Never type into a terminal on the user's behalf** except through an explicit user
    action (e.g. Hub "Allow once"), sending exactly the keystroke the UI shows. Log it.
-   Relaunching is not typing: the zsh integration runs `claude --resume <id>` at a
+   Relaunching is not typing: the zsh integration runs `claude --resume <id>` or `codex resume <id>` at a
    restored shell's first prompt, and leaves any other last command at the prompt for
    the user to run with Return.
 7. **Hooks must never slow or break the CLIs.** `shoji-hook` exits 0 within ~100 ms
@@ -99,8 +100,10 @@ If a command here is wrong or missing, fix this file in the same change.
 8. **Don't touch the user's global CLI config** (`~/.claude`, `~/.codex`) without an
    explicit opt-in. Prefer per-launch injection (env vars, a settings file or config
    override passed at launch). Verify the current CLI flags before relying on them.
-9. **Thread file is versioned.** `threads.json` has a `schemaVersion`; add a migration
-   whenever the shape changes. Never silently drop a user's threads.
+9. **Thread file is versioned.** `threads.json` has a `schemaVersion`; bump it and add a
+   migration when an older or newer Shoji couldn't read the new shape. Additive optional
+   fields and removed fields that are simply ignored stay on the current version. Never
+   silently drop a user's threads.
 
 ## Terminal setup rules (known SwiftTerm pitfalls with Claude Code)
 
@@ -108,8 +111,8 @@ If a command here is wrong or missing, fix this file in the same change.
   environment match a normal terminal. A GUI app's own environment is not enough.
 - **zsh integration** (`scripts/shoji.zsh`): Shoji sets `ZDOTDIR` to a `.zshenv` that
   restores the user's and sources it, so their dotfiles load unchanged. On the first
-  prompt it adds precmd/preexec hooks and a `claude` function that passes `--settings`
-  with Shoji's hooks. Other shells run without it (no folder, command or Claude status).
+  prompt it adds precmd/preexec hooks and `claude` / `codex` functions that pass Shoji's
+  hooks (`--settings`, `-c hooks={…}`). Other shells run without it (no folder, command or agent status).
 - Set a **large scrollback** (default is only 500 lines; long agent replies overflow it).
 - **Shift+Enter** must insert a newline in Claude Code: if the CLI doesn't receive a
   distinct key, the view sends ESC + CR for Shift+Enter.
@@ -123,13 +126,13 @@ If a command here is wrong or missing, fix this file in the same change.
 
 - Swift 6 strict concurrency, no default actor isolation. `ThreadStore` and `TerminalSessions` are `@MainActor @Observable`.
 - The thread model is `ShojiThread`; `Thread` would shadow `Foundation.Thread`.
-- Tests use Swift Testing. The test host runs the app headless (no shells, no socket); keep `ShojiApp.isHeadless` in sync if launch wiring changes.
+- Tests use Swift Testing. The test host runs the app headless (no shells, no socket); keep `ShojiApp.isHeadless` in sync if launch wiring changes. Suites follow features (Activity, Shelf, Panes, Navigation, PaneLayout, StatusEvent, ThreadFile, ThreadLaunch); `Support.swift` has `store.send(_:to:)` and `numberedThreads(_:)`. Extend a scenario before adding a near-duplicate test.
 - To check UI by hand, launch the built app and use `screencapture -l <windowid>`. Press controls with System Events `perform action "AXPress"`; never send keystrokes, because macOS keeps the user's frontmost app and keystrokes go there.
 - **Zoom:** chrome metrics (font sizes, card and header sizes, radii, paddings) multiply by `@Environment(\.zoom)`, so ⌘+ / ⌘− scale the UI with the terminal text. New chrome must do the same.
 - **Shortcuts:** add new ones to the `Shortcut` catalog in `App/Shortcuts.swift`; the menu bar and the ⌘/ sheet both read it. Leave ⌘K free (planned quick jump; it also means "clear" in Mac terminals).
 - Child processes get `SHOJI_THREAD_ID` and `SHOJI_SOCKET` in their environment so
   hooks can report which thread they belong to. The zsh integration also reads
-  `SHOJI_ZSH`, `SHOJI_USER_ZDOTDIR`, `SHOJI_CLAUDE_SETTINGS`, `SHOJI_RESUME_CLAUDE` and
+  `SHOJI_ZSH`, `SHOJI_USER_ZDOTDIR`, `SHOJI_CLAUDE_SETTINGS`, `SHOJI_CODEX_HOOKS`, `SHOJI_RESUME` and
   `SHOJI_PREFILL`; inherited `SHOJI_*` variables are stripped first.
 - Status is never color-only: every state has its own icon shape plus a text label.
 - Every view gets a SwiftUI preview backed by mock threads (`Threads/Mock.swift`).
@@ -159,7 +162,7 @@ Status palette (dark UI):
 | Working | `#74B8FF` | spinning arc |
 | Needs you | `#FF9F43` | ring + "!", card glow, count badge, Hachi |
 | Done | `#E2E8F0` | check |
-| Idle | `#E2E8F0` at 55% | dashed ring |
+| Idle | `#E2E8F0` at 55% | Torii gate (`docs/design/status/`) |
 | Task running | `#4FD1B5` | pulsing dot |
 | Exited / error | `#FF8787` | ring + × |
 

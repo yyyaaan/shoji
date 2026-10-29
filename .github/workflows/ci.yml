@@ -14,6 +14,9 @@ jobs:
     # Xcode 27 image (public preview) matches the local toolchain; macos-26 only has Xcode 26.
     runs-on: xcode-27
     timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: write
     env:
       HOMEBREW_NO_AUTO_UPDATE: 1
     steps:
@@ -26,4 +29,22 @@ jobs:
           key: spm-${{ hashFiles('project.yml') }}
       - run: xcodegen generate
       - name: Test
-        run: xcodebuild -scheme Shoji -derivedDataPath build -destination 'platform=macOS' -skipPackagePluginValidation test
+        run: xcodebuild -scheme Shoji -derivedDataPath build -destination 'platform=macOS' -skipPackagePluginValidation -resultBundlePath build/TestResults.xcresult test
+      - name: Test report
+        if: ${{ !cancelled() && hashFiles('build/TestResults.xcresult/Info.plist') != '' }}
+        run: |
+          scripts/test-report.py build/TestResults.xcresult > build/test-report.md
+          cat build/test-report.md >> "$GITHUB_STEP_SUMMARY"
+      # One comment per PR, updated on every push. Fork PRs get a read-only token, so they only get the run summary.
+      - name: Comment on the pull request
+        if: ${{ !cancelled() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && hashFiles('build/test-report.md') != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMENTS: repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments
+        run: |
+          id=$(gh api "$COMMENTS" --paginate --jq '.[] | select(.body | startswith("<!-- shoji-test-report -->")) | .id' | head -n 1)
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/${{ github.repository }}/issues/comments/$id" -F body=@build/test-report.md > /dev/null
+          else
+            gh api -X POST "$COMMENTS" -F body=@build/test-report.md > /dev/null
+          fi
