@@ -38,6 +38,8 @@ struct ThreadLaunchTests {
 
         let codex = ShojiThread(resumeId: "019a-c0de", command: "codex --full-auto").launch(in: context)
         #expect(codex.environment["SHOJI_RESUME"] == "codex resume 019a-c0de")
+        let restarted = ShojiThread(resumeId: "019a-c0de", resumeAgent: .codex).launch(in: context)
+        #expect(restarted.environment["SHOJI_RESUME"] == "codex resume 019a-c0de")
         let alias = ShojiThread(resumeId: "abc", command: "cc").launch(in: context)
         #expect(alias.environment["SHOJI_RESUME"] == "claude --resume abc")
 

@@ -12,8 +12,10 @@ struct ShojiThread: Identifiable, Codable, Hashable, Sendable {
     /// Cards between two bars on the shelf share a group; the numbers only order groups and cards.
     var group: Int
     var order: Int
-    /// The Claude session running in the thread; a relaunch resumes it.
+    /// The agent session running in the thread; a relaunch resumes it with `resumeAgent`'s CLI.
     var resumeId: String?
+    /// Kept apart from `command`, which a relaunch or a dead shell clears while the session stays resumable.
+    var resumeAgent: Agent?
     /// The command running when Shoji last saved; a relaunch leaves it at the prompt, ready to run again.
     var command: String?
 
@@ -24,6 +26,7 @@ struct ShojiThread: Identifiable, Codable, Hashable, Sendable {
         group: Int = 0,
         order: Int = 0,
         resumeId: String? = nil,
+        resumeAgent: Agent? = nil,
         command: String? = nil
     ) {
         self.id = id
@@ -32,6 +35,7 @@ struct ShojiThread: Identifiable, Codable, Hashable, Sendable {
         self.group = group
         self.order = order
         self.resumeId = resumeId
+        self.resumeAgent = resumeAgent
         self.command = command
     }
 

@@ -96,11 +96,14 @@ struct ShojiCommands: Commands {
             button(.nextNeedingYou) { if !store.openNextNeedingYou() { NSSound.beep() } }
             Toggle("Show Hachi When an Agent Finishes", isOn: Bindable(store).hachiOnFinish)
             // From the keyboard, RecentSwitchKeys takes these first so ⌃ can be held; a click switches at once.
+            // RecentSwitchKeys lets ⌃Tab through while a sheet or alert is up, so never switch behind one.
             button(.recentThread) {
+                guard NSApp.keyWindow?.sheetParent == nil else { return }
                 store.stepRecent(by: 1)
                 store.finishRecentSwitch()
             }
             button(.recentThreadReversed) {
+                guard NSApp.keyWindow?.sheetParent == nil else { return }
                 store.stepRecent(by: -1)
                 store.finishRecentSwitch()
             }

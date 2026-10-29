@@ -163,10 +163,16 @@ struct ThreadStoreTests {
         let names = { [a, b].map { store.thread($0).map(store.name) } }
         #expect(names() == ["~", "~ 2"])
 
-        // Whoever arrives in a folder later carries the number.
-        send(.directory(NSHomeDirectory() + "/lab/shoji"), to: a, in: store)
-        #expect(names() == ["shoji", "~"])
-        send(.directory("/tmp/shoji"), to: b, in: store)
+        // The newer thread carries the number, whichever got there first.
+        send(.directory(NSHomeDirectory() + "/lab/shoji"), to: b, in: store)
+        #expect(names() == ["~", "shoji"])
+        send(.directory("/tmp/shoji"), to: a, in: store)
+        #expect(names() == ["shoji", "shoji 2"])
+
+        // A cd into a subfolder and back changes nothing in the end.
+        send(.directory("/tmp/shoji/Sources"), to: a, in: store)
+        #expect(names() == ["Sources", "shoji"])
+        send(.directory("/tmp/shoji"), to: a, in: store)
         #expect(names() == ["shoji", "shoji 2"])
         store.move(b, by: -1)
         #expect(names() == ["shoji", "shoji 2"])
@@ -267,6 +273,13 @@ struct ThreadStoreTests {
         send(.needsYou(message: nil), to: ids[1], in: store)
         store.open(ids[2])
         #expect(store.layout.panes == [ids[2], ids[1]])
+
+        // A pane Hachi points at for a finished turn is spared too.
+        let finished = ThreadStore(threads: threads, layout: PaneLayout(mode: .twoColumns, openThreadIds: [ids[0], ids[1]]))
+        send(.working(sessionId: nil), to: ids[1], in: finished)
+        send(.finished, to: ids[1], in: finished)
+        finished.open(ids[3])
+        #expect(finished.layout.panes == [ids[3], ids[1]])
     }
 
     @Test func switchingLayoutsKeepsYourPaneAndFillsNewOnes() {
@@ -365,6 +378,12 @@ struct ThreadStoreTests {
         store.open(ids[1])
         #expect(store.layout.panes == [ids[2], ids[1], ids[0]])
         #expect(store.focusRequest == ids[1])
+
+        // Off screen, it still comes to your pane rather than a free one; yours moves aside.
+        let two = ThreadStore(threads: threads, layout: PaneLayout(mode: .twoColumns, openThreadIds: [ids[0]]))
+        two.focus(ids[0])
+        two.bringHere(ids[2])
+        #expect(two.layout.panes == [ids[2], ids[0]])
     }
 
     @Test func codexTurnLifecycleInsideTheShell() {
@@ -376,11 +395,17 @@ struct ThreadStoreTests {
         send(.working(sessionId: "c1"), to: first.id, in: store, at: start + 2)
         #expect(store.activity(for: first.id).status == .working)
         #expect(store.thread(first.id)?.resumeId == "c1")
+        #expect(store.thread(first.id)?.resumeAgent == .codex)
         #expect(store.activity(for: first.id).agent == .codex)
         send(.needsYou(message: "Allow Bash: ls"), to: first.id, in: store, at: start + 3)
         #expect(store.activity(for: first.id).detail == "Allow Bash: ls")
         send(.finished, to: first.id, in: store, at: start + 4)
         #expect(store.activity(for: first.id).status == .done)
+
+        // A dead shell forgets the command but keeps the session and its CLI for Restart.
+        send(.exited(code: 1), to: first.id, in: store, at: start + 5)
+        #expect(store.thread(first.id)?.command == nil)
+        #expect(store.thread(first.id)?.resumeId == "c1" && store.thread(first.id)?.resumeAgent == .codex)
     }
 
     @Test func aTurnFinishedOutOfSightWantsYouUntilSeen() {

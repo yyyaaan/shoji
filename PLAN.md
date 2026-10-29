@@ -4,7 +4,7 @@
 
 - **Last session (pane-control, PR #3, releases v0.3.0):** panes are under the user's control. A card click goes to its thread (focus if on screen, else it opens in the pane you're in; a line under the card marks threads in panes); ⌥-click or Show in This Pane brings it to your pane, swapping if needed; drop a card on a pane; pin panes (⇧⌘P); layout switches keep panes in place (no re-hosted terminals), keep the focused and pinned ones, and fill new panes; minimize is gone. ⌃Tab / ⌃⇧Tab switches recent threads like ⌘Tab. Names carry a number only when two would read the same. Codex reports status and resumes through its own hooks, like Claude (tried live by the user, `/hooks` trust included). Idle shows the Torii gate. A turn that finishes out of sight (not the focused pane, or Shoji in the background) is unseen and calls Hachi like needs-you, keeping its tick; Threads › Show Hachi When an Agent Finishes (on by default) turns that off. 64 tests pass.
 - **Next up:** after the merge, `release.yml` publishes v0.3.0; install it and trust its Codex hooks once (a new path). Then Tasks › Next, with macOS notifications as the likely v0.4 headline.
-- **Design update (idle Torii):** vector assets and zoom preview ready; native integration handed to app through `docs/handoffs/`.
+- **Design update (completion):** optional Hachi-on-finish visual alternatives are in `docs/design/completion/`; no new treatment selected and no app changes from this design session.
 - **Blockers:** none
 
 _Agents: update this section at the end of every session (what changed, what's next), tick or move tasks, and add new wishes to the right bucket._
@@ -50,7 +50,7 @@ _Agents: update this section at the end of every session (what changed, what's n
 - **Ad-hoc signatures change every build**, so macOS privacy grants (TCC, e.g. Files & Folders prompts that child CLIs trigger in Shoji's name) reset after each update.
 - **Icon Composer documents:** XcodeGen adds `AppIcon.icon` as one `wrapper.icon` file, and actool compiles it to `AppIcon.icns` + `Assets.car` with `ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon`. Check renders with `ictool <file>.icon --export-image --platform macOS --rendition Default|Dark|ClearLight|TintedDark …`; in `icon.json`, `groups` and `layers` list front to back.
 - **Visual checks of SwiftUI views without touching the live app:** render them with `ImageRenderer` from a throwaway test (the test host has the asset catalog). Glass renders flat there, so confirm glass ordering in the running app.
-- **Codex hooks need the user's trust once.** Codex skips any hook whose exact definition hasn't been trusted in `/hooks` (keyed by its hash), so the first Codex run in Shoji shows no status until the user trusts Shoji's hooks; Debug and installed builds have different hook paths, so each is trusted once. Keep `CodexHooks` stable: changing events, command or timeout asks for trust again. Shoji never passes `--dangerously-bypass-hook-trust`. `codex debug prompt-input -c '…'` validates an override without a model call (an unknown hook type fails; an unknown event is ignored). Unverified: whether the `-c` hooks add to hooks in the user's own `config.toml` or replace them (docs say layers add up).
+- **Codex hooks need the user's trust once.** Codex skips any hook whose exact definition hasn't been trusted in `/hooks` (keyed by its hash), so the first Codex run in Shoji shows no status until the user trusts Shoji's hooks; Debug and installed builds have different hook paths, so each is trusted once. Keep `CodexHooks` stable: changing events, command or timeout asks for trust again. Shoji never passes `--dangerously-bypass-hook-trust`. `codex debug prompt-input -c '…'` validates an override without a model call (an unknown hook type fails; an unknown event is ignored). The `-c` hooks add to the user's own hooks, never replace them: CLI overrides are their own config layer (`SessionFlags`), and Codex reads hooks from each layer separately (`codex-rs/hooks/src/engine/discovery.rs`).
 - **Codex `Stop` / `Interrupt` hooks expect JSON on stdout** when they print anything; `shoji-hook` prints nothing, which counts as success.
 - **Typed `claude` / `codex` only report status through the zsh integration.** The functions add `--settings` / `-c`; an alias still works (aliases expand first), but a script or other shell calling the binary directly gets no hooks. bash and fish have no integration yet.
 - **SwiftTerm's `registerOscHandler` isn't public** (the `Terminal` is internal to the view). Shell reports therefore use `OSC 1337 ; ShojiEvent=<kind>;<value>`: SwiftTerm hands unknown 1337 keys to `iTermContent`, in order, on the main thread.
@@ -86,7 +86,7 @@ private to Yan's account; agents can't open it, so the HTML files are what they 
 **Threads screen (Option B)**
 - No toolbar row (user's call): the title bar is hidden and the shelf takes the top. Its left end holds the window buttons and Hachi's corner below them (empty; Hachi and a count while anything needs you, click opens it), its right end the layout switcher; new threads come from ⌘N and shortcuts from ⌘/ or the Help menu, so neither has a button. The window drags by its background.
 - Shelf of glass cards across the top in the user's order, split into groups by plain bars (no titles, no fixed meaning; user's call); scrolls sideways when cards overflow.
-- Card: status icon, a tag for what runs (CLAUDE / CODEX / the command's name, none at an idle prompt), name (the folder's name unless renamed; a number only when two unnamed threads would read the same, like "shoji 2", given to the one that arrived there later), one-line status, command or folder, elapsed time.
+- Card: status icon, a tag for what runs (CLAUDE / CODEX / the command's name, none at an idle prompt), name (the folder's name unless renamed; a number only when two unnamed threads would read the same, like "shoji 2", given to the newer thread, so a `cd` into a subfolder and back changes nothing), one-line status, command or folder, elapsed time.
 - Needs-you card: orange border + glow, count badge, Hachi. A finished turn you haven't seen (Zed's unread dot: it ended outside the focused pane, or while Shoji was in the background) gets the same card, Hachi corner and ⌘J, keeping its tick and without a count; focusing it or returning to Shoji on it clears it. Threads › Show Hachi When an Agent Finishes (default on, remembered) leaves only the quiet tick.
 - Drag a card onto another to put it before or after it (by which half), joining that card's group; ⌘N plus a drag replaces any per-group + button.
 - Card context menu: Show in This Pane, Rename, Move Left / Right (the non-drag path, also for VoiceOver), Add / Remove Bar Before, Restart (shell ended), Close Thread. Later: open folder in Zed.
@@ -133,7 +133,8 @@ private to Yan's account; agents can't open it, so the HTML files are what they 
       "group": 0,
       "order": 0,
       "command": "claude",
-      "resumeId": "abc123…"
+      "resumeId": "abc123…",
+      "resumeAgent": "claude"
     },
     {
       "id": "9A2E…",
@@ -147,7 +148,7 @@ private to Yan's account; agents can't open it, so the HTML files are what they 
 }
 ```
 
-`title` is optional (the card shows the folder's name), `folder` follows the shell's working directory, and `group` / `order` place the card (a bar between groups). The array is in order of arrival in the current folder, which decides who carries the number among same-named threads. Files from v0.2 still load: their `number` is ignored, and every `layout` key may be missing (`pinnedThreadIds` is newer). `command` is what was running at the last save and `resumeId` the agent session in it: a relaunch runs `claude --resume <id>` or `codex resume <id>` at the first prompt, or leaves `command` at the prompt for Return.
+`title` is optional (the card shows the folder's name), `folder` follows the shell's working directory, and `group` / `order` place the card (a bar between groups). The array is in creation order, which decides who carries the number among same-named threads (the newer one). Files from v0.2 still load: their `number` is ignored, and every `layout` key may be missing (`pinnedThreadIds` is newer). `command` is what was running at the last save and `resumeId` the agent session in it, with `resumeAgent` naming its CLI (kept when a relaunch or a dead shell clears `command`; older files fall back to `command`, then Claude): a relaunch runs `claude --resume <id>` or `codex resume <id>` at the first prompt, or leaves `command` at the prompt for Return.
 
 Runtime-only (not persisted): status, last activity, unread count, agent, terminal view.
 
@@ -183,6 +184,7 @@ Priorities shift with the user's wishes; reorder freely. Keep items one line, sm
 - [ ] Open folder in Zed from the card context menu
 - [ ] bash (and maybe fish) integration, so threads in those shells get folder, command and Claude status
 - [ ] macOS notification for needs-you while Shoji is in the background
+- [ ] Give card drags their own drag type: panes accept `.plainText`, so text dragged in from another app highlights a pane and is accepted as a drop that does nothing (review finding; needs a live drag test, so not in v0.3)
 - [ ] opencode status and resume (`opencode -s <id>`). Not hook-compatible with Claude / Codex: it takes in-process JS plugins with events (`session.status`, `permission.asked`, `session.idle`). Likely a small Shoji plugin loaded per launch through `OPENCODE_CONFIG_DIR`, forwarding to `shoji-hook`; but v2 runs plugins in a shared background service, so telling threads apart probably needs `--standalone` per thread. Prototype first
 
 ### Later
@@ -197,7 +199,8 @@ Priorities shift with the user's wishes; reorder freely. Keep items one line, sm
 - [ ] Developer ID signing and notarization (needs a paid Apple Developer account)
 
 ### Done
-- Idle Torii design: SVG, vector PDF/template image set, status mapping and 75/100/200% size previews at 1×/2×; native integration remains open
+- Completion design study: current orange treatment compared with quiet ivory chrome, an ink-circle check and a small shoji mark; interactive preview, selection still open
+- Idle Torii design: SVG, vector PDF/template image set, status mapping and 75/100/200% size previews at 1×/2×
 - Build: XcodeGen project, SwiftTerm 1.99.1 pinned, CI on GitHub (`xcode-27` runner), release workflow and `scripts/package.sh` (universal ad-hoc DMG)
 - Terminals: SwiftTerm panes (Metal) in glass cards, login-shell launch, 10k scrollback, Shift+Return fallback, hide / show without redraw glitches
 - Status: `shoji-hook` → socket → `ThreadStore`, per-launch Claude hooks, terminal title / bell / exit; working / needs you / done / idle with elapsed time and needs-you count; resume id captured
@@ -223,6 +226,7 @@ Run by hand with Claude Code in Shoji; re-run after every SwiftTerm bump (AGENTS
 
 ## Open questions
 
+- **Completion presentation:** retain current orange unseen-finish chrome, or choose A (quiet ivory), B (ink-circle check) or C (shoji corner mark)? See `docs/design/completion/preview.html`; design recommends A first.
 - **Allow once:** allow from the Hub/toast for any prompt, or only for commands the
   user has approved before? Default proposal: only when the prompt text is visible
   on the card, and send exactly the shown keystroke.
@@ -237,6 +241,7 @@ Run by hand with Claude Code in Shoji; re-run after every SwiftTerm bump (AGENTS
 - **Stable local signing identity:** a self-signed code-signing certificate (kept as a CI secret) would keep TCC grants across updates without a paid account. Worth it before daily use, or wait for Developer ID?
 - **Multiple windows:** a thread's terminal can be on screen in only one window at a time (one SwiftTerm view per thread). When a second window opens it, move it there, or show only its card?
 - **Sidebar window:** clicking a card opens the thread in a full window, or expands it in place?
+- **Invariant 9 wording:** v0.3 changed the `threads.json` shape (dropped `number`; added `pinnedThreadIds`, `resumeAgent`) without bumping `schemaVersion`, because both directions still read it, and a bump would make an older Shoji set the whole file aside. Proposal: bump (and migrate) only when an older or newer Shoji couldn't read the file; additive optional fields and ignored removed fields stay on the current version. Needs the user's OK to reword the invariant.
 - **Quitting with live agents:** quitting closes every PTY (agents get SIGHUP). Confirm before quit while something is Working / Needs you?
 
 ## Decisions

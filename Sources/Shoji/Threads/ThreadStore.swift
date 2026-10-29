@@ -67,12 +67,7 @@ final class ThreadStore {
         case .directory(let path):
             activity.isIntegrated = true
             let folder = (path as NSString).abbreviatingWithTildeInPath
-            if threads[index].folder != folder {
-                // Last in line: of two threads in one folder, the one that arrived later carries the number.
-                var thread = threads.remove(at: index)
-                thread.folder = folder
-                threads.append(thread)
-            }
+            if threads[index].folder != folder { threads[index].folder = folder }
         case .commandStarted(let line):
             activity.isIntegrated = true
             threads[index].command = line
@@ -83,18 +78,22 @@ final class ThreadStore {
         case .commandFinished(let code):
             // Whatever ran has ended, an agent included, so there is nothing left to resume.
             if threads[index].command != nil { threads[index].command = nil }
-            if threads[index].resumeId != nil { threads[index].resumeId = nil }
+            if threads[index].resumeId != nil {
+                threads[index].resumeId = nil
+                threads[index].resumeAgent = nil
+            }
             activity.agent = nil
             activity.detail = nil
             activity.attention = 0
             // 130 is Ctrl-C: stopping a dev server on purpose isn't an error.
             activity.transition(to: code == 0 || code == 130 ? .idle : .exited(code: code), at: now)
         case .working(let sessionId):
-            // Prompt and tool hooks only come from a session with content, so its id is safe to resume.
-            if let sessionId, threads[index].resumeId != sessionId {
-                threads[index].resumeId = sessionId
-            }
             activity.agent = activity.agent ?? .claude
+            // Prompt and tool hooks only come from a session with content, so its id is safe to resume.
+            if let sessionId, threads[index].resumeId != sessionId || threads[index].resumeAgent != activity.agent {
+                threads[index].resumeId = sessionId
+                threads[index].resumeAgent = activity.agent
+            }
             activity.transition(to: .working, at: now)
             activity.detail = nil
         case .needsYou(let message):
@@ -173,7 +172,7 @@ final class ThreadStore {
     }
 
     /// The user's name for the thread, else its folder's name. Unnamed threads in folders of the same name
-    /// are numbered in the order they got there: "shoji", "shoji 2".
+    /// are numbered oldest first ("shoji", "shoji 2"), so a `cd` into a subfolder and back changes nothing.
     func name(of thread: ShojiThread) -> String {
         if let title = thread.title { return title }
         let twins = threads.filter { $0.title == nil && $0.folderName == thread.folderName }
@@ -319,7 +318,7 @@ final class ThreadStore {
     func open(_ id: UUID) {
         let unpinned = layout.panes.filter { !layout.pinnedThreadIds.contains($0) }
         let candidates = unpinned.isEmpty ? layout.panes : unpinned
-        let notWaiting = candidates.filter { activity(for: $0).status != .needsYou }
+        let notWaiting = candidates.filter { !wantsYou($0) }
         let replaced = candidates.first { $0 == focusedThreadId }
             ?? (notWaiting.isEmpty ? candidates : notWaiting).reversed().max { recency($0) < recency($1) }
         layout.show(id, replacing: replaced)
@@ -329,9 +328,7 @@ final class ThreadStore {
     /// ⌥-click on a card, or Show in This Pane: the thread comes to the pane you're in, trading places when
     /// it's on screen elsewhere. A plain click uses `open` and goes to the thread where it is.
     func bringHere(_ id: UUID) {
-        guard let focusedThreadId, focusedThreadId != id, layout.panes.contains(focusedThreadId), layout.panes.contains(id) else {
-            return open(id)
-        }
+        guard let focusedThreadId, focusedThreadId != id, layout.panes.contains(focusedThreadId) else { return open(id) }
         show(id, inPaneOf: focusedThreadId)
     }
 

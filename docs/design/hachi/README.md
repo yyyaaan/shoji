@@ -6,11 +6,11 @@
 
 - Quiet Balance C throughout, retaining the fuller ink sketch and relaxed ear tip.
 - Open Shoji app icon, face only: no paws or Torii.
-- Hachi appears only on needs-you agent cards, and in the window's top-left corner (under the window buttons) while any thread needs you, with the count; a click there opens the next waiting thread. Otherwise that corner stays empty. No other status, welcome illustration, terminal decoration or custom toolbar glyph.
+- Hachi appears on needs-you cards and optionally on agent turns finished unseen, using the existing Threads › Show Hachi When an Agent Finishes preference. The window corner counts the same `ThreadStore.wantsYou` set and opens the next waiting thread; otherwise it stays empty. No welcome illustration, terminal decoration or custom toolbar glyph.
 - Static artwork; existing status shapes, labels, badge, colors and click behavior remain authoritative.
-- Idle now uses the separately approved [Torii status glyph](../status/README.md). Hachi stays needs-you only, and the app icon remains Torii-free.
+- Idle uses the separately approved [Torii status glyph](../status/README.md). Finished unseen keeps its done checkmark even when Hachi appears. The app icon remains Torii-free.
 
-No design selection remains open. Native integration and Icon Composer checks are tracked separately.
+The base character and app-icon choices remain settled. The user has since added optional Hachi on unseen completion; [completion chrome alternatives](../completion/README.md) are exploratory and have not been selected.
 
 ## Production artwork
 
@@ -46,7 +46,7 @@ The preview measures portrait-vs-status, portrait-vs-badge and portrait-vs-title
 
 ## Rendering and behavior
 
-- Condition: existing `activity.status == .needsYou` (only an agent raises it). No scraping, extra status source or state change.
+- Condition: existing `ThreadStore.wantsYou(id)`, which includes needs-you and optionally unseen agent completion. No scraping, extra status source or state change.
 - Attach the decorative overlay **before** `.glassEffect(...)` inside `GlassEffectContainer`.
 - `.allowsHitTesting(false)` and `.accessibilityHidden(true)` on the illustration. Preserve the existing card accessibility label and actions.
 - Static appearance is the supplied Reduce Motion version and default. If a later implementation adds an appearance fade, keep it subtle, disable it under Reduce Motion and do not repeat it on count/hook updates.

@@ -87,8 +87,8 @@ extension ShojiThread {
             environment["SHOJI_CODEX_HOOKS"] = CodexHooks.configOverride(hookCommand: hookScript.shellQuoted)
         }
         if let resumeId {
-            // The agent's own resume; a session started through an alias counts as Claude's.
-            environment["SHOJI_RESUME"] = Agent(commandLine: command ?? "") == .codex
+            // The agent's own resume; files from before `resumeAgent` fall back to the saved command, then Claude.
+            environment["SHOJI_RESUME"] = (resumeAgent ?? Agent(commandLine: command ?? "")) == .codex
                 ? "codex resume \(resumeId.shellQuoted)"
                 : "claude --resume \(resumeId.shellQuoted)"
         } else if let command {

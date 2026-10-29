@@ -19,7 +19,7 @@ enum ThreadStatus: Equatable, Sendable {
 }
 
 /// Agent CLIs Shoji recognises when they run in a thread.
-enum Agent: String, Sendable {
+enum Agent: String, Codable, Sendable {
     case claude, codex
 
     /// From the command's first word, so `claude --model opus` counts.

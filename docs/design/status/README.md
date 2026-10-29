@@ -8,11 +8,11 @@
 |---|---|
 | Idle | Static Torii gate, replacing the dashed circle |
 | Working | Existing blue spinning arc |
-| Done | Existing checkmark; also keep the successful-exit treatment |
+| Done | Existing checkmark; optional Hachi on unseen agent completion follows the current app preference |
 | Needs you | Existing orange ring/exclamation plus the approved Hachi portrait |
 | Running / error | Existing pulsing dot / error glyph |
 
-Torii means an idle prompt, not an agent turn finishing. Hachi continues to mean attention/input is needed; it does not become a general ready/done marker. Status labels and accessibility names retain their existing meanings. No status source or model change is required.
+Torii means an idle prompt, not an agent turn finishing. Hachi marks attention/input and, under the user's optional setting, an agent turn completed unseen. Done still keeps its checkmark; it does not become the orange exclamation state. Status labels and accessibility names retain their existing meanings. No status source or model change is required.
 
 This Torii is a UI status glyph only. The signed-off face-only Open Shoji app icon stays without Torii. Toolbar, pane action and shortcut glyphs remain SF Symbols.
 
