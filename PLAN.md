@@ -5,7 +5,7 @@ The current state of Shoji: what's next, what to watch out for, and why things a
 ## Status
 
 - **Released:** v0.4.1. **In review (`side-by-side`, v0.5.0):** Room light (80%), the compact form, a thread dropdown in every pane header, ⌘ card numbers, terminal text down to 50%, notifications only while Shoji is out of sight. 73 tests.
-- **Next up:** the user merges the PR (publishing v0.5.0) and installs it, then the checks in Now; the Hub after that.
+- **Next up:** the user merges the PR (publishing v0.5.0) and installs it, then the checks in Now; the next session builds the Hub.
 - **Blockers:** none. Design's review of the pane chrome is open (`docs/handoffs/`).
 
 _Agents: update Status and Tasks at the end of every session; record decisions and gotchas as they stand now, not how they got there._
@@ -24,17 +24,17 @@ Priorities follow the user's wishes. Keep items one line, small enough for one P
 - [ ] Not yet seen: a screenshot dragged from Finder onto Claude Code, Open in VS Code / Zed, Codex resuming after quit and reopen, the go-to glow, ⌘Q's busy list, the About panel
 
 ### Next
-- [ ] Design: review the v0.4 and v0.5 chrome (two app-to-design handoffs)
+- [ ] Design: review the v0.4 chrome (app-to-design handoff)
 
 ### Later
 - [ ] Hub view (see Product › Hub)
 - [ ] "Allow once" from the Hub (see Open questions)
-- [ ] Devcontainer command presets
 - [ ] Developer ID signing and notarization (needs a paid Apple Developer account)
 
 ### Parked
 Only when the user asks.
 - [ ] Workspaces (named sets of threads): shelf bars already group threads
+- [ ] Devcontainers and SSH: presets, and status from agents that can't reach the host socket (a localhost TCP listener with a per-launch token via `host.docker.internal`, or a mounted socket)
 - [ ] bash / fish integration: zsh is macOS's default and the user's shell
 - [ ] opencode status and resume: no Claude-style hooks; it takes in-process JS plugins (`session.status`, `permission.asked`, `session.idle`), likely a small plugin loaded through `OPENCODE_CONFIG_DIR` forwarding to `shoji-hook`, with `--standalone` per thread to tell threads apart. Prototype first
 
@@ -168,7 +168,6 @@ Run by hand with Claude Code in Shoji after every SwiftTerm bump (AGENTS invaria
 ## Open questions
 
 - **Allow once:** for any prompt, or only commands approved before? Proposal: only when the prompt is visible on the card, sending exactly the shown keystroke.
-- **Devcontainers:** hooks inside a container can't reach a host Unix socket. A localhost TCP listener with a per-launch token via `host.docker.internal`, or mount the socket?
 - **Performance:** how many live terminal views before it matters? Keep only SwiftTerm's headless `Terminal` for hidden threads?
 - **Task restart:** SIGINT then relaunch, or SIGTERM with a timeout?
 - **Git branch on Hub cards:** read `.git/HEAD` or run `git`?
