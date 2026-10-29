@@ -122,13 +122,6 @@ struct PaneView: View {
                 .foregroundStyle(.white.opacity(0.72))
                 .lineLimit(1)
                 .truncationMode(.head)
-            if let steps = thread.textSteps {
-                Text(TextZoom.level(textZoom, steps: steps), format: .percent.precision(.fractionLength(0)))
-                    .font(.system(size: 11 * zoom, weight: .medium))
-                    .monospacedDigit()
-                    .foregroundStyle(.white.opacity(0.55))
-                    .help("This pane's text size; ⌥⌘0 puts it back in line with the others")
-            }
             Spacer(minLength: 8)
             if !store.activity(for: thread.id).isAlive {
                 Button("Restart", systemImage: "arrow.clockwise") {

@@ -43,6 +43,8 @@ final class ThreadStore {
     var closeRequest: UUID?
     /// ⌃Tab in progress (⌃ still held).
     private(set) var recentSwitch: RecentSwitch?
+    /// ⌘ held on its own: the first nine cards show their ⌘1–9 number.
+    var showsCardNumbers = false
     /// Threads › Show Hachi When an Agent Finishes: an unseen finished turn wants you too, not just its quiet tick.
     var hachiOnFinish = true
     /// False while another app is in front, when even the focused pane is out of sight.

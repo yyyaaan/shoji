@@ -23,7 +23,7 @@ struct Shortcut: Identifiable {
 extension Shortcut {
     static let newThread = Shortcut(title: "New Thread", key: "n")
     static let closeThread = Shortcut(title: "Close Thread", key: "w")
-    static let jumpToThread = Shortcut(title: "Jump to Thread 1–9", key: "1", keyLabel: "1–9")
+    static let jumpToThread = Shortcut(title: "Jump to Thread 1–9", key: "1", keyLabel: "1–9", hint: "hold ⌘ to see them")
     static let nextNeedingYou = Shortcut(title: "Next Thread That Needs You", key: "j")
     static let openInVSCode = Shortcut(title: "Open in VS Code", key: "e", modifiers: [.command, .option, .shift])
     static let openInZed = Shortcut(title: "Open in Zed", key: "e", modifiers: [.command, .shift])

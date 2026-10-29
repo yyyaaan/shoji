@@ -66,7 +66,8 @@ struct NavigationTests {
         #expect(TextZoom.step(1, by: 1) == 1.1)
         #expect(TextZoom.step(1, by: -1) == 0.85)
         #expect(TextZoom.step(2, by: 1) == 2)
-        #expect(TextZoom.step(0.75, by: -1) == 0.75)
+        #expect(TextZoom.step(0.75, by: -1) == 0.6)
+        #expect(TextZoom.step(0.5, by: -1) == 0.5)
         #expect(TextZoom.step(1.17, by: 1) == 1.25)
         #expect(TextZoom.step(1.17, by: -1) == 1.1)
 
@@ -86,8 +87,8 @@ struct NavigationTests {
         #expect(TextZoom.level(0.85, steps: store.thread(ids[0])?.textSteps ?? 0) == 0.75)
 
         // At the smallest level there's nowhere to go, so the steps don't pile up unseen.
-        store.stepTextSize(of: ids[0], by: -1, global: 0.85)
-        store.stepTextSize(of: ids[0], by: -1, global: 0.85)
+        store.stepTextSize(of: ids[0], by: -1, global: 0.6)
+        store.stepTextSize(of: ids[0], by: -1, global: 0.6)
         #expect(store.thread(ids[0])?.textSteps == -1)
 
         store.stepTextSize(of: ids[0], by: nil, global: 1)

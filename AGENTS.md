@@ -32,7 +32,7 @@ Sources/Shoji/
   Terminal/                 TerminalBackend protocol, SwiftTerm implementation (only place importing SwiftTerm), TerminalSessions
   Status/                   StatusEvent, HookServer (socket listener), ClaudeHooks, CodexHooks
   UI/                       Theme (palette), StatusIcon, Backdrop, Zoom (text and interface sizes), ShortcutsSheet, RecentSwitch (⌃Tab)
-  UI/Shelf/                 card shelf, bars, card menu
+  UI/Shelf/                 card shelf, bars, card menu, ⌘ card numbers
   UI/Panes/                 PaneGrid (panes and split handles by frame), PaneView (header, thread dropdown, Split menu, drops), TerminalHost, QuickTerminal
   UI/Hachi/                 HachiPortrait, HachiCorner, Hachi.xcassets, AppIcon.icon (spec in docs/design/hachi/README.md)
 Tests/ShojiTests/           Swift Testing

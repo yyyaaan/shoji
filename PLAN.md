@@ -19,6 +19,7 @@ Priorities follow the user's wishes. Keep items one line, small enough for one P
 - [ ] Room light: no seam at the terminal's margin; all panes solid with Reduce Transparency
 - [ ] Compact form: Split View beside a full-screen Zed or Chrome, narrow below 680 pt and back above 720 without flicker; the dropdown (shelf order, bars as separators, status) picks and swaps rows, New Thread; ⇧⌘D adds a row, ⌘D and ⌥⌘2–4 are off; the full layout comes back intact
 - [ ] Full form: the hover chevron beside a pane's name opens the same dropdown; double-clicking the name still maximizes
+- [ ] Holding ⌘ shows 1–9 on the first nine cards after a moment; ⌘C, ⌘N and other quick shortcuts don't flash them
 - [ ] Notifications: none while Shoji is visible (Split View), one when it's on another Space; Dock badge at 10 or more
 - [ ] Not yet seen: a screenshot dragged from Finder onto Claude Code, Open in VS Code / Zed, Codex resuming after quit and reopen, the go-to glow, ⌘Q's busy list, the About panel
 
@@ -57,15 +58,16 @@ A calm command center for the terminals the user already runs all day. Claude Co
 ### Panes
 - A split tree: split right, left, down or up from the header's Split menu, its right-click menu, ⌘D / ⇧⌘D, or a card dropped on a pane's edge (the half it takes is previewed); the middle of a pane swaps. A new split shows your most recent thread that isn't on screen, else a new shell in that folder. Drag a gap to resize, double-click it to even. Splits that would leave a pane under 320×160 are refused. Panes › ⌥⌘1–4 snaps to one, two columns, three (one tall left) or a grid, keeping your pane and filling from recent threads.
 - **Going to a thread** (card click, ⌘1–9, ⌃Tab, ⌘J, Hachi, a notification): on screen, it just takes focus and glows ivory briefly; otherwise it opens in your pane (with none focused, the least recently used one that isn't waiting for you). Other panes never change behind your back. ⌥-click or Show in This Pane brings it to your pane; dropping a card, or picking it from a pane's dropdown, puts it in that pane, trading places if it's on screen.
-- **Pane header:** status, name, folder, the pane's text size when it differs; on hover a chevron (the thread dropdown: the shelf's cards with status, then New Thread), Split and Maximize. Double-click maximizes; Restart once the shell has ended. In the compact form the name itself is the dropdown.
+- **Pane header:** status, name, folder; on hover a chevron (the thread dropdown: the shelf's cards with status, then New Thread), Split and Maximize. Double-click maximizes; Restart once the shell has ended. In the compact form the name itself is the dropdown.
 - Close Pane keeps the thread on the shelf; ⌘W closes the thread (asking while something runs). The last pane stays and shows your next recent thread.
 - Files or text dropped on a pane paste into its terminal (files as escaped paths, like Terminal).
 
 ### Getting around
+- Hold ⌘ on its own for a moment and the first nine cards show their ⌘1–9 number; any key or leaving Shoji hides them.
 - ⌃Tab / ⌃⇧Tab: recent threads like ⌘Tab; a tap returns to the previous one, holding ⌃ shows the list, Esc cancels.
 - ⌘K: a quick terminal over the window, a little above centre, in the focused thread's folder. ⌘K, ⌘W, a click outside or `exit` closes it; a command still running then becomes a thread beside the focused card.
 - Menus: **Threads** (cards ⌘1–9, ⌘J, ⌃Tab, Open in VS Code ⌥⇧⌘E / Zed ⇧⌘E, the two options), **Panes** (focus, split, close, maximize, layouts), **View** (Interface Size, text sizes). No submenus; titles come from the `Shortcut` catalog, which also feeds the ⌘/ sheet.
-- **Sizes:** ⌘+ / ⌘− / ⌘0 step the terminal text (75–200%); View › Interface Size scales the chrome (85–130%); ⌥⌘+ / ⌥⌘− / ⌥⌘0 keep one thread levels apart from the rest.
+- **Sizes:** ⌘+ / ⌘− / ⌘0 step the terminal text (50–200%); View › Interface Size scales the chrome (85–130%); ⌥⌘+ / ⌥⌘− / ⌥⌘0 keep one thread levels apart from the rest.
 - **Reaching you:** Hachi's corner and count, the Dock badge, and macOS notifications while Shoji's window is out of sight (another Space, minimized or covered). All count the same threads; Threads › Notify Me When Shoji Is Away turns notifications off.
 - ⌘Q asks only when something is busy (working, needs you, running a command, or the quick terminal running one), naming it.
 
@@ -139,7 +141,7 @@ Shell reports from the zsh integration: `cwd;<path>` each prompt, `cmd;<line>` b
 - **A translucent terminal stacks with whatever is behind it.** SwiftTerm paints its own background at `backgroundOpacity`, so `PaneView` fills only the margin around it (an even-odd `Margin`). Never set the terminal's background to 0 and let SwiftUI draw it: the IME overlay and whole-screen reverse video use that colour.
 - **Inside a `GlassEffectContainer`, overlays added after `.glassEffect` draw under the glass.** Put borders and badges first.
 - **Hidden title bar:** content ignores the top safe area; the leading 78 pt stays clear for the window buttons; the window drags by its background.
-- **⌃Tab is a local key monitor** (`RecentSwitchKeys`), since the switcher needs ⌃'s release and the keys must not reach the terminal; it stands down while a sheet or alert is up.
+- **⌃Tab is a local key monitor** (`RecentSwitchKeys`), since the switcher needs ⌃'s release and the keys must not reach the terminal; it stands down while a sheet or alert is up. The ⌘ card numbers (`CardNumberKeys`) watch the same events but never consume them; ⌘Tab's Tab never reaches the app, so the numbers can show under the app switcher until Shoji goes inactive.
 - **⌘W is Close Thread:** `ShojiCommands` replaces `.saveItem`, which also removes Close Window.
 - **`NSApp` is nil during `ShojiApp.init`.** `Notifier` waits for `didFinishLaunchingNotification`; tests never build it, so launch the Debug app after changing launch wiring.
 - **Debug notifications** ask once as "Shoji Debug" and post nothing while its window is in sight. `scripts/shoji-hook` with `SHOJI_THREAD_ID` and `SHOJI_SOCKET` raises needs-you without an agent.

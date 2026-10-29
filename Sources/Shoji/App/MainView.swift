@@ -81,7 +81,10 @@ struct MainView: View {
             if old != textZoom { withAnimation(.snappy) { zoomToast = textZoom } }
         }
         .onChange(of: store.threads.map(\.textSteps)) { sessions?.applyTextSizes() }
-        .onAppear { RecentSwitchKeys.install(store: store) }
+        .onAppear {
+            RecentSwitchKeys.install(store: store)
+            CardNumberKeys.install(store: store)
+        }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)) { _ in
             store.cancelRecentSwitch()
             store.isAppActive = false
