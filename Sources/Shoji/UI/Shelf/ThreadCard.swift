@@ -9,11 +9,15 @@ struct ThreadCard: View {
     var isFocused = false
     /// Shown in a pane, so a click only moves focus there.
     var isOnScreen = false
-    /// Needs you, or finished unseen with Hachi on finish (`ThreadStore.wantsYou`).
+    /// Needs you, or finished unseen with Hachi on finish (`ThreadStore.wantsYou`): shows Hachi.
     var wantsYou = false
 
     @Environment(\.zoom) private var zoom
+    @Environment(\.colorSchemeContrast) private var contrast
 
+    private var needsYou: Bool { activity.status == .needsYou }
+    /// Quiet ivory chrome and halo whatever the Hachi setting (docs/design/completion); orange stays with needs-you.
+    private var finishedUnseen: Bool { activity.status == .done && activity.isUnseen }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6 * zoom) {
@@ -34,7 +38,7 @@ struct ThreadCard: View {
                 .lineLimit(1)
             Text(subtitle)
                 .font(.system(size: 11 * zoom, weight: .medium, design: .monospaced))
-                .foregroundStyle(wantsYou ? Palette.needsYouText : .white.opacity(0.75))
+                .foregroundStyle(needsYou ? Palette.needsYouText : .white.opacity(0.75))
                 .lineLimit(1)
                 .truncationMode(.middle)
         }
@@ -74,12 +78,22 @@ struct ThreadCard: View {
             }
         }
         .glassEffect(.regular.tint(tint).interactive(), in: .rect(cornerRadius: 18 * zoom))
+        // The halo comes from the card's shape behind the glass, so no text or glyph gets its own shadow.
+        .background {
+            if finishedUnseen {
+                RoundedRectangle(cornerRadius: 18 * zoom)
+                    .fill(Palette.done.opacity(0.07))
+                    .blur(radius: 8 * zoom)
+                    .allowsHitTesting(false)
+            }
+        }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel([name, tag?.capitalized, activity.status.label, wantsYou && activity.isUnseen ? "not seen yet" : nil, subtitle, isOnScreen ? "in a pane" : nil].compactMap(\.self).joined(separator: ", "))
+        .accessibilityLabel([name, tag?.capitalized, activity.status.label, finishedUnseen ? "not seen yet" : nil, subtitle, isOnScreen ? "in a pane" : nil].compactMap(\.self).joined(separator: ", "))
     }
 
     private var tint: Color {
-        if wantsYou { return Palette.needsYou.opacity(0.22) }
+        if needsYou { return Palette.needsYou.opacity(0.22) }
+        if finishedUnseen { return Palette.done.opacity(isFocused ? 0.1 : 0.03) }
         return .white.opacity(isFocused ? 0.1 : 0)
     }
 
@@ -116,8 +130,9 @@ struct ThreadCard: View {
     }
 
     private var borderColor: Color {
-        if wantsYou { return Palette.needsYouStroke.opacity(0.85) }
+        if finishedUnseen { return Palette.done.opacity(contrast == .increased ? 0.6 : 0.36) }
         return switch activity.status {
+        case .needsYou: Palette.needsYouStroke.opacity(0.85)
         case .done: Palette.working.opacity(0.7)
         case .exited(code: let code) where code != 0: Palette.exited.opacity(0.6)
         default: .white.opacity(isFocused ? 0.4 : 0.12)

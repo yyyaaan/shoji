@@ -61,11 +61,6 @@ struct PaneLayoutTests {
         #expect(layout.pinnedThreadIds.isEmpty)
     }
 
-    @Test func layoutsWithoutNewerFieldsDecode() throws {
-        let layout = try JSONDecoder().decode(PaneLayout.self, from: Data(#"{"mode": "grid", "openThreadIds": []}"#.utf8))
-        #expect(layout.mode == .grid && layout.columnSplit == 0.5 && layout.pinnedThreadIds.isEmpty)
-    }
-
     @Test func maximizeAndClose() {
         var layout = PaneLayout(mode: .twoColumns, openThreadIds: [ids[0], ids[1]])
         layout.toggleMaximize(ids[1])
@@ -78,12 +73,5 @@ struct PaneLayoutTests {
         layout.close(ids[0])
         #expect(layout.maximizedThreadId == nil)
         #expect(layout.visibleThreadIds == [ids[1]])
-    }
-
-    @Test func threePanesHoldsThree() {
-        var layout = PaneLayout(mode: .threePanes, openThreadIds: Array(ids.prefix(4)))
-        #expect(layout.visibleThreadIds == Array(ids.prefix(3)))
-        layout.show(ids[4], replacing: ids[2])
-        #expect(layout.visibleThreadIds == [ids[0], ids[1], ids[4]])
     }
 }

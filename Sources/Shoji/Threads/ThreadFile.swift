@@ -2,7 +2,7 @@ import Foundation
 import OSLog
 
 /// `threads.json`: the user's threads and the window layout. Bump `currentVersion` and migrate in `load`
-/// whenever the shape changes (AGENTS invariant 9).
+/// when another Shoji version couldn't read the new shape; optional additions don't need it (AGENTS invariant 9).
 struct ThreadFile: Codable, Equatable {
     static let currentVersion = 1
 

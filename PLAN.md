@@ -2,9 +2,8 @@
 
 ## Status
 
-- **Last session (pane-control, PR #3, releases v0.3.0):** panes are under the user's control. A card click goes to its thread (focus if on screen, else it opens in the pane you're in; a line under the card marks threads in panes); ⌥-click or Show in This Pane brings it to your pane, swapping if needed; drop a card on a pane; pin panes (⇧⌘P); layout switches keep panes in place (no re-hosted terminals), keep the focused and pinned ones, and fill new panes; minimize is gone. ⌃Tab / ⌃⇧Tab switches recent threads like ⌘Tab. Names carry a number only when two would read the same. Codex reports status and resumes through its own hooks, like Claude (tried live by the user, `/hooks` trust included). Idle shows the Torii gate. A turn that finishes out of sight (not the focused pane, or Shoji in the background) is unseen and calls Hachi like needs-you, keeping its tick; Threads › Show Hachi When an Agent Finishes (on by default) turns that off. 64 tests pass.
+- **Last session (pane-control, PR #3, releases v0.3.0):** panes are under the user's control. A card click goes to its thread (focus if on screen, else it opens in the pane you're in; a line under the card marks threads in panes); ⌥-click or Show in This Pane brings it to your pane, swapping if needed; drop a card on a pane; pin panes (⇧⌘P); layout switches keep panes in place (no re-hosted terminals), keep the focused and pinned ones, and fill new panes; minimize is gone. ⌃Tab / ⌃⇧Tab switches recent threads like ⌘Tab. Names carry a number only when two would read the same. Codex reports status and resumes through its own hooks, like Claude (tried live by the user, `/hooks` trust included). Idle shows the Torii gate. A turn that finishes out of sight (not the focused pane, or Shoji in the background) is unseen: its card keeps the tick and gets the design team's Quiet finish look (ivory rim, neutral subtitle, soft static halo), and Hachi joins unless Threads › Show Hachi When an Agent Finishes is off. Review fixes (⌥-click into your pane, `resumeAgent`, creation-order numbering, sparing panes Hachi points at, no ⌃Tab behind dialogs). Tests regrouped by feature: 60 in 10 suites pass.
 - **Next up:** after the merge, `release.yml` publishes v0.3.0; install it and trust its Codex hooks once (a new path). Then Tasks › Next, with macOS notifications as the likely v0.4 headline.
-- **Design update (completion):** optional Hachi-on-finish visual alternatives are in `docs/design/completion/`; no new treatment selected and no app changes from this design session.
 - **Blockers:** none
 
 _Agents: update this section at the end of every session (what changed, what's next), tick or move tasks, and add new wishes to the right bucket._
@@ -87,7 +86,7 @@ private to Yan's account; agents can't open it, so the HTML files are what they 
 - No toolbar row (user's call): the title bar is hidden and the shelf takes the top. Its left end holds the window buttons and Hachi's corner below them (empty; Hachi and a count while anything needs you, click opens it), its right end the layout switcher; new threads come from ⌘N and shortcuts from ⌘/ or the Help menu, so neither has a button. The window drags by its background.
 - Shelf of glass cards across the top in the user's order, split into groups by plain bars (no titles, no fixed meaning; user's call); scrolls sideways when cards overflow.
 - Card: status icon, a tag for what runs (CLAUDE / CODEX / the command's name, none at an idle prompt), name (the folder's name unless renamed; a number only when two unnamed threads would read the same, like "shoji 2", given to the newer thread, so a `cd` into a subfolder and back changes nothing), one-line status, command or folder, elapsed time.
-- Needs-you card: orange border + glow, count badge, Hachi. A finished turn you haven't seen (Zed's unread dot: it ended outside the focused pane, or while Shoji was in the background) gets the same card, Hachi corner and ⌘J, keeping its tick and without a count; focusing it or returning to Shoji on it clears it. Threads › Show Hachi When an Agent Finishes (default on, remembered) leaves only the quiet tick.
+- Needs-you card: orange border + glow, count badge, Hachi. A finished unseen turn keeps its tick and no count, with Quiet finish ivory chrome and static halo; focusing it or returning to Shoji on it clears it. Threads › Show Hachi When an Agent Finishes (default on, remembered) controls its portrait, Hachi corner and ⌘J participation, not the completion halo.
 - Drag a card onto another to put it before or after it (by which half), joining that card's group; ⌘N plus a drag replaces any per-group + button.
 - Card context menu: Show in This Pane, Rename, Move Left / Right (the non-drag path, also for VoiceOver), Add / Remove Bar Before, Restart (shell ended), Close Thread. Later: open folder in Zed.
 - Bars are lanes for scanning (say agents left, servers right), not layout: where terminals sit on screen is the pane layout's job.
@@ -178,7 +177,7 @@ Priorities shift with the user's wishes; reorder freely. Keep items one line, sm
 - [ ] Hands-on pass on daily-driver: ⌘N opens a shell beside the focused card; `cd` updates the card; typed `claude` shows status and `/exit` returns to the prompt; quit and reopen resumes Claude and prefills a stopped `pnpm dev`; Move Left / Right and bars; ⌘W confirm only while running
 
 - [ ] Open the v0.3.0 DMG once and check its first launch (Open Anyway)
-- [ ] Rest of the pane-control pass (⌃Tab and Codex status already confirmed): click a card on screen (focus only, line under the card), ⌥-click and Show in This Pane (swap), drag a card onto a pane and onto another visible pane (swap), pin then click cards, two shells in one folder ("shoji", "shoji 2"), no blank panes when switching layouts with busy terminals, Codex quit + reopen resumes; an agent finishing in another pane or with Shoji in the background calls Hachi, focusing it clears, and the Threads menu toggle turns it off; the Torii gate on idle cards
+- [ ] Rest of the pane-control pass (⌃Tab and Codex status already confirmed): click a card on screen (focus only, line under the card), ⌥-click and Show in This Pane (swap), drag a card onto a pane and onto another visible pane (swap), pin then click cards, two shells in one folder ("shoji", "shoji 2"), no blank panes when switching layouts with busy terminals, Codex quit + reopen resumes; an agent finishing in another pane or with Shoji in the background calls Hachi, focusing it clears, and the Threads menu toggle turns it off; the Torii gate on idle cards; the unseen-finish halo on native glass (faint, not clipped by the shelf, still there with Hachi off, gone once seen)
 
 ### Next
 - [ ] Open folder in Zed from the card context menu
@@ -199,7 +198,7 @@ Priorities shift with the user's wishes; reorder freely. Keep items one line, sm
 - [ ] Developer ID signing and notarization (needs a paid Apple Developer account)
 
 ### Done
-- Completion design study: current orange treatment compared with quiet ivory chrome, an ink-circle check and a small shoji mark; interactive preview, selection still open
+- Completion design: Quiet finish A + static ivory halo for unseen finishes, independent of the Hachi toggle (`docs/design/completion/`)
 - Idle Torii design: SVG, vector PDF/template image set, status mapping and 75/100/200% size previews at 1×/2×
 - Build: XcodeGen project, SwiftTerm 1.99.1 pinned, CI on GitHub (`xcode-27` runner), release workflow and `scripts/package.sh` (universal ad-hoc DMG)
 - Terminals: SwiftTerm panes (Metal) in glass cards, login-shell launch, 10k scrollback, Shift+Return fallback, hide / show without redraw glitches
@@ -226,7 +225,6 @@ Run by hand with Claude Code in Shoji; re-run after every SwiftTerm bump (AGENTS
 
 ## Open questions
 
-- **Completion presentation:** retain current orange unseen-finish chrome, or choose A (quiet ivory), B (ink-circle check) or C (shoji corner mark)? See `docs/design/completion/preview.html`; design recommends A first.
 - **Allow once:** allow from the Hub/toast for any prompt, or only for commands the
   user has approved before? Default proposal: only when the prompt text is visible
   on the card, and send exactly the shown keystroke.
@@ -241,14 +239,15 @@ Run by hand with Claude Code in Shoji; re-run after every SwiftTerm bump (AGENTS
 - **Stable local signing identity:** a self-signed code-signing certificate (kept as a CI secret) would keep TCC grants across updates without a paid account. Worth it before daily use, or wait for Developer ID?
 - **Multiple windows:** a thread's terminal can be on screen in only one window at a time (one SwiftTerm view per thread). When a second window opens it, move it there, or show only its card?
 - **Sidebar window:** clicking a card opens the thread in a full window, or expands it in place?
-- **Invariant 9 wording:** v0.3 changed the `threads.json` shape (dropped `number`; added `pinnedThreadIds`, `resumeAgent`) without bumping `schemaVersion`, because both directions still read it, and a bump would make an older Shoji set the whole file aside. Proposal: bump (and migrate) only when an older or newer Shoji couldn't read the file; additive optional fields and ignored removed fields stay on the current version. Needs the user's OK to reword the invariant.
 - **Quitting with live agents:** quitting closes every PTY (agents get SIGHUP). Confirm before quit while something is Working / Needs you?
 
 ## Decisions
 
 - **Codex through its hooks, not `notify`** (2026-10-28). Codex (checked on 0.164) has Claude-style hooks with the same stdin fields, passed per launch as `-c hooks={…}`, so `~/.codex` stays untouched and the user's own `notify` isn't overridden. Cost: the user trusts Shoji's hooks once in `/hooks`.
 
-- **A finished turn you didn't see wants you** (2026-10-29, user's call, after Zed's unread dot). The user doesn't need to tell "needs my click" from "done, needs my check", so both call Hachi; the tick stays to show which. A menu toggle keeps the quiet tick for focused work.
+- **`schemaVersion` only for unreadable shapes** (2026-10-29, user's OK; AGENTS invariant 9). Optional additions and ignored removals stay on the current version, so older and newer Shoji keep reading each other's files; v0.3 dropped `number` and added `pinnedThreadIds` and `resumeAgent` on version 1.
+
+- **A finished turn you didn't see wants you** (2026-10-29, user's call, after Zed's unread dot). The user doesn't need to tell "needs my click" from "done, needs my check", so both call Hachi; the tick stays to show which. A menu toggle keeps the quiet tick for focused work. Refined by design (Quiet finish A, user's pick): orange stays with needs-you; an unseen finish gets ivory chrome and a soft halo whatever the toggle, which only decides Hachi, the corner and ⌘J.
 
 - **Releases follow the version** (2026-10-28). Bumping `MARKETING_VERSION` in `project.yml` inside a PR is the decision to release; merging it makes `release.yml` build the DMG and publish `vX.Y.Z` with generated notes, creating the tag on that commit. Other merges don't release. No manual tags. Chosen over release-please / semantic-release (Conventional Commit titles, a bot PR, a changelog file) while Shoji has one maintainer; revisit if contributors join.
 

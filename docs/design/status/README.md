@@ -1,6 +1,6 @@
 # Status glyphs — idle Torii
 
-[Visual reference and size checks](preview.html).
+Final vector assets and sizing specification. Temporary comparison pages/screenshots have been removed.
 
 ## Approved mapping
 
@@ -29,15 +29,15 @@ Render the template with **`Palette.done.opacity(0.55)`**, matching the old idle
 - Keep `StatusIcon`'s existing outer `size` and alignment: 22 pt on cards, 16 pt in pane headers and 18 pt in the recent-thread switcher, before app zoom.
 - The 24-unit artwork has 1.7-unit rounded strokes. At a 22 pt canvas its visible width is approximately **18.1 pt**, matching the requested 18–20 pt optical size and existing status weight.
 - Fit the asset to the **full `size` canvas** for idle. Do not then constrain it through the old ring-sized inner frame: the artwork already has optical padding and would be undersized twice.
-- Scale the whole canvas with the existing zoom. The preview checks 75/100/200% for all three current call sites, including the 12 pt pane-header minimum at 75%.
+- Scale the whole canvas with the existing zoom. Design checks covered 75/100/200% for all three current call sites, including the 12 pt pane-header minimum at 75%.
 - The glyph stays inside the existing status slot, so card title, Hachi and badge positions do not move. Native previews should confirm baseline and optical balance against adjacent states.
 
 The SVG and PDF use the same quadratic upper beam, lower rail, two gently splayed posts and short center support. `tools/export-torii.swift` regenerates the PDF using CoreGraphics; it adds no app dependency.
 
-[Validation evidence](validation.json): all nine size/zoom combinations passed at both 1× and 2× display density. The one-page PDF has a 24 × 24 pt media box and no raster image objects. The app's native checks (all three call sites at 75/100/200% zoom, 1× and 2×, beside the other states) passed on 2026-10-29.
+All nine design size/zoom combinations passed at both 1× and 2× display density. The one-page PDF has a 24 × 24 pt media box and no raster image objects. The app's native checks (all three call sites at 75/100/200% zoom, 1× and 2×, beside the other states) passed on 2026-10-29.
 
 ## Implementation boundary
 
 Only `.idle` in the shared `StatusIcon` changes. Its existing callers therefore remain consistent across shelf, pane headers and recent switcher. Keep the outer size, help text and accessibility label. Hachi, the needs-you corner indicator, status hooks and terminal content remain unchanged.
 
-The dark-surface HTML is a sizing/reference preview, not app code. Native rendering and regression checks belong to [the active app handoff](../../handoffs/). Delete the handoff when addressed; retain this specification and assets.
+Native rendering and regression work belongs in [the handoff directory](../../handoffs/). Delete addressed handoffs; retain this specification and assets.

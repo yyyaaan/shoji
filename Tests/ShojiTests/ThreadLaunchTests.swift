@@ -107,22 +107,6 @@ struct ThreadLaunchTests {
         #expect(launch.environment["CLAUDECODE"] == nil)
     }
 
-    @Test func shellReportsParse() {
-        #expect(TerminalEvent(shojiReport: "ShojiEvent=cmd;git commit -m \"a;b\"") == .commandStarted("git commit -m \"a;b\""))
-        #expect(TerminalEvent(shojiReport: "ShojiEvent=done;130") == .commandFinished(130))
-        #expect(TerminalEvent(shojiReport: "ShojiEvent=cwd;/tmp/a b") == .directory("/tmp/a b"))
-        #expect(TerminalEvent(shojiReport: "ShojiEvent=cwd;") == nil)
-        #expect(TerminalEvent(shojiReport: "ShojiEvent=done;x") == nil)
-        #expect(TerminalEvent(shojiReport: "SetUserVar=foo=YmFy") == nil)
-    }
-
-    @Test func agentsAreRecognisedByTheirExecutable() {
-        #expect(Agent(commandLine: "/opt/homebrew/bin/claude -c") == .claude)
-        #expect(Agent(commandLine: "  codex resume") == .codex)
-        #expect(Agent(commandLine: "pnpm dev") == nil)
-        #expect(Agent(commandLine: "") == nil)
-    }
-
     @Test func shellQuoting() {
         #expect("plain-word_1.2/x".shellQuoted == "plain-word_1.2/x")
         #expect("".shellQuoted == "''")

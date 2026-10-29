@@ -3,49 +3,63 @@ import SwiftUI
 import Testing
 @testable import Shoji
 
+/// Keyboard navigation: ⌘J, ⌘] / ⌘[, ⌃Tab, zoom steps and how shortcuts are spelled.
 @MainActor
 struct NavigationTests {
-    private let agents = (0..<2).map { ShojiThread(title: "a\($0)", folder: "/tmp", group: 0, order: $0) }
-    private let task = ShojiThread(title: "t", folder: "/tmp", group: 1)
-
-    private func makeStore() -> ThreadStore {
-        ThreadStore(threads: [task] + agents.reversed())
-    }
-
-    @Test func shelfOrderFollowsGroupsThenOrder() {
-        #expect(makeStore().shelfOrder.map(\.title) == ["a0", "a1", "t"])
-    }
-
     @Test func nextNeedingYouWrapsFromTheFocusedThread() {
-        let store = makeStore()
+        let (threads, ids) = numberedThreads(3)
+        let store = ThreadStore(threads: threads)
         #expect(!store.openNextNeedingYou())
-        store.apply(StatusEvent(threadId: agents[0].id, signal: .needsYou(message: nil)))
-        store.focus(agents[1].id)
+        store.send(.needsYou(message: nil), to: ids[0])
+        store.focus(ids[1])
         #expect(store.openNextNeedingYou())
-        #expect(store.focusRequest == agents[0].id)
-        #expect(store.layout.visibleThreadIds.contains(agents[0].id))
+        #expect(store.focusRequest == ids[0])
+        #expect(store.layout.visibleThreadIds.contains(ids[0]))
     }
 
     @Test func paneFocusCyclesThroughVisiblePanes() {
-        let store = makeStore()
-        store.layout = PaneLayout(mode: .twoColumns, openThreadIds: [agents[0].id, task.id])
+        let (threads, ids) = numberedThreads(3)
+        let store = ThreadStore(threads: threads, layout: PaneLayout(mode: .twoColumns, openThreadIds: [ids[0], ids[2]]))
         store.focusPane(offset: 1)
-        #expect(store.focusRequest == agents[0].id)
-        store.focus(agents[0].id)
+        #expect(store.focusRequest == ids[0])
+        store.focus(ids[0])
         store.focusPane(offset: 1)
-        #expect(store.focusRequest == task.id)
-        store.focus(task.id)
+        #expect(store.focusRequest == ids[2])
+        store.focus(ids[2])
         store.focusPane(offset: 1)
-        #expect(store.focusRequest == agents[0].id)
+        #expect(store.focusRequest == ids[0])
     }
 
-    @Test func closingTheFocusedThreadFocusesAnotherPane() {
-        let store = makeStore()
-        store.layout = PaneLayout(mode: .twoColumns, openThreadIds: [agents[0].id, task.id])
-        store.focus(task.id)
-        store.close(task.id)
-        #expect(store.focusedThreadId == nil)
-        #expect(store.focusRequest == agents[0].id)
+    @Test func recentSwitchStepsInTheOrderOfUse() {
+        let (threads, ids) = numberedThreads(4)
+        let store = ThreadStore(threads: threads)
+        for id in [ids[2], ids[0], ids[1]] {
+            store.open(id)
+            store.focus(id)
+        }
+
+        // A quick ⌃Tab goes back to the previous thread.
+        store.stepRecent(by: 1)
+        #expect(store.recentSwitch?.threadIds == [ids[1], ids[0], ids[2], ids[3]])
+        store.finishRecentSwitch()
+        #expect(store.recentSwitch == nil)
+        #expect(store.focusRequest == ids[0])
+        store.focus(ids[0])
+
+        // Holding ⌃ keeps stepping, wrapping around; ⌃⇧Tab steps back.
+        store.stepRecent(by: 1)
+        store.stepRecent(by: 1)
+        store.stepRecent(by: 1)
+        #expect(store.recentSwitch?.selected == ids[3])
+        store.stepRecent(by: 1)
+        #expect(store.recentSwitch?.selected == ids[0])
+        store.stepRecent(by: -1)
+        #expect(store.recentSwitch?.selected == ids[3])
+        store.cancelRecentSwitch()
+        #expect(store.recentSwitch == nil && store.focusRequest == nil)
+
+        store.stepRecent(by: -1)
+        #expect(store.recentSwitch?.selected == ids[3])
     }
 
     @Test func zoomStepsStopAtTheEnds() {

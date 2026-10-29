@@ -1,6 +1,6 @@
 # Hachi — signed-off design specification
 
-[Visual reference and zoom checks](preview.html). Active coding work lives in [the handoff directory](../../handoffs/); remove addressed handoff content rather than accumulating completed notes.
+Final artwork and specification. Temporary comparison pages/screenshots have been removed. Active coding work lives in [the handoff directory](../../handoffs/); remove addressed handoff content rather than accumulating completed notes.
 
 ## Decisions
 
@@ -10,7 +10,7 @@
 - Static artwork; existing status shapes, labels, badge, colors and click behavior remain authoritative.
 - Idle uses the separately approved [Torii status glyph](../status/README.md). Finished unseen keeps its done checkmark even when Hachi appears. The app icon remains Torii-free.
 
-The base character and app-icon choices remain settled. The user has since added optional Hachi on unseen completion; [completion chrome alternatives](../completion/README.md) are exploratory and have not been selected.
+The base character and app-icon choices remain settled. For optional Hachi on unseen completion, the user selected [Quiet finish A with a subtle ivory halo](../completion/README.md). The unseen-completion halo remains even when Hachi on finish is disabled. Native card implementation is tracked in the handoff directory.
 
 ## Production artwork
 
@@ -26,7 +26,7 @@ The base character and app-icon choices remain settled. The user has since added
 
 The portrait is a four-tone contour trace of the approved source, retaining the eyes, muzzle and fur marks. Its white face is opaque; outside the silhouette is transparent. Use original colors, not template tint or inversion. Vector paths scale independently of display density; the PNG source is not the runtime export.
 
-The trace suppresses isolated speckles up to two source pixels and quantizes gray to four tones. Compare the reference pair in the preview if regenerating. Source and trace are not pixel-identical, and no character redesign is intended.
+The trace suppresses isolated speckles up to two source pixels and quantizes gray to four tones. Compare regenerated vectors against the approved PNG source. Source and trace are not pixel-identical, and no character redesign is intended.
 
 ## Geometry — points at 100% zoom
 
@@ -42,7 +42,7 @@ The trace suppresses isolated speckles up to two source pixels and quantizes gra
 
 Every chrome dimension and offset uses the existing `@Environment(\.zoom)` scale. Shelf portrait bounds at 100% are x=118…150, y=6…38. The title begins at y=40 in the current layout. The portrait moves left from the previous proposal so a **999** count badge can grow left without touching it. The ring and CLI kind retain the leading header area. Pixel density is independent of zoom; vector assets cover 75–200% at 1×/2× without a bitmap upscale.
 
-The preview measures portrait-vs-status, portrait-vs-badge and portrait-vs-title intersections for counts 1 and 999 at 75%, 100% and 200%. It also checks that the portrait stays inside its card. These are HTML geometry checks; native SwiftUI validation remains necessary.
+Design geometry checks covered portrait-vs-status, portrait-vs-badge and portrait-vs-title spacing for counts 1 and 999 at 75/100/200%, plus portrait containment. Native SwiftUI validation is the app agent's responsibility.
 
 ## Rendering and behavior
 
@@ -76,4 +76,4 @@ Export utilities in `tools/` use macOS CoreGraphics/ImageIO, Python's standard l
 
 2026-10-28: addressed app-side design constraints with genuine vector exports, separate icon layers and a badge-safe zoom-aware placement. Existing app code and `AGENTS.md` are untouched. Native integration and Icon Composer packaging are intentionally handed off. No commit or push.
 
-[Export and geometry evidence](validation.json): path-only production SVGs, no PDF image objects, and all six Retina-density HTML collision cases passed. Native checks are deliberately not reported as complete.
+Export checks confirmed path-only production SVGs and no PDF image objects; all six original Retina-density HTML collision cases passed. These source-art checks do not establish native behavior.

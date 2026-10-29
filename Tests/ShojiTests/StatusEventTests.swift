@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import Shoji
 
+/// What Shoji reads from the outside: hook payloads, the zsh integration's reports, agent command lines.
 struct StatusEventTests {
     private let threadId = UUID()
 
@@ -30,6 +31,22 @@ struct StatusEventTests {
             == .needsYou(message: "Allow Bash"))
         #expect(event(#"{"hook_event_name":"Stop","session_id":"c1","stop_hook_active":false}"#)?.signal == .finished)
         #expect(event(#"{"hook_event_name":"Interrupt","session_id":"c1"}"#)?.signal == .finished)
+    }
+
+    @Test func shellReportsParse() {
+        #expect(TerminalEvent(shojiReport: "ShojiEvent=cmd;git commit -m \"a;b\"") == .commandStarted("git commit -m \"a;b\""))
+        #expect(TerminalEvent(shojiReport: "ShojiEvent=done;130") == .commandFinished(130))
+        #expect(TerminalEvent(shojiReport: "ShojiEvent=cwd;/tmp/a b") == .directory("/tmp/a b"))
+        #expect(TerminalEvent(shojiReport: "ShojiEvent=cwd;") == nil)
+        #expect(TerminalEvent(shojiReport: "ShojiEvent=done;x") == nil)
+        #expect(TerminalEvent(shojiReport: "SetUserVar=foo=YmFy") == nil)
+    }
+
+    @Test func agentsAreRecognisedByTheirExecutable() {
+        #expect(Agent(commandLine: "/opt/homebrew/bin/claude -c") == .claude)
+        #expect(Agent(commandLine: "  codex resume") == .codex)
+        #expect(Agent(commandLine: "pnpm dev") == nil)
+        #expect(Agent(commandLine: "") == nil)
     }
 
     @Test func malformedMessagesAreDropped() {
