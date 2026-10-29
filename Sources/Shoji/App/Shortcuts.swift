@@ -25,6 +25,8 @@ extension Shortcut {
     static let closeThread = Shortcut(title: "Close Thread", key: "w")
     static let jumpToThread = Shortcut(title: "Jump to Thread 1–9", key: "1", keyLabel: "1–9")
     static let nextNeedingYou = Shortcut(title: "Next Thread That Needs You", key: "j")
+    static let openInVSCode = Shortcut(title: "Open in VS Code", key: "e", modifiers: [.command, .option, .shift])
+    static let openInZed = Shortcut(title: "Open in Zed", key: "e", modifiers: [.command, .shift])
     static let quickTerminal = Shortcut(title: "Quick Terminal", key: "k", hint: "in this thread's folder")
     static let showInYourPane = Shortcut(title: "Show a Card in Your Pane", key: " ", modifiers: .option, keyLabel: "Click")
     static let recentThread = Shortcut(title: "Previous Thread", key: .tab, modifiers: .control, hint: "hold ⌃ for more")
@@ -63,7 +65,7 @@ struct ShortcutSection: Identifiable {
 
     static let columns: [[ShortcutSection]] = [
         [
-            ShortcutSection(title: "Threads", symbol: "rectangle.stack", shortcuts: [.newThread, .jumpToThread, .showInYourPane, .recentThread, .recentThreadReversed, .nextNeedingYou, .quickTerminal, .closeThread]),
+            ShortcutSection(title: "Threads", symbol: "rectangle.stack", shortcuts: [.newThread, .jumpToThread, .showInYourPane, .recentThread, .recentThreadReversed, .nextNeedingYou, .quickTerminal, .openInVSCode, .openInZed, .closeThread]),
             ShortcutSection(title: "Panes", symbol: "rectangle.split.2x1", shortcuts: [.nextPane, .previousPane, .splitRight, .splitDown, .toggleMaximize]),
         ],
         [
@@ -126,7 +128,7 @@ struct ShojiCommands: Commands {
             if !Editor.installed.isEmpty {
                 Divider()
                 ForEach(Editor.installed) { editor in
-                    Button("Open in \(editor.name)") { store.focusedThreadId.flatMap(store.thread).map { editor.open($0.folder) } }
+                    button(editor == .zed ? .openInZed : .openInVSCode) { store.focusedThreadId.flatMap(store.thread).map { editor.open($0.folder) } }
                         .disabled(store.focusedThreadId == nil)
                 }
             }

@@ -78,6 +78,7 @@ Every version merged to `main` publishes a DMG on [Releases](https://github.com/
 | Next / previous pane | ⌘] / ⌘[ |
 | Maximize or restore pane | ⇧⌘↩ |
 | Split pane right / down | ⌘D / ⇧⌘D |
+| Open the thread's folder in Zed / VS Code | ⇧⌘E / ⌥⇧⌘E |
 | Arrange as one / two / three / four panes | ⌥⌘1 / ⌥⌘2 / ⌥⌘3 / ⌥⌘4 |
 | Terminal text bigger / smaller / actual size | ⌘+ / ⌘− / ⌘0 |
 | This pane's text bigger / smaller / like the others | ⌥⌘+ / ⌥⌘− / ⌥⌘0 |

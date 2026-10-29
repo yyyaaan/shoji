@@ -392,7 +392,7 @@ final class ThreadStore {
         recentThreadIds.firstIndex(of: id) ?? .max
     }
 
-    /// View › Arrange: snaps the panes into a fixed layout, keeping the pane you're in on screen, and filling
+    /// Panes › Single Pane … Grid of Four: snaps the panes into a fixed layout, keeping the pane you're in on screen, and filling
     /// new panes with your most recent threads, then the shelf's.
     func arrange(_ preset: PaneLayout.Preset) {
         var ids = layout.panes

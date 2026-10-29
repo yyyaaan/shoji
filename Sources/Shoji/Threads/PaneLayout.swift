@@ -4,7 +4,7 @@ import Foundation
 /// The panes as a split tree, like Ghostty. Its panes in reading order (`panes`) are the order the opening
 /// rules in `ThreadStore` use.
 struct PaneLayout: Equatable, Sendable {
-    /// The fixed layouts of v0.3, now View › Arrange.
+    /// The fixed layouts of v0.3, now in the Panes menu (⌥⌘1–4).
     enum Preset: String, Codable, CaseIterable, Sendable {
         /// `threePanes` is one tall pane on the left with two stacked on the right.
         case single, twoColumns, threePanes, grid
