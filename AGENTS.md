@@ -16,7 +16,7 @@ terminals and watches their status.
 
 **`PLAN.md` is the living state file.** Read its Status and Gotchas sections before
 starting work, then check `docs/handoffs/` for work addressed to you. Update Status and
-its task list (Now / Next / Later / Done) when you finish a session.
+its task list (Now / Next / Later / Parked / Done) when you finish a session.
 
 ## Stack
 
@@ -129,7 +129,7 @@ If a command here is wrong or missing, fix this file in the same change.
 - Tests use Swift Testing. The test host runs the app headless (no shells, no socket); keep `ShojiApp.isHeadless` in sync if launch wiring changes. Suites follow features (Activity, Shelf, Panes, Navigation, PaneLayout, StatusEvent, ThreadFile, ThreadLaunch); `Support.swift` has `store.send(_:to:)` and `numberedThreads(_:)`. Extend a scenario before adding a near-duplicate test.
 - To check UI by hand, launch the built app and use `screencapture -l <windowid>`. Press controls with System Events `perform action "AXPress"`; never send keystrokes, because macOS keeps the user's frontmost app and keystrokes go there.
 - **Zoom:** chrome metrics (font sizes, card and header sizes, radii, paddings) multiply by `@Environment(\.zoom)`, so ⌘+ / ⌘− scale the UI with the terminal text. New chrome must do the same.
-- **Shortcuts:** add new ones to the `Shortcut` catalog in `App/Shortcuts.swift`; the menu bar and the ⌘/ sheet both read it. Leave ⌘K free (planned quick jump; it also means "clear" in Mac terminals).
+- **Shortcuts:** add new ones to the `Shortcut` catalog in `App/Shortcuts.swift`; the menu bar and the ⌘/ sheet both read it. Leave ⌘K free for the planned popup terminal (it also means "clear" in Mac terminals).
 - Child processes get `SHOJI_THREAD_ID` and `SHOJI_SOCKET` in their environment so
   hooks can report which thread they belong to. The zsh integration also reads
   `SHOJI_ZSH`, `SHOJI_USER_ZDOTDIR`, `SHOJI_CLAUDE_SETTINGS`, `SHOJI_CODEX_HOOKS`, `SHOJI_RESUME` and

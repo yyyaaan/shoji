@@ -53,7 +53,7 @@ def report(bundle):
     if skipped:
         headline += f" ({skipped} skipped)"
     details = [f"{len(rows)} suites", f"{summary['finishTime'] - summary['startTime']:.1f} s"]
-    if sha := os.environ.get("GITHUB_SHA"):
+    if sha := os.environ.get("REPORT_SHA"):
         details.append(f"`{sha[:7]}`")
 
     lines = [MARKER, f"### {headline}", f"<sub>{' · '.join(details)}</sub>", ""]

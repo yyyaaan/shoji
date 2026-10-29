@@ -116,7 +116,7 @@ open build/Build/Products/Debug/Shoji.app
 ## Roadmap
 
 - **Now:** a hands-on polish pass on everyday use
-- **Next:** macOS notifications while Shoji is in the background, open a folder in Zed, a Spotlight-style ⌘K bar to jump to a thread or run a quick command like `open report.html`, bash integration
+- **Next:** a Dock badge, a menu bar Hachi and macOS notifications for threads that want you while Shoji is in the background, panes that split in any direction, dropping files onto a terminal to paste their paths, open a folder in Zed or VS Code, a ⌘K popup terminal for quick commands like `open report.html`
 - **Later:** multiple windows with a slim sidebar style, saved workspaces, a Hub view of every agent sorted by attention, "Allow once" from the Hub, settings and themes
 
 The live list is in [PLAN.md](PLAN.md#tasks).

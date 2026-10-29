@@ -3,7 +3,8 @@
 ## Status
 
 - **Last session (pane-control, PR #3 → v0.3.0):** panes under the user's control (click goes to a thread, ⌥-click brings it to your pane, drop onto a pane, pins, layout switches that keep panes, no minimize); ⌃Tab recent-thread switcher; Codex status and resume through its own hooks; names numbered only when they'd collide; Torii idle glyph; unseen finishes get the Quiet finish halo, with Hachi behind a Threads menu toggle. Code review fixes in; tests regrouped by feature (60 in 10 suites); Release build checked locally (universal, 0.3.0).
-- **Next up:** merge PR #3 (`release.yml` publishes v0.3.0), install it, trust its Codex hooks once in `/hooks` (installed path differs from Debug), finish the pane-control pass in Now. Then v0.4 from Tasks › Next, headed by background notifications.
+- **Shipped:** v0.3.0 released (DMG on GitHub) and installed in /Applications, 2026-10-29.
+- **Next up:** v0.4 on branch `reach-out` (Tasks › Next, in order): a separate Debug bundle id; quieter pane headers; split panes in any direction instead of fixed layouts; file drops onto terminals; open in Zed / VS Code with the options in the Threads menu; Dock badge, menu bar Hachi and macOS notifications for threads that want you while Shoji is in the background; the ⌘K popup terminal. Design has a handoff for the menu bar glyph and the popup frame. The branch also carries a CI fix: the PR test report names the PR's own commit, not GitHub's merge commit. The user's hands-on passes in Now continue alongside.
 - **Blockers:** none
 
 _Agents: update this section at the end of every session (what changed, what's next), tick or move tasks, and add new wishes to the right bucket._
@@ -177,15 +178,25 @@ Priorities shift with the user's wishes; reorder freely. Keep items one line, sm
 - [ ] Hands-on pass by the user: the terminal checklist below, plus pane resize / focus feel, split dragging, and shortcuts with a terminal focused
 - [ ] Hands-on pass on daily-driver: ⌘N opens a shell beside the focused card; `cd` updates the card; typed `claude` shows status and `/exit` returns to the prompt; quit and reopen resumes Claude and prefills a stopped `pnpm dev`; Move Left / Right and bars; ⌘W confirm only while running
 
-- [ ] Install v0.3.0 (`scripts/package.sh` + `ditto`, or the DMG once to check Open Anyway) and trust its Codex hooks in `/hooks`
+- [ ] Trust the installed v0.3.0's Codex hooks once in `/hooks` (installed path differs from Debug)
 - [ ] Rest of the pane-control pass (⌃Tab and Codex status already confirmed): click a card on screen (focus only, line under the card), ⌥-click and Show in This Pane (swap), drag a card onto a pane and onto another visible pane (swap), pin then click cards, two shells in one folder ("shoji", "shoji 2"), no blank panes when switching layouts with busy terminals, Codex quit + reopen resumes; an agent finishing in another pane or with Shoji in the background calls Hachi, focusing it clears, and the Threads menu toggle turns it off; the Torii gate on idle cards; the unseen-finish halo on native glass (faint, not clipped by the shelf, still there with Hachi off, gone once seen)
 
 ### Next
-- [ ] macOS notification for needs-you (and, following the Threads menu toggle, unseen finishes) while Shoji is in the background; clicking one opens the thread
-- [ ] Open folder in Zed from the card context menu
-- [ ] ⌘K quick bar, Spotlight style (user's wish): a small floating field over the window that jumps to a thread by name, or runs a one-off command such as `open report.html` in the focused thread's folder, without a pane (see Open questions)
-- [ ] Give card drags their own drag type: panes accept `.plainText`, so text dragged in from another app highlights a pane and is accepted as a drop that does nothing (review finding; needs a live drag test, so not in v0.3)
-- [ ] bash (and maybe fish) integration, so threads in those shells get folder, command and agent status
+v0.4 on branch `reach-out`: Shoji reaches you while it's in the background, you reach things fast, and panes split any way you like. In order (panes first: they share the pane header and are the riskiest change, so they get the longest hands-on time):
+- [ ] Debug build gets its own bundle id (`fi.yan.shoji.debug`): today it shares `fi.yan.shoji` with the installed app, so notifications, their permission and Launch Services would mix the two up. Also splits Debug's UserDefaults (zoom, Hachi toggle) from the installed app's, like its `Shoji-Debug` folder
+- [ ] Quieter pane header: Split, Pin and Maximize lose their glass and show as plain icons only while the pointer is over the header; a pinned pane keeps a small tinted pin; double-click the header to maximize or restore, like a Mac title bar; Restart (shell exited) becomes a plain text button. The layout switcher leaves the window; the presets move to View › Arrange (⌥⌘1–4)
+- [ ] Split panes (see Decisions): a split tree instead of the four fixed layouts; split from the header's Split menu (Right, Left, Down, Up, Close Pane), ⌘D / ⇧⌘D, or by dropping a card on a pane's edge; the new pane shows the most recent hidden thread
+- [ ] Drops from other apps: files dropped on a terminal paste their quoted paths and text pastes as text, like Terminal (how screenshots reach Claude Code); card drags get their own drag type, so panes stop accepting outside text as a card drop that does nothing
+- [ ] Open in editor: "Open in Zed" (⇧⌘E, focused thread) in the Threads menu and the card context menu, opening the thread's current folder; Threads › Open Folders In picks Zed or VS Code (only installed ones listed; the item names the choice)
+- [ ] Threads menu options section at the bottom (see Decisions): move Show Hachi When an Agent Finishes there, next to the new notifications toggle and Open Folders In
+- [ ] Dock badge and menu bar Hachi: the count of threads that want you (`wantsYou`); the menu lists them (needs you first, then unseen finishes), then working ones; choosing one brings Shoji forward on that thread. No permission needed; macOS 26 lets the user hide any menu bar item in System Settings, so no toggle of our own
+- [ ] macOS notifications for whatever calls Hachi (needs you, with the prompt such as "Allow Tool: …"; unseen finishes when Show Hachi When an Agent Finishes is on), only while Shoji isn't the active app; toggle Threads › Notify Me When Shoji Is Away (default on, UserDefaults like `hachiOnFinish`); clicking one opens the thread; one per thread (a newer one replaces it), removed once the thread is seen. Ask for permission on launch while the toggle is on; if it's denied in System Settings, the menu item says so. Ad-hoc signing is enough for local notifications; check the prompt in the installed app and that the permission survives the next update
+- [ ] ⌘K popup terminal (see Decisions)
+- [ ] Design (handoff `2026-10-29-app-to-design-reach-out.md`, can run alongside): the menu bar glyph, then a review of the new pane header, split drop preview, shelf corner and ⌘K popup once built
+
+### Parked
+Only when the user asks for it.
+- [ ] bash (and maybe fish) integration. No big win while zsh is both macOS's default and the user's shell; shells inside containers belong to the devcontainer question, not this
 - [ ] opencode status and resume (`opencode -s <id>`). Not hook-compatible with Claude / Codex: it takes in-process JS plugins with events (`session.status`, `permission.asked`, `session.idle`). Likely a small Shoji plugin loaded per launch through `OPENCODE_CONFIG_DIR`, forwarding to `shoji-hook`; but v2 runs plugins in a shared background service, so telling threads apart probably needs `--standalone` per thread. Prototype first
 
 ### Later
@@ -241,7 +252,6 @@ Run by hand with Claude Code in Shoji; re-run after every SwiftTerm bump (AGENTS
 - **Stable local signing identity:** a self-signed code-signing certificate (kept as a CI secret) would keep TCC grants across updates without a paid account. Worth it before daily use, or wait for Developer ID?
 - **Multiple windows:** a thread's terminal can be on screen in only one window at a time (one SwiftTerm view per thread). When a second window opens it, move it there, or show only its card?
 - **Sidebar window:** clicking a card opens the thread in a full window, or expands it in place?
-- **⌘K quick bar:** run quick commands through the login shell (`$SHELL -l -i -c`) in the focused thread's folder, or in the thread's own shell so `cd` and aliases match? Show the result as a toast (exit status, last line of output), and keep a short history with ↑? Thread names first, commands after, or a `>` prefix for commands?
 - **Quitting with live agents:** quitting closes every PTY (agents get SIGHUP). Confirm before quit while something is Working / Needs you?
 
 ## Decisions
@@ -254,13 +264,23 @@ Run by hand with Claude Code in Shoji; re-run after every SwiftTerm bump (AGENTS
 
 - **Releases follow the version** (2026-10-28). Bumping `MARKETING_VERSION` in `project.yml` inside a PR is the decision to release; merging it makes `release.yml` build the DMG and publish `vX.Y.Z` with generated notes, creating the tag on that commit. Other merges don't release. No manual tags. Chosen over release-please / semantic-release (Conventional Commit titles, a bot PR, a changelog file) while Shoji has one maintainer; revisit if contributors join.
 
+- **⌘K is a popup terminal** (2026-10-29, user's call; replaces the Spotlight-style field). A small terminal floats over the panes: a fresh login shell with the zsh integration (so PATH and aliases match) in the focused thread's current folder, home if none. ⌘K again, ⌘W, a click outside or `exit` closes it; if a command is still running then, nothing is killed and the shell becomes a regular thread card beside the focused one. It doesn't jump to threads (⌃Tab and ⌘1–9 do). Chosen over a one-line field with a result toast because completion, aliases, colour output and interactive commands come free, and it reuses the terminal and thread code instead of adding a second way to run commands.
+
+- **Reaching the user in the background** (2026-10-29): a Dock badge and menu bar Hachi for an always-visible count, plus macOS notifications for the moment something happens. Native notifications over Zed-style popups (Zed draws its own 450×72 window at the screen's top right with View / Dismiss): they follow Focus / Do Not Disturb, stay hidden while sharing the screen by default (a prompt like "Allow Tool: rm …" shouldn't show on a call), keep a history in Notification Center, and already wear Hachi as the app icon. Own popups stay an option if banners turn out too easy to miss, or for "Allow once" later. Every channel counts the same `wantsYou` set as Hachi: Show Hachi When an Agent Finishes decides whether unseen finishes count, and Notify Me When Shoji Is Away decides whether that set also reaches macOS notifications, so two toggles cover both events.
+
+- **Options live in the Threads menu** (2026-10-29, user's call). A bottom section holds Show Hachi When an Agent Finishes, Notify Me When Shoji Is Away and Open Folders In ▸ Zed / VS Code: one click each, lighter than a Settings window for three options. They move to a Settings window (⌘,) when fonts, themes and the other Later settings arrive.
+
+- **Quiet chrome** (2026-10-29, user's call): glass stays on surfaces (shelf, cards, pane headers) but not on small controls inside them. Pane header buttons appear only on hover, and the layout switcher leaves the window (presets live in View › Arrange).
+
+- **Panes are splits** (2026-10-29, user's call; replaces the four fixed layouts). A binary split tree, each split an axis and a ratio, like Ghostty. Its leaves in reading order are the pane order the v0.3 rules already use (a click goes to a thread, ⌥-click brings it here, pins, the least recently used pane that doesn't want you), so those rules carry over. Split from the header's Split menu (Right, Left, Down, Up), ⌘D (right) or ⇧⌘D (down), or drop a card on the edge band of a pane, with a preview of the half it will take; dropping in the middle still swaps. A split from the menu or keys shows the most recent thread that isn't on screen (⌃Tab order), else a new shell in that pane's folder, and takes focus, so one click on a card replaces it; a dropped card shows that thread. Close Pane (Split menu, right-click on the header) removes the pane and keeps its thread running on the shelf; closing a thread (⌘W) closes its pane the same way, and the sibling takes the space. The last pane stays and shows the next recent thread. Dragging a gap resizes that split; double-click evens it. A split that would leave a pane too small to use is refused. View › Arrange (⌥⌘1–4) snaps the panes into single, two columns, three panes or a grid of four, keeping the focused and pinned panes and filling from recents as v0.3's layout switch did. `threads.json` gains the tree as an additive field (schema stays 1) and keeps writing the nearest preset and pane order, so v0.3 still opens it.
+
 - **Threads are shells** (2026-10-28, user's call). A thread no longer has a fixed command or an agent/task kind: it's the user's login shell, and the card reflects what runs in it. Quitting an agent returns to the prompt, `cd` replaces a folder picker, and the old Agents | Tasks split became user-placed bars.
 
 - **Name:** the app is **Shoji** (Dock, menus, repo, bundle id, code); **Hachi no Shoji** (ハチの障子) is the full name for places with room for the story, like the README header and an About box.
 - **Bundle id `fi.yan.shoji`**, ad-hoc signed until there's a Developer ID.
 - **The `.xcodeproj` is generated and not committed**; `project.yml` is the only source. Package.resolved therefore isn't committed either; SwiftTerm itself is pinned exactly.
 - **Shift+Return → ESC CR** (Meta+Return, a newline in Claude Code) for every thread whose program hasn't enabled the Kitty keyboard protocol.
-- **Shortcuts sheet on ⌘/** (the user suggested ⌘K): ⌘K is "clear" in every Mac terminal and is reserved for quick jump. It's a real sheet, not an overlay, so Esc closes it without reaching the focused terminal (Esc would interrupt Claude).
+- **Shortcuts sheet on ⌘/** (the user suggested ⌘K): ⌘K is "clear" in every Mac terminal and is reserved for the ⌘K popup terminal. It's a real sheet, not an overlay, so Esc closes it without reaching the focused terminal (Esc would interrupt Claude).
 - **Zoom is one factor for everything**, browser style, stored in UserDefaults (`zoom`). Terminal font = 13 pt × zoom, rounded to half points.
 - **Terminal engine: SwiftTerm** (chosen over libghostty). Pure Swift package, no Zig
   build, stable versioned API, Metal renderer, Kitty keyboard and graphics protocols,
