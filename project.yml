@@ -39,6 +39,8 @@ targets:
         MARKETING_VERSION: "0.3.0"
         CURRENT_PROJECT_VERSION: "1"
         GENERATE_INFOPLIST_FILE: YES
+        # Merged with the generated keys; holds what has no INFOPLIST_KEY_ setting (the card drag type).
+        INFOPLIST_FILE: Sources/Shoji/Info.plist
         INFOPLIST_KEY_CFBundleDisplayName: Shoji
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.developer-tools
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon

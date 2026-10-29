@@ -14,6 +14,7 @@ struct TerminalSessionsTests {
         func terminate() { terminated = true }
         func focus() {}
         func setFontSize(_ size: CGFloat) {}
+        func paste(_ text: String) {}
     }
 
     private let task = ShojiThread(title: "t", folder: "/tmp")
@@ -55,5 +56,47 @@ struct TerminalSessionsTests {
         #expect(store.activity(for: task.id).isAlive)
         made[1].onEvent?(.exited(code: 1))
         #expect(store.activity(for: task.id).status == .exited(code: 1))
+    }
+
+    @Test func quickTerminalEndsIdleOrJoinsTheShelfStillRunning() throws {
+        let store = ThreadStore(threads: [task], layout: PaneLayout(.single, [task.id]))
+        var made: [FakeBackend] = []
+        let sessions = TerminalSessions(store: store, context: context) {
+            let backend = FakeBackend()
+            made.append(backend)
+            return backend
+        }
+        sessions.sync()
+        store.focus(task.id)
+
+        // It opens in your thread's folder, and an idle shell just ends.
+        sessions.togglePopup()
+        let idle = try #require(made.last)
+        #expect(idle.launches.first?.directory == "/tmp")
+        idle.onEvent?(.focused)
+        #expect(store.focusedThreadId == task.id)
+        sessions.togglePopup()
+        #expect(idle.terminated && sessions.popup == nil && store.threads.count == 1)
+
+        // Still running something: the same shell becomes a card after yours, without a pane.
+        sessions.togglePopup()
+        let busy = try #require(made.last)
+        busy.onEvent?(.directory("/tmp/site"))
+        busy.onEvent?(.commandStarted("python3 -m http.server"))
+        sessions.closePopup()
+        let adopted = try #require(store.threads.last)
+        #expect(!busy.terminated)
+        #expect(sessions.terminal(for: adopted.id) === busy)
+        #expect(store.shelfOrder.map(\.id) == [task.id, adopted.id])
+        #expect(adopted.folder == "/tmp/site" && adopted.command == "python3 -m http.server")
+        #expect(store.activity(for: adopted.id).status == .running)
+        #expect(store.layout.panes == [task.id])
+        busy.onEvent?(.commandFinished(0))
+        #expect(store.activity(for: adopted.id).status == .idle)
+
+        // `exit` closes it too.
+        sessions.togglePopup()
+        made.last?.onEvent?(.exited(code: 0))
+        #expect(sessions.popup == nil)
     }
 }

@@ -55,6 +55,10 @@ final class SwiftTermBackend: TerminalBackend, LocalProcessTerminalViewDelegate 
         terminalView.font = .monospacedSystemFont(ofSize: size, weight: .regular)
     }
 
+    func paste(_ text: String) {
+        terminalView.pasteText(text)
+    }
+
     // MARK: LocalProcessTerminalViewDelegate
 
     func sizeChanged(source: LocalProcessTerminalView, newCols: Int, newRows: Int) {}

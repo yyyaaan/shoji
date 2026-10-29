@@ -8,7 +8,7 @@ struct HachiCorner: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        let waiting = store.threads.count { store.wantsYou($0.id) }
+        let waiting = store.wantingYou.count
         // The column is 78 pt wide whatever the zoom.
         let size = min(36 * zoom, 58)
         ZStack {

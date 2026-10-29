@@ -1,4 +1,6 @@
+import OSLog
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct PaneView: View {
     let thread: ShojiThread
@@ -9,6 +11,7 @@ struct PaneView: View {
     @State private var dropZone: DropZone?
     @State private var size = CGSize.zero
     @State private var isHovering = false
+    @AppStorage(Editor.storageKey) private var editorChoice = Editor.zed.rawValue
 
     private var isFocused: Bool { store.focusedThreadId == thread.id }
     private var isMaximized: Bool { store.layout.maximizedThreadId == thread.id }
@@ -49,7 +52,7 @@ struct PaneView: View {
             }
         }
         .onGeometryChange(for: CGSize.self) { $0.size } action: { size = $0 }
-        .onDrop(of: [.plainText], delegate: PaneDrop(target: thread.id, size: size, zone: $dropZone, store: store))
+        .onDrop(of: PaneDrop.types, delegate: PaneDrop(target: thread.id, size: size, zone: $dropZone, store: store, terminal: sessions?.terminal(for: thread.id)))
     }
 
     private var header: some View {
@@ -104,6 +107,9 @@ struct PaneView: View {
             splitItems
             Divider()
             Button(isMaximized ? "Restore" : "Maximize") { store.toggleMaximize(thread.id) }
+            if let editor = Editor.resolved(editorChoice) {
+                Button("Open in \(editor.name)") { editor.open(thread.folder) }
+            }
         }
         .animation(.easeOut(duration: 0.15), value: isHovering)
         .glassEffect(.regular, in: .rect)
@@ -155,20 +161,26 @@ enum DropZone: Equatable {
     }
 }
 
+/// Cards split or take the pane (see `DropZone`). Files and text from other apps paste into the terminal, like
+/// Terminal: a file as its path, so a dropped screenshot reaches Claude Code.
 private struct PaneDrop: DropDelegate {
+    static let types: [UTType] = [.shojiThread, .fileURL, .plainText]
+
     let target: UUID
     let size: CGSize
     @Binding var zone: DropZone?
     let store: ThreadStore
+    let terminal: (any TerminalBackend)?
 
     func validateDrop(info: DropInfo) -> Bool {
-        info.hasItemsConforming(to: [.plainText])
+        info.hasItemsConforming(to: Self.types)
     }
 
     func dropUpdated(info: DropInfo) -> DropProposal? {
-        let next = DropZone(info.location, in: size)
+        let isCard = info.hasItemsConforming(to: [.shojiThread])
+        let next = isCard ? DropZone(info.location, in: size) : .center
         if zone != next { zone = next }
-        return DropProposal(operation: .move)
+        return DropProposal(operation: isCard ? .move : .copy)
     }
 
     func dropExited(info: DropInfo) {
@@ -176,16 +188,57 @@ private struct PaneDrop: DropDelegate {
     }
 
     func performDrop(info: DropInfo) -> Bool {
-        let landing = DropZone(info.location, in: size)
         zone = nil
-        let target = target
-        let store = store
-        return CardDrag.load(info.itemProviders(for: [.plainText])) { id in
-            switch landing {
-            case .center: store.show(id, inPaneOf: target)
-            case .edge(let side): if !store.split(target, side: side, showing: id) { NSSound.beep() }
+        let (target, store) = (target, store)
+        if info.hasItemsConforming(to: [.shojiThread]) {
+            let landing = DropZone(info.location, in: size)
+            return CardDrag.load(info.itemProviders(for: [.shojiThread])) { id in
+                switch landing {
+                case .center: store.show(id, inPaneOf: target)
+                case .edge(let side): if !store.split(target, side: side, showing: id) { NSSound.beep() }
+                }
             }
         }
+        guard let terminal else { return false }
+        let files = info.itemProviders(for: [.fileURL])
+        let texts = info.itemProviders(for: [.plainText])
+        Task {
+            var text = ""
+            if !files.isEmpty {
+                var paths: [String] = []
+                for provider in files {
+                    let url = await withCheckedContinuation { done in
+                        _ = provider.loadObject(ofClass: URL.self) { url, _ in done.resume(returning: url) }
+                    }
+                    if let url { paths.append(url.path) }
+                }
+                text = FileDrop.text(for: paths)
+            } else if let provider = texts.first {
+                text = await withCheckedContinuation { done in
+                    _ = provider.loadObject(ofClass: String.self) { text, _ in done.resume(returning: text ?? "") }
+                }
+            }
+            guard !text.isEmpty else { return }
+            // Invariant 6: a paste the user dropped, sent as dropped.
+            Logger(subsystem: "fi.yan.shoji", category: "terminal").info("Pasted a drop of \(text.count) characters into \(target, privacy: .public)")
+            terminal.paste(text)
+            store.open(target)
+        }
+        return true
+    }
+}
+
+enum FileDrop {
+    /// Paths as Terminal pastes dropped files: shell characters escaped with a backslash, a space after each.
+    static func text(for paths: [String]) -> String {
+        paths.map { path in
+            path.reduce(into: "") { escaped, character in
+                if !(character.isLetter || character.isNumber || "/._-+@%:,=".contains(character)) { escaped.append("\\") }
+                escaped.append(character)
+            }
+        }
+        .map { $0 + " " }
+        .joined()
     }
 }
 

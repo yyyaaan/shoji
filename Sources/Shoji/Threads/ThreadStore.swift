@@ -139,6 +139,14 @@ final class ThreadStore {
         return activity.status == .needsYou || (hachiOnFinish && activity.isUnseen)
     }
 
+    /// The threads that want you in shelf order, those waiting on an answer first: Hachi's count, the Dock badge
+    /// and the menu bar.
+    var wantingYou: [ShojiThread] {
+        let waiting = shelfOrder.filter { wantsYou($0.id) }
+        let asking = waiting.filter { activity(for: $0.id).status == .needsYou }
+        return asking + waiting.filter { activity(for: $0.id).status != .needsYou }
+    }
+
     /// Called when a thread's terminal takes keyboard focus.
     func focus(_ id: UUID, at now: Date = .now) {
         if focusedThreadId != id { focusedThreadId = id }
@@ -165,10 +173,22 @@ final class ThreadStore {
 
     /// A fresh shell right after `neighbour`'s card, in its folder (home without one).
     private func addThread(after neighbour: UUID?, at now: Date = .now) -> UUID {
-        let neighbour = neighbour.flatMap(thread)
-        let thread = ShojiThread(folder: neighbour?.folder ?? "~")
+        let thread = ShojiThread(folder: neighbour.flatMap(thread)?.folder ?? "~")
+        insert(thread, after: neighbour, at: now)
+        return thread.id
+    }
+
+    /// The ⌘K quick terminal closed while running something: its shell joins the shelf right after the focused
+    /// card, still running, without taking a pane.
+    func adopt(_ thread: ShojiThread, running command: String, at now: Date = .now) {
+        insert(thread, after: focusedThreadId, at: now)
+        apply(StatusEvent(threadId: thread.id, signal: .directory(thread.folder)), at: now)
+        apply(StatusEvent(threadId: thread.id, signal: .commandStarted(command)), at: now)
+    }
+
+    private func insert(_ thread: ShojiThread, after neighbour: UUID?, at now: Date) {
         var groups = shelfIds
-        if let neighbour, let place = position(of: neighbour.id, in: groups) {
+        if let neighbour, let place = position(of: neighbour, in: groups) {
             groups[place.group].insert(thread.id, at: place.index + 1)
         } else if groups.isEmpty {
             groups = [[thread.id]]
@@ -178,7 +198,6 @@ final class ThreadStore {
         activities[thread.id] = ThreadActivity(launchedAt: now)
         threads.append(thread)
         arrange(groups)
-        return thread.id
     }
 
     /// The user's name for the thread, else its folder's name. Unnamed threads in folders of the same name

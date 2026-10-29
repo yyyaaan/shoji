@@ -34,6 +34,12 @@ struct MainView: View {
         .background(Backdrop())
         .overlay(alignment: .top) { zoomBadge }
         .overlay {
+            if let popup = sessions?.popup {
+                QuickTerminal(popup: popup) { sessions?.closePopup() }
+                    .environment(\.zoom, zoom)
+            }
+        }
+        .overlay {
             if showsRecentSwitch, let recentSwitch = store.recentSwitch {
                 RecentSwitchPanel(recentSwitch: recentSwitch)
                     .environment(\.zoom, zoom)

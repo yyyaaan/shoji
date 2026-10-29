@@ -1,8 +1,9 @@
 import Foundation
 import Testing
+import UniformTypeIdentifiers
 @testable import Shoji
 
-/// Which pane a thread lands in: card clicks, ⌥-click, drops, splits, Arrange and closing.
+/// Which pane a thread lands in: card clicks, ⌥-click, drops, splits, Arrange and closing; what other drops paste.
 /// `PaneLayoutTests` covers the layout value on its own.
 @MainActor
 struct PaneTests {
@@ -121,6 +122,21 @@ struct PaneTests {
         #expect(DropZone(CGPoint(x: 90, y: 100), in: size) == .edge(.left))
         #expect(DropZone(CGPoint(x: 200, y: 190), in: size) == .edge(.down))
         #expect(DropZone(CGPoint(x: 200, y: 100), in: size) == .center)
+    }
+
+    @Test func cardDragsCarryOnlyTheirThread() async {
+        let id = UUID()
+        let provider = CardDrag.item(for: id)
+        #expect(provider.registeredTypeIdentifiers == [UTType.shojiThread.identifier])
+        let loaded = await withCheckedContinuation { done in
+            _ = CardDrag.load([provider]) { done.resume(returning: $0) }
+        }
+        #expect(loaded == id)
+    }
+
+    @Test func droppedFilesPasteAsEscapedPathsLikeTerminal() {
+        #expect(FileDrop.text(for: ["/Users/yan/Desktop/Screenshot 2026-10-29 at 12.04.png"]) == #"/Users/yan/Desktop/Screenshot\ 2026-10-29\ at\ 12.04.png "#)
+        #expect(FileDrop.text(for: ["/tmp/a'b(1)", "/tmp/日本.txt"]) == #"/tmp/a\'b\(1\) /tmp/日本.txt "#)
     }
 
     @Test func closingAPaneKeepsItsThreadAndTheLastPaneStays() {

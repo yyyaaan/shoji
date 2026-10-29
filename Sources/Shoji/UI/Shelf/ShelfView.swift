@@ -10,6 +10,7 @@ struct ShelfView: View {
     @State private var renaming: ShojiThread?
     @State private var draftTitle = ""
     @State private var dropSpot: DropSpot?
+    @AppStorage(Editor.storageKey) private var editorChoice = Editor.zed.rawValue
 
     var body: some View {
         let groups = store.shelf
@@ -69,7 +70,7 @@ struct ShelfView: View {
                 .accessibilityAddTraits(.isButton)
                 .accessibilityAction { store.open(thread.id) }
                 .onDrag { CardDrag.item(for: thread.id) }
-                .onDrop(of: [.plainText], delegate: CardDrop(target: thread.id, width: ThreadCard.width * zoom, spot: $dropSpot, store: store))
+                .onDrop(of: [.shojiThread], delegate: CardDrop(target: thread.id, width: ThreadCard.width * zoom, spot: $dropSpot, store: store))
                 .overlay(alignment: dropSpot?.after == true ? .trailing : .leading) {
                     if dropSpot?.id == thread.id {
                         // Sits in the gap beside the card, outside its glass.
@@ -91,6 +92,9 @@ struct ShelfView: View {
     private func menu(for thread: ShojiThread) -> some View {
         Button("Show in This Pane") { store.bringHere(thread.id) }
             .disabled(store.focusedThreadId == nil || store.focusedThreadId == thread.id)
+        if let editor = Editor.resolved(editorChoice) {
+            Button("Open in \(editor.name)") { editor.open(thread.folder) }
+        }
         Button("Rename…") {
             draftTitle = thread.title ?? ""
             renaming = thread
@@ -119,18 +123,26 @@ private struct DropSpot: Equatable {
 }
 
 /// A card being dragged, as Shoji's own text payload, so text dragged in from elsewhere is ignored.
-enum CardDrag {
-    private nonisolated static let prefix = "shoji-thread:"
+extension UTType {
+    /// A card being dragged; declared in Info.plist and never offered to other apps.
+    static let shojiThread = UTType(exportedAs: "fi.yan.shoji.thread")
+}
 
+enum CardDrag {
     static func item(for id: UUID) -> NSItemProvider {
-        NSItemProvider(object: (prefix + id.uuidString) as NSString)
+        let provider = NSItemProvider()
+        provider.registerDataRepresentation(forTypeIdentifier: UTType.shojiThread.identifier, visibility: .ownProcess) { completion in
+            completion(Data(id.uuidString.utf8), nil)
+            return nil
+        }
+        return provider
     }
 
     /// Reads the dragged card's thread and hands it over on the main actor. False when nothing could be read.
     static func load(_ providers: [NSItemProvider], then action: @escaping @MainActor (UUID) -> Void) -> Bool {
         guard let provider = providers.first else { return false }
-        _ = provider.loadObject(ofClass: String.self) { text, _ in
-            guard let text, text.hasPrefix(prefix), let id = UUID(uuidString: String(text.dropFirst(prefix.count))) else { return }
+        _ = provider.loadDataRepresentation(forTypeIdentifier: UTType.shojiThread.identifier) { data, _ in
+            guard let data, let id = UUID(uuidString: String(decoding: data, as: UTF8.self)) else { return }
             Task { @MainActor in action(id) }
         }
         return true
@@ -145,7 +157,7 @@ private struct CardDrop: DropDelegate {
     let store: ThreadStore
 
     func validateDrop(info: DropInfo) -> Bool {
-        info.hasItemsConforming(to: [.plainText])
+        info.hasItemsConforming(to: [.shojiThread])
     }
 
     func dropUpdated(info: DropInfo) -> DropProposal? {
@@ -163,7 +175,7 @@ private struct CardDrop: DropDelegate {
         spot = nil
         let target = target
         let store = store
-        return CardDrag.load(info.itemProviders(for: [.plainText])) { id in
+        return CardDrag.load(info.itemProviders(for: [.shojiThread])) { id in
             withAnimation(.snappy) { store.place(id, nextTo: target, after: after) }
         }
     }
