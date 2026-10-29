@@ -77,6 +77,8 @@ final class ThreadStore {
             threads[index].command = line
             activity.agent = Agent(commandLine: line)
             activity.detail = nil
+            // A new program sets its own title; an earlier agent's topic must not stick to it.
+            activity.terminalTitle = nil
             // An agent waits at its own prompt until a hook says otherwise; anything else is running.
             activity.transition(to: activity.agent == nil ? .running : .idle, at: now)
         case .commandFinished(let code):
@@ -200,11 +202,13 @@ final class ThreadStore {
         arrange(groups)
     }
 
-    /// The user's name for the thread, else its folder's name. Unnamed threads in folders of the same name
-    /// are numbered oldest first ("shoji", "shoji 2"), so a `cd` into a subfolder and back changes nothing.
+    /// The user's name for the thread, else the running agent's topic, else its folder's name. Threads going by
+    /// folders of the same name are numbered oldest first ("shoji", "shoji 2"), so a `cd` into a subfolder and
+    /// back changes nothing. Cards, pane headers, menus and notifications all use it.
     func name(of thread: ShojiThread) -> String {
         if let title = thread.title { return title }
-        let twins = threads.filter { $0.title == nil && $0.folderName == thread.folderName }
+        if let topic = activities[thread.id]?.topic { return topic }
+        let twins = threads.filter { $0.title == nil && activities[$0.id]?.topic == nil && $0.folderName == thread.folderName }
         let place = twins.firstIndex { $0.id == thread.id } ?? 0
         return place == 0 ? thread.folderName : "\(thread.folderName) \(place + 1)"
     }
@@ -347,8 +351,10 @@ final class ThreadStore {
     // MARK: Panes
 
     /// Shows the thread in the pane you're in (or, with none, the one used longest ago that isn't waiting for
-    /// you), and focuses it. A thread already on screen just takes focus.
+    /// you), and focuses it. A thread already on screen just takes focus; one that's gone (a late notification
+    /// click) is ignored.
     func open(_ id: UUID) {
+        guard thread(id) != nil else { return }
         let panes = layout.panes
         let notWaiting = panes.filter { !wantsYou($0) }
         let replaced = panes.first { $0 == focusedThreadId }

@@ -17,7 +17,7 @@ Coding agents like Claude Code and Codex sit next to long-running tasks like `pn
 
 </div>
 
-<p align="center"><img src="docs/images/shoji.png" alt="Shoji window: a shelf of glass cards on top, one agent card asking for attention with Hachi, and a Claude Code terminal below"></p>
+<p align="center"><img src="docs/images/shoji.png" alt="Shoji window: a shelf of glass cards on top (Claude working on a login fix, another Claude agent asking for permission with Hachi and an orange glow, a finished Codex turn, pnpm dev and docker compose running, an idle notes shell) and split panes below with the Claude Code session and both server logs"></p>
 
 ## Why Shoji
 
@@ -27,7 +27,7 @@ Shoji is deliberately not an editor, a diff viewer or an agent client. It never 
 
 ## Features
 
-- **Every thread is your shell.** ⌘N opens one next to the card you're on. `cd` anywhere, run `claude`, `codex` or `pnpm dev`, quit back to the prompt; the card follows along. Reopen Shoji and your threads, layout and Claude or Codex conversations come back.
+- **Every thread is your shell.** ⌘N opens one next to the card you're on. `cd` anywhere, run `claude`, `codex` or `pnpm dev`, quit back to the prompt; the card follows along. While an agent runs, its card is named after what the agent is working on, with the folder underneath. Reopen Shoji and your threads, layout and Claude or Codex conversations come back.
 - **Your shelf, your groups.** Drag cards into place and drop plain bars between them (right-click a card); groups mean whatever you want. Unnamed threads go by their folder's name, and get a number ("shoji 2") only when two would read the same.
 - **Know who needs you.** Cards show working, needs you, done, idle, running and exited, each with its own shape and label. A needs-you card turns orange, counts what's waiting and brings out Hachi, who also peeks out under the window buttons: one click opens the thread that's waiting. With Shoji in the background, a macOS notification says which thread wants you (click it to go there; **Threads › Notify Me When Shoji Is Away** turns them off), and Hachi in the menu bar and the Dock badge keep the count. An agent that finishes while you're not looking keeps its tick and gets a soft ivory glow, like an unread mark, and Hachi too unless you turn off **Threads › Show Hachi When an Agent Finishes**.
 - **Status from the CLI itself.** Claude Code reports through its own hooks, injected per launch with `--settings`, so your `~/.claude` is never touched. Shoji never scrapes terminal output.
@@ -117,9 +117,8 @@ open build/Build/Products/Debug/Shoji.app
 
 ## Roadmap
 
-- **Now:** a hands-on polish pass on everyday use
-- **Next:** a Dock badge, a menu bar Hachi and macOS notifications for threads that want you while Shoji is in the background, panes that split in any direction, dropping files onto a terminal to paste their paths, open a folder in Zed or VS Code, a ⌘K popup terminal for quick commands like `open report.html`
-- **Later:** multiple windows with a slim sidebar style, saved workspaces, a Hub view of every agent sorted by attention, "Allow once" from the Hub, settings and themes
+- **Now (v0.4):** split panes in any direction, a ⌘K quick terminal, a menu bar Hachi, Dock badge and macOS notifications for threads that want you, files dropped onto a terminal paste their paths, open a folder in Zed or VS Code
+- **Next and later:** a Settings window for terminal font, theme and scrollback; saved workspaces and multiple windows, including a slim sidebar style; a Hub view of every agent sorted by attention, with "Allow once"
 
 The live list is in [PLAN.md](PLAN.md#tasks).
 

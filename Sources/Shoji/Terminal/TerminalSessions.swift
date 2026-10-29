@@ -108,8 +108,8 @@ final class TerminalSessions {
         } else {
             popup.backend.terminate()
         }
-        // Back to the pane you were in.
-        if let id = store.focusedThreadId { store.open(id) }
+        // Back to the pane you were in, if it's still on screen.
+        if let id = store.focusedThreadId, store.layout.visibleThreadIds.contains(id) { store.open(id) }
     }
 
     private func handlePopup(_ event: TerminalEvent) {

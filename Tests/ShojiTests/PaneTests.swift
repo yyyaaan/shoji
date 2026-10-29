@@ -15,10 +15,12 @@ struct PaneTests {
         #expect(store.layout.panes == [ids[2], ids[1]])
         #expect(store.focusRequest == ids[2])
 
-        // Already on screen: only focus moves.
+        // Already on screen: only focus moves. A thread that's gone changes nothing.
         store.open(ids[1])
         #expect(store.layout.panes == [ids[2], ids[1]])
         #expect(store.focusRequest == ids[1])
+        store.open(UUID())
+        #expect(store.layout.panes == [ids[2], ids[1]])
     }
 
     @Test func withNoPaneFocusedOpenSparesPanesThatWantYou() {
