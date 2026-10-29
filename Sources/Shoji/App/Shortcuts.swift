@@ -152,6 +152,7 @@ struct ShojiCommands: Commands {
             Divider()
             Group {
                 button(.splitRight) { if !store.split(side: .right) { NSSound.beep() } }
+                    .disabled(store.isCompact)
                 button(.splitDown) { if !store.split(side: .down) { NSSound.beep() } }
                 Button("Close Pane") { store.focusedThreadId.map(store.closePane) }
                     .disabled(store.layout.panes.count < 2)
@@ -160,9 +161,12 @@ struct ShojiCommands: Commands {
             .disabled(store.focusedThreadId == nil)
             Divider()
             button(.singlePane) { store.arrange(.single) }
-            button(.twoColumns) { store.arrange(.twoColumns) }
-            button(.threePanes) { store.arrange(.threePanes) }
-            button(.grid) { store.arrange(.grid) }
+            Group {
+                button(.twoColumns) { store.arrange(.twoColumns) }
+                button(.threePanes) { store.arrange(.threePanes) }
+                button(.grid) { store.arrange(.grid) }
+            }
+            .disabled(store.isCompact)
         }
 
         CommandGroup(before: .toolbar) {

@@ -6,6 +6,7 @@ import SwiftUI
 struct TerminalHost: NSViewRepresentable {
     let terminal: any TerminalBackend
     var wantsFocus = false
+    var backgroundOpacity = 1.0
 
     final class Coordinator {
         var wantedFocus = false
@@ -20,6 +21,7 @@ struct TerminalHost: NSViewRepresentable {
     }
 
     func updateNSView(_ container: TerminalContainer, context: Context) {
+        terminal.setBackgroundOpacity(backgroundOpacity)
         container.host(terminal.view)
         // Only when a request arrives: a pending one must not pull focus back after the user clicked another pane.
         if wantsFocus, !context.coordinator.wantedFocus {

@@ -20,9 +20,14 @@ struct ThreadFileTests {
         store.apply(StatusEvent(threadId: id, signal: .directory("/tmp")))
         store.apply(StatusEvent(threadId: id, signal: .commandStarted("claude --model opus")))
         store.apply(StatusEvent(threadId: id, signal: .working(sessionId: "s1")))
+        store.isCompact = true
+        store.split(side: .down)
         store.saveNow()
 
         let saved = try #require(ThreadFile.load(from: url))
+        #expect(saved.compactLayout == store.compactLayout)
+        #expect(saved.layout == store.fullLayout)
+        store.isCompact = false
         #expect(saved.schemaVersion == 1)
         #expect(saved.threads.map(\.id) == store.layout.panes)
         #expect(saved.threads.first?.folder == "/tmp")
@@ -61,6 +66,7 @@ struct ThreadFileTests {
         #expect(file.threads.map(\.id) == [id])
         #expect(file.threads.first?.resumeAgent == nil)
         #expect(file.layout.panes == [id])
+        #expect(file.compactLayout == nil)
 
         let (a, b, c) = (UUID(), UUID(), UUID())
         let v3 = #"{"mode": "threePanes", "openThreadIds": ["\#(a)", "\#(b)", "\#(c)", "\#(UUID())"], "columnSplit": 0.3, "pinnedThreadIds": ["\#(b)"]}"#

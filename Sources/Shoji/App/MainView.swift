@@ -11,28 +11,43 @@ struct MainView: View {
     @State private var showsRecentSwitch = false
 
     var body: some View {
-        VStack(spacing: 14) {
+        VStack(spacing: store.isCompact ? 6 : 14) {
             if store.threads.isEmpty {
                 welcome
             } else {
                 // No title bar: the shelf shares the top with the window buttons.
-                HStack(spacing: 0) {
-                    // Clear of the window's close, minimize and zoom buttons; Hachi's corner sits below them.
-                    HachiCorner()
-                        .frame(width: 78)
-                        .frame(maxHeight: .infinity, alignment: .bottom)
-                        .padding(.bottom, 6 * zoom)
-                    ShelfView()
+                if store.isCompact {
+                    // Hachi beside the window buttons; no shelf, each row picks its thread.
+                    HStack(spacing: 0) {
+                        HachiCorner()
+                            .padding(.leading, 78)
+                        Spacer()
+                    }
+                    .frame(height: 40 * zoom)
+                } else {
+                    HStack(spacing: 0) {
+                        // Clear of the window's close, minimize and zoom buttons; Hachi's corner sits below them.
+                        HachiCorner()
+                            .frame(width: 78)
+                            .frame(maxHeight: .infinity, alignment: .bottom)
+                            .padding(.bottom, 6 * zoom)
+                        ShelfView()
+                    }
+                    .frame(height: 120 * zoom)
                 }
-                .frame(height: 120 * zoom)
+                // Same place in both forms, so panes on screen in both keep their terminals hosted.
                 PaneGrid()
-                    .padding(.horizontal, 18)
-                    .padding(.bottom, 16)
+                    .padding(.horizontal, store.isCompact ? 10 : 18)
+                    .padding(.bottom, store.isCompact ? 10 : 16)
             }
         }
         .ignoresSafeArea(.container, edges: .top)
         .environment(\.zoom, zoom)
-        .frame(minWidth: 640, minHeight: 480)
+        // The Split View divider sets the width; a margin either side of 700 pt keeps a drag from flickering.
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width in
+            if width < 680, !store.isCompact { store.isCompact = true } else if width > 720, store.isCompact { store.isCompact = false }
+        }
+        .frame(minWidth: 480, minHeight: 480)
         .background(Backdrop())
         .overlay(alignment: .top) { zoomBadge }
         .overlay {

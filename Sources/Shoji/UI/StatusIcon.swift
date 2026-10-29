@@ -1,5 +1,19 @@
 import SwiftUI
 
+extension ThreadStatus {
+    /// For menus, which can't draw `StatusIcon`.
+    var symbol: String {
+        switch self {
+        case .working: "ellipsis.circle"
+        case .needsYou: "exclamationmark.circle"
+        case .done, .exited(code: 0?): "checkmark.circle"
+        case .idle: "circle"
+        case .running: "play.circle"
+        case .exited: "xmark.circle"
+        }
+    }
+}
+
 /// One shape per status so state never relies on color alone; the label goes to VoiceOver and the tooltip.
 struct StatusIcon: View {
     let status: ThreadStatus

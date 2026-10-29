@@ -8,7 +8,7 @@ Shoji shows what's running and what needs the user.
 
 Mascot: **Hachi**, an Akita who appears on a card, and in the window's top-left corner, when a thread needs the user.
 
-Words used everywhere (code, docs, chat): a **thread** is one hosted shell session, whatever runs in it; the **shelf** is the strip of **cards** across the top, one card per thread in the user's order, with **bars** splitting it into groups that mean whatever the user wants (no titles); a **pane** shows an open thread's terminal below the shelf; the **Hub** (planned) shows big cards.
+Words used everywhere (code, docs, chat): a **thread** is one hosted shell session, whatever runs in it; the **shelf** is the strip of **cards** across the top, one card per thread in the user's order, with **bars** splitting it into groups that mean whatever the user wants (no titles); a **pane** shows an open thread's terminal below the shelf; the **compact form** is the same window made narrow (Split View beside an editor): no shelf, one column of one or two panes, each picking its thread from a dropdown; the **Hub** (planned) shows big cards.
 
 Shoji is NOT an editor, diff viewer or file browser (the user keeps Zed/VS Code for
 those), and NOT an agent client: it never talks to models or APIs. It only hosts
@@ -41,7 +41,7 @@ scripts/
 Sources/Shoji/
   Info.plist                merged with the generated keys; only what has no INFOPLIST_KEY_ setting (the card drag type)
   ThirdPartyNotices.txt     bundled open-source notices (SwiftTerm's MIT licence), shown in the About panel
-  App/                      app entry (ShojiApp: wiring, window, AppDelegate's quit check), MainView + the top row's controls,
+  App/                      app entry (ShojiApp: wiring, window, AppDelegate's quit check), MainView (full and compact forms) + the top row's controls,
                             Shortcuts (catalog + menu commands), Notifier (Dock badge, macOS notifications),
                             Editor (Open in VS Code / Zed)
   Threads/                  ShojiThread, ThreadStore, PaneLayout (split tree, presets, PaneTiles), launch building, Mock
@@ -50,7 +50,7 @@ Sources/Shoji/
   Status/                   StatusEvent, HookServer (socket listener), ClaudeHooks, CodexHooks
   UI/                       Theme (palette), StatusIcon, Backdrop, Zoom (text and interface sizes), ShortcutsSheet, RecentSwitch (⌃Tab)
   UI/Shelf/                 card shelf with bars between groups, context menu
-  UI/Panes/                 PaneGrid (panes and split handles by frame), PaneView (header, Split menu, edge drops), TerminalHost
+  UI/Panes/                 PaneGrid (panes and split handles by frame), PaneView (header, compact thread picker, Split menu, edge drops), TerminalHost
   UI/Hub/                   Hub view big cards
   UI/Hachi/                 HachiPortrait, HachiCorner, Hachi.xcassets (vector PDFs), AppIcon.icon
                             (Icon Composer; spec in docs/design/hachi/README.md)
@@ -86,7 +86,8 @@ If a command here is wrong or missing, fix this file in the same change.
    `TerminalBackend` protocol, so the engine stays swappable (libghostty is the
    documented fallback).
 3. **Glass on chrome only.** Shelf, card frames, pane headers, Hub cards, toasts and
-   menus are glass. Terminal content is always drawn on a solid background.
+   menus are glass. Terminal content sits on its own background: `Palette.paneOpacity`
+   (90%) in panes with no blur, solid in the quick terminal and with Reduce Transparency.
 4. **No tmux or any multiplexer.** Persistence = relaunch with the CLI's own resume
    (`claude --resume <id>`, `codex resume <id>`) using the thread's stored resume id.
 5. **One status path.** Every status change is a `StatusEvent` (from the socket or
@@ -177,7 +178,7 @@ come from Shoji's settings (default: a monospaced system font and a dark theme).
 
 - Don't add an editor, diff view, file tree or git UI.
 - Don't call model APIs or embed agent SDKs; Shoji only hosts the CLIs.
-- Don't put glass, blur or transparency behind terminal text.
+- Don't put glass or blur behind terminal text, or take a pane's background below `Palette.paneOpacity`.
 - Don't parse terminal output for status (invariant 5).
 - Don't hand-edit `.pbxproj`.
 - Don't change an invariant above without asking; propose it in PLAN.md Open questions.

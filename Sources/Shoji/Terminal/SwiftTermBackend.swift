@@ -9,6 +9,7 @@ final class SwiftTermBackend: TerminalBackend, LocalProcessTerminalViewDelegate 
 
     private let terminalView: ShojiTerminalView
     private let relay: DelegateRelay
+    private var backgroundOpacity = 1.0
 
     init() {
         terminalView = ShojiTerminalView(
@@ -53,6 +54,12 @@ final class SwiftTermBackend: TerminalBackend, LocalProcessTerminalViewDelegate 
     func setFontSize(_ size: CGFloat) {
         guard terminalView.font.pointSize != size else { return }
         terminalView.font = .monospacedSystemFont(ofSize: size, weight: .regular)
+    }
+
+    func setBackgroundOpacity(_ opacity: Double) {
+        guard backgroundOpacity != opacity else { return }
+        backgroundOpacity = opacity
+        terminalView.backgroundOpacity = opacity
     }
 
     func paste(_ text: String) {

@@ -170,6 +170,45 @@ struct PaneTests {
         #expect(store.layout.panes == [ids[1]])
     }
 
+    @Test func theCompactFormKeepsAtMostTwoRowsOfItsOwn() throws {
+        let (threads, ids) = numberedThreads(4)
+        let store = ThreadStore(threads: threads, layout: PaneLayout(.threePanes, Array(ids.prefix(3))))
+        store.focus(ids[1])
+
+        // First time: your thread, alone; nothing beside it, at most one row below.
+        store.isCompact = true
+        #expect(store.layout.panes == [ids[1]])
+        #expect(store.focusRequest == ids[1])
+        #expect(!store.split(side: .right))
+        store.arrange(.grid)
+        #expect(store.layout.panes == [ids[1]])
+        #expect(store.split(side: .down))
+        let below = try #require(store.layout.panes.last)
+        #expect(store.layout.root == .split(axis: .rows, ratio: 0.5, first: .pane(id: ids[1]), second: .pane(id: below)))
+        #expect(!store.split(ids[1], side: .up))
+
+        // A row's dropdown picks its thread, trading places with the other row.
+        store.show(ids[3], inPaneOf: below)
+        store.show(ids[1], inPaneOf: ids[3])
+        #expect(store.layout.panes == [ids[3], ids[1]])
+        let shell = store.newThread(inPaneOf: ids[1])
+        #expect(store.layout.panes == [ids[3], shell])
+
+        // The full form comes back as it was, and so do the rows.
+        store.isCompact = false
+        #expect(store.layout.panes == Array(ids.prefix(3)))
+        store.isCompact = true
+        #expect(store.layout.panes == [ids[3], shell])
+
+        // Closing a thread takes it out of both forms.
+        store.close(ids[3])
+        #expect(store.layout.panes == [shell])
+        store.isCompact = false
+        #expect(store.layout.panes == Array(ids.prefix(3)))
+        store.close(ids[0])
+        #expect(store.layout.panes == [ids[1], ids[2]])
+    }
+
     @Test func closingTheFocusedThreadFocusesAnotherPane() {
         let (threads, ids) = numberedThreads(3)
         let store = ThreadStore(threads: threads, layout: PaneLayout(.twoColumns, [ids[0], ids[2]]))

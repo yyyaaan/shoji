@@ -15,6 +15,7 @@ struct TerminalSessionsTests {
         func terminate() { terminated = true }
         func focus() {}
         func setFontSize(_ size: CGFloat) { fontSize = size }
+        func setBackgroundOpacity(_ opacity: Double) {}
         func paste(_ text: String) {}
     }
 

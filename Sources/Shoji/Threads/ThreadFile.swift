@@ -8,8 +8,10 @@ struct ThreadFile: Codable, Equatable {
 
     var schemaVersion = currentVersion
     var threads: [ShojiThread]
-    /// Kept apart from `threads` so it can later belong to a window's workspace.
+    /// The full form's panes.
     var layout: PaneLayout
+    /// The compact form's rows; missing before v0.5.
+    var compactLayout: PaneLayout?
 
     enum LoadError: Error {
         case newerVersion(Int)
