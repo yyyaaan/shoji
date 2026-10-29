@@ -2,7 +2,7 @@
 
 ## Status
 
-- **Last session (pane-control, PR #3, releases v0.3.0):** panes are under the user's control. A card click goes to its thread (focus if on screen, else it opens in the pane you're in; a line under the card marks threads in panes); ⌥-click or Show in This Pane brings it to your pane, swapping if needed; drop a card on a pane; pin panes (⇧⌘P); layout switches keep panes in place (no re-hosted terminals), keep the focused and pinned ones, and fill new panes; minimize is gone. ⌃Tab / ⌃⇧Tab switches recent threads like ⌘Tab. Names carry a number only when two would read the same. Codex reports status and resumes through its own hooks, like Claude (tried live by the user, `/hooks` trust included). 61 tests pass.
+- **Last session (pane-control, PR #3, releases v0.3.0):** panes are under the user's control. A card click goes to its thread (focus if on screen, else it opens in the pane you're in; a line under the card marks threads in panes); ⌥-click or Show in This Pane brings it to your pane, swapping if needed; drop a card on a pane; pin panes (⇧⌘P); layout switches keep panes in place (no re-hosted terminals), keep the focused and pinned ones, and fill new panes; minimize is gone. ⌃Tab / ⌃⇧Tab switches recent threads like ⌘Tab. Names carry a number only when two would read the same. Codex reports status and resumes through its own hooks, like Claude (tried live by the user, `/hooks` trust included). Idle shows the Torii gate. A turn that finishes out of sight (not the focused pane, or Shoji in the background) is unseen and calls Hachi like needs-you, keeping its tick; Threads › Show Hachi When an Agent Finishes (on by default) turns that off. 64 tests pass.
 - **Next up:** after the merge, `release.yml` publishes v0.3.0; install it and trust its Codex hooks once (a new path). Then Tasks › Next, with macOS notifications as the likely v0.4 headline.
 - **Design update (idle Torii):** vector assets and zoom preview ready; native integration handed to app through `docs/handoffs/`.
 - **Blockers:** none
@@ -87,7 +87,7 @@ private to Yan's account; agents can't open it, so the HTML files are what they 
 - No toolbar row (user's call): the title bar is hidden and the shelf takes the top. Its left end holds the window buttons and Hachi's corner below them (empty; Hachi and a count while anything needs you, click opens it), its right end the layout switcher; new threads come from ⌘N and shortcuts from ⌘/ or the Help menu, so neither has a button. The window drags by its background.
 - Shelf of glass cards across the top in the user's order, split into groups by plain bars (no titles, no fixed meaning; user's call); scrolls sideways when cards overflow.
 - Card: status icon, a tag for what runs (CLAUDE / CODEX / the command's name, none at an idle prompt), name (the folder's name unless renamed; a number only when two unnamed threads would read the same, like "shoji 2", given to the one that arrived there later), one-line status, command or folder, elapsed time.
-- Needs-you card: orange border + glow, count badge, Hachi.
+- Needs-you card: orange border + glow, count badge, Hachi. A finished turn you haven't seen (Zed's unread dot: it ended outside the focused pane, or while Shoji was in the background) gets the same card, Hachi corner and ⌘J, keeping its tick and without a count; focusing it or returning to Shoji on it clears it. Threads › Show Hachi When an Agent Finishes (default on, remembered) leaves only the quiet tick.
 - Drag a card onto another to put it before or after it (by which half), joining that card's group; ⌘N plus a drag replaces any per-group + button.
 - Card context menu: Show in This Pane, Rename, Move Left / Right (the non-drag path, also for VoiceOver), Add / Remove Bar Before, Restart (shell ended), Close Thread. Later: open folder in Zed.
 - Bars are lanes for scanning (say agents left, servers right), not layout: where terminals sit on screen is the pane layout's job.
@@ -159,7 +159,7 @@ Runtime-only (not persisted): status, last activity, unread count, agent, termin
 | Running | a command other than claude / codex is running (zsh `preexec`) |
 | Working | Claude or Codex `UserPromptSubmit` / `PostToolUse` hook; typing into a needs-you thread |
 | Needs you | Claude `Notification` hook (not `idle_prompt`); Codex `PermissionRequest`; bell while Working |
-| Done | Claude or Codex `Stop` hook; Codex `Interrupt` |
+| Done | Claude or Codex `Stop` hook; Codex `Interrupt`. Unseen (wants you, with the menu setting) when it lands outside the focused pane or while Shoji is in the background |
 | Exited(code) | a command failed (shell still alive, clears on focus), or the shell itself ended (Restart) |
 
 Shell reports from the zsh integration: `cwd;<path>` each prompt, `cmd;<line>` before a command, `done;<code>` after it.
@@ -177,10 +177,9 @@ Priorities shift with the user's wishes; reorder freely. Keep items one line, sm
 - [ ] Hands-on pass on daily-driver: ⌘N opens a shell beside the focused card; `cd` updates the card; typed `claude` shows status and `/exit` returns to the prompt; quit and reopen resumes Claude and prefills a stopped `pnpm dev`; Move Left / Right and bars; ⌘W confirm only while running
 
 - [ ] Open the v0.3.0 DMG once and check its first launch (Open Anyway)
-- [ ] Rest of the pane-control pass (⌃Tab and Codex status already confirmed): click a card on screen (focus only, line under the card), ⌥-click and Show in This Pane (swap), drag a card onto a pane and onto another visible pane (swap), pin then click cards, two shells in one folder ("shoji", "shoji 2"), no blank panes when switching layouts with busy terminals, Codex quit + reopen resumes
+- [ ] Rest of the pane-control pass (⌃Tab and Codex status already confirmed): click a card on screen (focus only, line under the card), ⌥-click and Show in This Pane (swap), drag a card onto a pane and onto another visible pane (swap), pin then click cards, two shells in one folder ("shoji", "shoji 2"), no blank panes when switching layouts with busy terminals, Codex quit + reopen resumes; an agent finishing in another pane or with Shoji in the background calls Hachi, focusing it clears, and the Threads menu toggle turns it off; the Torii gate on idle cards
 
 ### Next
-- [ ] Replace the idle dashed circle with the approved Torii glyph; assets/spec in `docs/design/status/`, native checks in the design-to-app handoff
 - [ ] Open folder in Zed from the card context menu
 - [ ] bash (and maybe fish) integration, so threads in those shells get folder, command and Claude status
 - [ ] macOS notification for needs-you while Shoji is in the background
@@ -207,6 +206,7 @@ Priorities shift with the user's wishes; reorder freely. Keep items one line, sm
 - Hachi: vector portrait on needs-you cards (zoom-aware, behind the count badge) and in the window corner while anything needs you; a layered Icon Composer app icon
 - Pane control: a card opens in the pane you're in, or a free one, else the least recently used pane that isn't waiting; layout switches keep panes (no re-hosted terminals), the focused and pinned ones on screen, and fill new panes; drop a card on a pane; pin a pane; a card click brings its thread to your pane; ⌃Tab recent-thread switcher; names number only same-named threads
 - Codex: status (working, needs you on `PermissionRequest`, done) and `codex resume` through its own hooks, like Claude
+- Idle shows the approved Torii gate (`docs/design/status/`) instead of the dashed ring
 - Daily driver: threads are shells (⌘N instant, welcome screen); zsh integration for folder, commands and Claude hooks; `threads.json` save and restore with Claude resume and last-command prefill; shelf bars with Move Left / Right; rename, restart, close (⌘W, confirm while running)
 
 ## Terminal checklist
@@ -242,6 +242,8 @@ Run by hand with Claude Code in Shoji; re-run after every SwiftTerm bump (AGENTS
 ## Decisions
 
 - **Codex through its hooks, not `notify`** (2026-10-28). Codex (checked on 0.164) has Claude-style hooks with the same stdin fields, passed per launch as `-c hooks={…}`, so `~/.codex` stays untouched and the user's own `notify` isn't overridden. Cost: the user trusts Shoji's hooks once in `/hooks`.
+
+- **A finished turn you didn't see wants you** (2026-10-29, user's call, after Zed's unread dot). The user doesn't need to tell "needs my click" from "done, needs my check", so both call Hachi; the tick stays to show which. A menu toggle keeps the quiet tick for focused work.
 
 - **Releases follow the version** (2026-10-28). Bumping `MARKETING_VERSION` in `project.yml` inside a PR is the decision to release; merging it makes `release.yml` build the DMG and publish `vX.Y.Z` with generated notes, creating the tag on that commit. Other merges don't release. No manual tags. Chosen over release-please / semantic-release (Conventional Commit titles, a bot PR, a changelog file) while Shoji has one maintainer; revisit if contributors join.
 

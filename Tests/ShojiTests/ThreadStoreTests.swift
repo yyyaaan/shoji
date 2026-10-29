@@ -382,4 +382,51 @@ struct ThreadStoreTests {
         send(.finished, to: first.id, in: store, at: start + 4)
         #expect(store.activity(for: first.id).status == .done)
     }
+
+    @Test func aTurnFinishedOutOfSightWantsYouUntilSeen() {
+        let store = makeStore()
+        store.focus(second.id)
+        send(.working(sessionId: nil), to: first.id, in: store)
+        send(.finished, to: first.id, in: store)
+        #expect(store.activity(for: first.id).status == .done)
+        #expect(store.wantsYou(first.id))
+        #expect(store.openNextNeedingYou())
+        #expect(store.focusRequest == first.id)
+
+        store.hachiOnFinish = false
+        #expect(!store.wantsYou(first.id))
+        #expect(!store.openNextNeedingYou())
+        store.hachiOnFinish = true
+
+        store.focus(first.id)
+        #expect(!store.wantsYou(first.id))
+        #expect(store.activity(for: first.id).status == .idle)
+
+        // Watching it finish is the quiet tick.
+        send(.working(sessionId: nil), to: first.id, in: store)
+        send(.finished, to: first.id, in: store)
+        #expect(store.activity(for: first.id).status == .done && !store.wantsYou(first.id))
+    }
+
+    @Test func withShojiInTheBackgroundEvenTheFocusedPaneIsOutOfSight() {
+        let store = makeStore()
+        store.focus(first.id)
+        store.isAppActive = false
+        send(.working(sessionId: nil), to: first.id, in: store)
+        send(.finished, to: first.id, in: store)
+        #expect(store.wantsYou(first.id))
+
+        store.isAppActive = true
+        #expect(!store.wantsYou(first.id))
+        #expect(store.activity(for: first.id).status == .idle)
+    }
+
+    @Test func aNewTurnClearsTheUnseenMark() {
+        let store = makeStore()
+        send(.working(sessionId: nil), to: first.id, in: store)
+        send(.finished, to: first.id, in: store)
+        #expect(store.activity(for: first.id).isUnseen)
+        send(.working(sessionId: nil), to: first.id, in: store)
+        #expect(!store.activity(for: first.id).isUnseen)
+    }
 }

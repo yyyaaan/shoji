@@ -58,7 +58,8 @@ struct ShelfView: View {
                     name: store.name(of: thread),
                     activity: store.activity(for: thread.id),
                     isFocused: store.focusedThreadId == thread.id,
-                    isOnScreen: store.layout.visibleThreadIds.contains(thread.id)
+                    isOnScreen: store.layout.visibleThreadIds.contains(thread.id),
+                    wantsYou: store.wantsYou(thread.id)
                 )
                 .contentShape(.rect)
                 // A click goes to the thread; ⌥-click brings it to the pane you're in.

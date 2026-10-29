@@ -11,6 +11,8 @@ struct ShojiApp: App {
     private static let isHeadless = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
         || ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
 
+    private static let hachiOnFinishKey = "hachiOnFinish"
+
     /// Debug builds get their own folder, so a dev build never touches the installed app's threads or socket.
     private static let supportFolder: URL = {
         #if DEBUG
@@ -31,6 +33,7 @@ struct ShojiApp: App {
             let fileURL = Self.supportFolder.appending(path: "threads.json")
             let saved = ThreadFile.load(from: fileURL)
             store = ThreadStore(threads: saved?.threads ?? [], layout: saved?.layout ?? PaneLayout(), fileURL: fileURL)
+            store.hachiOnFinish = UserDefaults.standard.object(forKey: Self.hachiOnFinishKey) as? Bool ?? true
             NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { _ in
                 MainActor.assumeIsolated { store.saveNow() }
             }
@@ -48,6 +51,9 @@ struct ShojiApp: App {
                 .environment(store)
                 .environment(sessions)
                 .onChange(of: store.threads.map(\.id), initial: true) { sessions.sync() }
+                .onChange(of: store.hachiOnFinish) { _, isOn in
+                    if !Self.isHeadless { UserDefaults.standard.set(isOn, forKey: Self.hachiOnFinishKey) }
+                }
         }
         .defaultSize(width: 1360, height: 860)
         .windowResizability(.contentMinSize)

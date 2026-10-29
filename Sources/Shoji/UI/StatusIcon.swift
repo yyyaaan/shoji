@@ -8,8 +8,9 @@ struct StatusIcon: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
+        // The Torii brings its own optical padding, so it fills the whole slot instead of the ring's.
         icon
-            .frame(width: ring, height: ring)
+            .frame(width: status == .idle ? size : ring, height: status == .idle ? size : ring)
             .frame(width: size, height: size)
             .accessibilityElement()
             .accessibilityLabel(status.label)
@@ -39,7 +40,11 @@ struct StatusIcon: View {
         case .done, .exited(code: 0?):
             glyph("checkmark", tint: Palette.done, ring: Palette.done.opacity(0.7), fill: .white.opacity(0.08))
         case .idle:
-            Circle().stroke(Palette.done.opacity(0.55), style: StrokeStyle(lineWidth: line * 0.85, dash: [size * 0.1, size * 0.13]))
+            // At a prompt (docs/design/status). Hachi stays reserved for needs-you.
+            Image(.idleTorii)
+                .resizable()
+                .scaledToFit()
+                .foregroundStyle(Palette.done.opacity(0.55))
         case .running:
             ZStack {
                 if !reduceMotion {

@@ -34,7 +34,7 @@ Render the template with **`Palette.done.opacity(0.55)`**, matching the old idle
 
 The SVG and PDF use the same quadratic upper beam, lower rail, two gently splayed posts and short center support. `tools/export-torii.swift` regenerates the PDF using CoreGraphics; it adds no app dependency.
 
-[Validation evidence](validation.json): all nine size/zoom combinations passed at both 1× and 2× display density. The one-page PDF has a 24 × 24 pt media box and no raster image objects. Native optical alignment and status-transition checks remain open.
+[Validation evidence](validation.json): all nine size/zoom combinations passed at both 1× and 2× display density. The one-page PDF has a 24 × 24 pt media box and no raster image objects. The app's native checks (all three call sites at 75/100/200% zoom, 1× and 2×, beside the other states) passed on 2026-10-29.
 
 ## Implementation boundary
 

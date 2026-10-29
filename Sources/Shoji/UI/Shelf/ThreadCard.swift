@@ -9,10 +9,11 @@ struct ThreadCard: View {
     var isFocused = false
     /// Shown in a pane, so a click only moves focus there.
     var isOnScreen = false
+    /// Needs you, or finished unseen with Hachi on finish (`ThreadStore.wantsYou`).
+    var wantsYou = false
 
     @Environment(\.zoom) private var zoom
 
-    private var needsYou: Bool { activity.status == .needsYou }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6 * zoom) {
@@ -33,7 +34,7 @@ struct ThreadCard: View {
                 .lineLimit(1)
             Text(subtitle)
                 .font(.system(size: 11 * zoom, weight: .medium, design: .monospaced))
-                .foregroundStyle(needsYou ? Palette.needsYouText : .white.opacity(0.75))
+                .foregroundStyle(wantsYou ? Palette.needsYouText : .white.opacity(0.75))
                 .lineLimit(1)
                 .truncationMode(.middle)
         }
@@ -51,7 +52,7 @@ struct ThreadCard: View {
             }
         }
         .overlay(alignment: .topTrailing) {
-            if needsYou {
+            if wantsYou {
                 HachiPortrait(size: 32 * zoom)
                     .padding(.top, 6 * zoom)
                     .padding(.trailing, 38 * zoom)
@@ -74,11 +75,11 @@ struct ThreadCard: View {
         }
         .glassEffect(.regular.tint(tint).interactive(), in: .rect(cornerRadius: 18 * zoom))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel([name, tag?.capitalized, activity.status.label, subtitle, isOnScreen ? "in a pane" : nil].compactMap(\.self).joined(separator: ", "))
+        .accessibilityLabel([name, tag?.capitalized, activity.status.label, wantsYou && activity.isUnseen ? "not seen yet" : nil, subtitle, isOnScreen ? "in a pane" : nil].compactMap(\.self).joined(separator: ", "))
     }
 
     private var tint: Color {
-        if needsYou { return Palette.needsYou.opacity(0.22) }
+        if wantsYou { return Palette.needsYou.opacity(0.22) }
         return .white.opacity(isFocused ? 0.1 : 0)
     }
 
@@ -108,15 +109,15 @@ struct ThreadCard: View {
     }
 
     private var subtitle: String {
-        if needsYou { return activity.detail ?? "Waiting for you" }
+        if activity.status == .needsYou { return activity.detail ?? "Waiting for you" }
         if activity.agent != nil, let title = activity.terminalTitle, !title.isEmpty { return title }
         if activity.agent == nil, let command = thread.command { return command }
         return thread.displayFolder
     }
 
     private var borderColor: Color {
-        switch activity.status {
-        case .needsYou: Palette.needsYouStroke.opacity(0.85)
+        if wantsYou { return Palette.needsYouStroke.opacity(0.85) }
+        return switch activity.status {
         case .done: Palette.working.opacity(0.7)
         case .exited(code: let code) where code != 0: Palette.exited.opacity(0.6)
         default: .white.opacity(isFocused ? 0.4 : 0.12)
@@ -139,7 +140,7 @@ struct ThreadCard: View {
     let store = Mock.store()
     HStack(spacing: 10) {
         ForEach(store.threads) { thread in
-            ThreadCard(thread: thread, name: store.name(of: thread), activity: store.activity(for: thread.id), isFocused: thread.id == Mock.threads[1].id, isOnScreen: store.layout.visibleThreadIds.contains(thread.id))
+            ThreadCard(thread: thread, name: store.name(of: thread), activity: store.activity(for: thread.id), isFocused: thread.id == Mock.threads[1].id, isOnScreen: store.layout.visibleThreadIds.contains(thread.id), wantsYou: store.wantsYou(thread.id))
         }
     }
     .padding(24)

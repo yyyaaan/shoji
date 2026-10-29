@@ -159,7 +159,7 @@ Status palette (dark UI):
 | Working | `#74B8FF` | spinning arc |
 | Needs you | `#FF9F43` | ring + "!", card glow, count badge, Hachi |
 | Done | `#E2E8F0` | check |
-| Idle | `#E2E8F0` at 55% | dashed ring |
+| Idle | `#E2E8F0` at 55% | Torii gate (`docs/design/status/`) |
 | Task running | `#4FD1B5` | pulsing dot |
 | Exited / error | `#FF8787` | ring + × |
 

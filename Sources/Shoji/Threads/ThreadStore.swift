@@ -20,6 +20,14 @@ final class ThreadStore {
     var closeRequest: UUID?
     /// ⌃Tab in progress (⌃ still held).
     private(set) var recentSwitch: RecentSwitch?
+    /// Threads › Show Hachi When an Agent Finishes: an unseen finished turn wants you too, not just its quiet tick.
+    var hachiOnFinish = true
+    /// False while another app is in front, when even the focused pane is out of sight.
+    var isAppActive = true {
+        didSet {
+            if isAppActive, !oldValue, let focusedThreadId { focus(focusedThreadId) }
+        }
+    }
 
     /// Where `threads.json` lives; nil keeps everything in memory (tests, previews).
     @ObservationIgnored private let fileURL: URL?
@@ -97,6 +105,7 @@ final class ThreadStore {
         case .finished:
             activity.transition(to: .done, at: now)
             activity.detail = nil
+            activity.isUnseen = !(isAppActive && focusedThreadId == event.threadId)
         case .userInput where activity.status == .needsYou:
             // Typing into a waiting agent answers it; no hook fires until the approved tool finishes.
             activity.transition(to: .working, at: now)
@@ -119,6 +128,12 @@ final class ThreadStore {
         if activity != current {
             activities[event.threadId] = activity
         }
+    }
+
+    /// Waiting on an answer, or (with `hachiOnFinish`) done while you weren't looking: Hachi, orange card, ⌘J.
+    func wantsYou(_ id: UUID) -> Bool {
+        let activity = activity(for: id)
+        return activity.status == .needsYou || (hachiOnFinish && activity.isUnseen)
     }
 
     /// Called when a thread's terminal takes keyboard focus.
@@ -369,13 +384,13 @@ final class ThreadStore {
         open(order[index].id)
     }
 
-    /// Opens the next thread in shelf order that needs the user, wrapping around. False when none does.
+    /// Opens the next thread in shelf order that wants the user, wrapping around. False when none does.
     @discardableResult
     func openNextNeedingYou() -> Bool {
         let order = shelfOrder
         let start = order.firstIndex { $0.id == focusedThreadId }.map { $0 + 1 } ?? 0
         let rotated = order[start...] + order[..<start]
-        guard let next = rotated.first(where: { activity(for: $0.id).status == .needsYou }) else { return false }
+        guard let next = rotated.first(where: { wantsYou($0.id) }) else { return false }
         open(next.id)
         return true
     }

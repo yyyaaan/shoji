@@ -37,6 +37,8 @@ struct ThreadActivity: Equatable, Sendable {
     var since: Date
     /// Needs-you events the user hasn't looked at yet (card badge).
     var attention = 0
+    /// Done while you weren't looking (Zed's unread dot); cleared once you look or the thread moves on.
+    var isUnseen = false
     /// What the thread is waiting on, from the hook that raised needs-you.
     var detail: String?
     var terminalTitle: String?
@@ -65,5 +67,6 @@ struct ThreadActivity: Equatable, Sendable {
         guard status != self.status else { return }
         self.status = status
         since = now
+        isUnseen = false
     }
 }

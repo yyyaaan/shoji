@@ -27,6 +27,7 @@ enum Mock {
         }
         store.apply(StatusEvent(threadId: threads[0].id, signal: .needsYou(message: "Allow Bash: uv run pytest…")), at: now)
         store.apply(StatusEvent(threadId: threads[1].id, signal: .working(sessionId: nil)), at: now.addingTimeInterval(-6 * 60))
+        store.apply(StatusEvent(threadId: threads[2].id, signal: .finished), at: now.addingTimeInterval(-2 * 60))
         store.apply(StatusEvent(threadId: threads[3].id, signal: .directory("~/lab/shoji")), at: now)
         store.apply(StatusEvent(threadId: threads[6].id, signal: .commandStarted("pnpm build --watch")), at: now)
         store.apply(StatusEvent(threadId: threads[6].id, signal: .commandFinished(code: 1)), at: now)

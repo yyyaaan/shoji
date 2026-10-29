@@ -94,6 +94,7 @@ struct ShojiCommands: Commands {
             }
             Divider()
             button(.nextNeedingYou) { if !store.openNextNeedingYou() { NSSound.beep() } }
+            Toggle("Show Hachi When an Agent Finishes", isOn: Bindable(store).hachiOnFinish)
             // From the keyboard, RecentSwitchKeys takes these first so ⌃ can be held; a click switches at once.
             button(.recentThread) {
                 store.stepRecent(by: 1)

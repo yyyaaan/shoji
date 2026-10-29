@@ -61,6 +61,10 @@ struct MainView: View {
         .onAppear { RecentSwitchKeys.install(store: store) }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)) { _ in
             store.cancelRecentSwitch()
+            store.isAppActive = false
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            store.isAppActive = true
         }
         // Like ⌘Tab: a quick ⌃Tab switches without flashing the list.
         .task(id: store.recentSwitch != nil) {
