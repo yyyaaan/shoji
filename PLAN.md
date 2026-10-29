@@ -4,8 +4,8 @@ The current state of Shoji: what's next, what to watch out for, and why things a
 
 ## Status
 
-- **Released:** v0.4.1. **On `side-by-side`, not merged (v0.5.0):** Room light, the compact form, a thread dropdown in every pane header, notifications only while Shoji is out of sight. 73 tests.
-- **Next up:** the PR for `side-by-side` (merging publishes v0.5.0), then the Hub.
+- **Released:** v0.4.1. **In review (`side-by-side`, v0.5.0):** Room light (80%), the compact form, a thread dropdown in every pane header, ⌘ card numbers, terminal text down to 50%, notifications only while Shoji is out of sight. 73 tests.
+- **Next up:** the user merges the PR (publishing v0.5.0) and installs it, then the checks in Now; the Hub after that.
 - **Blockers:** none. Design's review of the pane chrome is open (`docs/handoffs/`).
 
 _Agents: update Status and Tasks at the end of every session; record decisions and gotchas as they stand now, not how they got there._
@@ -24,8 +24,7 @@ Priorities follow the user's wishes. Keep items one line, small enough for one P
 - [ ] Not yet seen: a screenshot dragged from Finder onto Claude Code, Open in VS Code / Zed, Codex resuming after quit and reopen, the go-to glow, ⌘Q's busy list, the About panel
 
 ### Next
-- [ ] PR for `side-by-side` once the checks pass
-- [ ] Design: review the pane header, split drop preview, compact strip and quick terminal (handoff)
+- [ ] Design: review the v0.4 and v0.5 chrome (two app-to-design handoffs)
 
 ### Later
 - [ ] Hub view (see Product › Hub)
