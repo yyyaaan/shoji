@@ -28,8 +28,9 @@ extension Shortcut {
     static let recentThreadReversed = Shortcut(title: "Recent threads, oldest first", key: .tab, modifiers: [.control, .shift])
     static let nextPane = Shortcut(title: "Next pane", key: "]")
     static let previousPane = Shortcut(title: "Previous pane", key: "[")
+    static let splitRight = Shortcut(title: "Split pane right", key: "d")
+    static let splitDown = Shortcut(title: "Split pane down", key: "d", modifiers: [.command, .shift])
     static let toggleMaximize = Shortcut(title: "Maximize or restore pane", key: .return, modifiers: [.command, .shift])
-    static let pinPane = Shortcut(title: "Pin or unpin pane", key: "p", modifiers: [.command, .shift])
     static let singlePane = Shortcut(title: "Single pane", key: "1", modifiers: [.command, .option])
     static let twoColumns = Shortcut(title: "Two columns", key: "2", modifiers: [.command, .option])
     static let threePanes = Shortcut(title: "Three panes", key: "3", modifiers: [.command, .option])
@@ -57,10 +58,10 @@ struct ShortcutSection: Identifiable {
     static let columns: [[ShortcutSection]] = [
         [
             ShortcutSection(title: "Threads", symbol: "rectangle.stack", shortcuts: [.newThread, .jumpToThread, .showInYourPane, .recentThread, .recentThreadReversed, .nextNeedingYou, .closeThread]),
-            ShortcutSection(title: "Panes", symbol: "rectangle.split.2x1", shortcuts: [.nextPane, .previousPane, .toggleMaximize, .pinPane]),
+            ShortcutSection(title: "Panes", symbol: "rectangle.split.2x1", shortcuts: [.nextPane, .previousPane, .splitRight, .splitDown, .toggleMaximize]),
         ],
         [
-            ShortcutSection(title: "Layout", symbol: "square.grid.2x2", shortcuts: [.singlePane, .twoColumns, .threePanes, .grid]),
+            ShortcutSection(title: "Arrange", symbol: "square.grid.2x2", shortcuts: [.singlePane, .twoColumns, .threePanes, .grid]),
             ShortcutSection(title: "View", symbol: "textformat.size", shortcuts: [.zoomIn, .zoomOut, .actualSize, .showShortcuts]),
             ShortcutSection(title: "In a terminal", symbol: "terminal", shortcuts: [.newline, .copy, .paste, .openLink]),
         ],
@@ -111,17 +112,22 @@ struct ShojiCommands: Commands {
             button(.nextPane) { store.focusPane(offset: 1) }
             button(.previousPane) { store.focusPane(offset: -1) }
             Group {
+                button(.splitRight) { if !store.split(side: .right) { NSSound.beep() } }
+                button(.splitDown) { if !store.split(side: .down) { NSSound.beep() } }
+                Button("Close Pane") { store.focusedThreadId.map(store.closePane) }
+                    .disabled(store.layout.panes.count < 2)
                 button(.toggleMaximize) { store.focusedThreadId.map(store.toggleMaximize) }
-                button(.pinPane) { store.focusedThreadId.map(store.togglePin) }
             }
             .disabled(store.focusedThreadId == nil)
         }
 
         CommandGroup(before: .toolbar) {
-            button(.singlePane) { store.layoutMode = .single }
-            button(.twoColumns) { store.layoutMode = .twoColumns }
-            button(.threePanes) { store.layoutMode = .threePanes }
-            button(.grid) { store.layoutMode = .grid }
+            Menu("Arrange") {
+                button(.singlePane) { store.arrange(.single) }
+                button(.twoColumns) { store.arrange(.twoColumns) }
+                button(.threePanes) { store.arrange(.threePanes) }
+                button(.grid) { store.arrange(.grid) }
+            }
             Divider()
             button(.zoomIn) { zoom = Zoom.step(zoom, by: 1) }
             button(.zoomOut) { zoom = Zoom.step(zoom, by: -1) }

@@ -32,8 +32,8 @@ Shoji is deliberately not an editor, a diff viewer or an agent client. It never 
 - **Know who needs you.** Cards show working, needs you, done, idle, running and exited, each with its own shape and label. A needs-you card turns orange, counts what's waiting and brings out Hachi, who also peeks out under the window buttons: one click opens the thread that's waiting. An agent that finishes while you're not looking keeps its tick and gets a soft ivory glow, like an unread mark, and Hachi too unless you turn off **Threads › Show Hachi When an Agent Finishes**.
 - **Status from the CLI itself.** Claude Code reports through its own hooks, injected per launch with `--settings`, so your `~/.claude` is never touched. Shoji never scrapes terminal output.
 - **Real terminals.** SwiftTerm with Metal rendering, your login shell's environment, 10,000 lines of scrollback, and Shift+Return for a new line in agent prompts.
-- **Panes that stay out of the way.** One, two, three (one tall beside two stacked) or four panes; drag the gap between them to resize; maximize one. Click a card to go to its thread (a line under the card means it's already in a pane); if it isn't on screen, it opens in the pane you're in. ⌥-click brings it to your pane, dropping a card on a pane puts it exactly there, and pinned panes stay put, like a dev server's log. Hidden threads keep running. No toolbar row: the shelf shares the top of the window with the window buttons.
-- **Keyboard first.** ⌃Tab flips back to the thread you were just in; hold ⌃ to keep going, like ⌘Tab. Jump to any card, cycle panes, switch layouts or find the next agent waiting on you without touching the mouse. Press ⌘/ to see every shortcut.
+- **Panes that stay out of the way.** Split any pane right, left, down or up (⌘D, ⇧⌘D, its header's Split menu, or drop a card on its edge); drag the gap between panes to resize; double-click a header to maximize; View › Arrange snaps back to one, two, three or four panes. Click a card to go to its thread (a line under the card means it's already in a pane); if it isn't on screen, it opens in the pane you're in. ⌥-click brings it to your pane, and dropping a card on a pane puts it exactly there; other panes never change behind your back, so a dev server's log stays put. Hidden threads keep running. No toolbar row: the shelf shares the top of the window with the window buttons.
+- **Keyboard first.** ⌃Tab flips back to the thread you were just in; hold ⌃ to keep going, like ⌘Tab. Jump to any card, cycle and split panes, or find the next agent waiting on you without touching the mouse. Press ⌘/ to see every shortcut.
 - **Zoom everything.** ⌘+ and ⌘− scale terminal text and the glass chrome together, from 75% to 200%.
 - **Native to macOS 26.** SwiftUI and Liquid Glass on the chrome, solid backgrounds behind terminal text.
 
@@ -76,8 +76,8 @@ Every version merged to `main` publishes a DMG on [Releases](https://github.com/
 | Next thread that needs you | ⌘J |
 | Next / previous pane | ⌘] / ⌘[ |
 | Maximize or restore pane | ⇧⌘↩ |
-| Pin or unpin pane | ⇧⌘P |
-| One / two / three / four panes | ⌥⌘1 / ⌥⌘2 / ⌥⌘3 / ⌥⌘4 |
+| Split pane right / down | ⌘D / ⇧⌘D |
+| Arrange as one / two / three / four panes | ⌥⌘1 / ⌥⌘2 / ⌥⌘3 / ⌥⌘4 |
 | Zoom in / out / actual size | ⌘+ / ⌘− / ⌘0 |
 | All shortcuts | ⌘/ |
 

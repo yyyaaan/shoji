@@ -45,6 +45,11 @@ targets:
         ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: YES
         # Shoji spawns shells and CLIs, so no App Sandbox (no entitlements file).
         ENABLE_APP_SANDBOX: NO
+      configs:
+        # Its own app to macOS (notifications, Launch Services, UserDefaults), so it runs beside the installed one.
+        Debug:
+          PRODUCT_BUNDLE_IDENTIFIER: fi.yan.shoji.debug
+          INFOPLIST_KEY_CFBundleDisplayName: Shoji Debug
 
   ShojiTests:
     type: bundle.unit-test

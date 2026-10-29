@@ -13,7 +13,7 @@ struct MainView: View {
             if store.threads.isEmpty {
                 welcome
             } else {
-                // No title bar or toolbar row: the shelf shares the top with the window buttons and Shoji's controls.
+                // No title bar or toolbar row: the shelf shares the top with the window buttons.
                 HStack(spacing: 0) {
                     // Clear of the window's close, minimize and zoom buttons; Hachi's corner sits below them.
                     HachiCorner()
@@ -21,7 +21,6 @@ struct MainView: View {
                         .frame(maxHeight: .infinity, alignment: .bottom)
                         .padding(.bottom, 6 * zoom)
                     ShelfView()
-                    trailingControls
                 }
                 .frame(height: 120 * zoom)
                 PaneGrid()
@@ -76,33 +75,6 @@ struct MainView: View {
             guard zoomToast != nil, (try? await Task.sleep(for: .seconds(1.2))) != nil else { return }
             withAnimation(.easeOut) { zoomToast = nil }
         }
-    }
-
-    private var controlSize: ControlSize {
-        zoom < 0.9 ? .small : zoom > 1.3 ? .large : .regular
-    }
-
-
-    private var trailingControls: some View {
-        @Bindable var store = store
-        return VStack(alignment: .trailing) {
-            Picker("Layout", selection: $store.layoutMode) {
-                // The macOS window-tiling family, so the four read as one set.
-                Label("Single pane", systemImage: "rectangle.inset.filled").tag(PaneLayout.Mode.single)
-                Label("Two columns", systemImage: "inset.filled.leadinghalf.trailinghalf.rectangle").tag(PaneLayout.Mode.twoColumns)
-                Label("Three panes", systemImage: "inset.filled.leadinghalf.toptrailing.bottomtrailing.rectangle").tag(PaneLayout.Mode.threePanes)
-                Label("Grid of four", systemImage: "inset.filled.topleft.topright.bottomleft.bottomright.rectangle").tag(PaneLayout.Mode.grid)
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .fixedSize()
-            Spacer(minLength: 0)
-        }
-        .labelStyle(.iconOnly)
-        .controlSize(controlSize)
-        .padding(.top, 10 * zoom)
-        .padding(.bottom, 6 * zoom)
-        .padding(.trailing, 18)
     }
 
     private var closing: ShojiThread? {

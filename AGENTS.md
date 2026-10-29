@@ -41,13 +41,13 @@ scripts/
 Sources/Shoji/
   App/                      app entry (ShojiApp: wiring, window), MainView + the top row's controls,
                             Shortcuts (catalog + menu commands)
-  Threads/                  ShojiThread, ThreadStore, PaneLayout, launch building, Mock
+  Threads/                  ShojiThread, ThreadStore, PaneLayout (split tree, presets, PaneTiles), launch building, Mock
   Terminal/                 TerminalBackend protocol, SwiftTerm implementation
                             (only place importing SwiftTerm), TerminalSessions
   Status/                   StatusEvent, HookServer (socket listener), ClaudeHooks, CodexHooks
   UI/                       Theme (palette), StatusIcon, Backdrop, Zoom, ShortcutsSheet, RecentSwitch (⌃Tab)
   UI/Shelf/                 card shelf with bars between groups, context menu
-  UI/Panes/                 pane layouts (1 / 2 / 3 / 4) with drag splits, pane header, TerminalHost
+  UI/Panes/                 PaneGrid (panes and split handles by frame), PaneView (header, Split menu, edge drops), TerminalHost
   UI/Hub/                   Hub view big cards
   UI/Hachi/                 HachiPortrait, HachiCorner, Hachi.xcassets (vector PDF), AppIcon.icon
                             (Icon Composer; spec in docs/design/hachi/README.md)
@@ -71,7 +71,7 @@ scripts/package.sh [version]     # universal Release app + DMG, ad-hoc signed
 
 `-skipPackagePluginValidation` is needed because SwiftTerm runs a build-tool plugin; in Xcode, click Trust & Enable once instead.
 
-`main` is protected: work on a branch, one PR per change, green `test` check, squash merge. Debug builds keep their threads and hook socket in `~/Library/Application Support/Shoji-Debug`, apart from the installed app's `Shoji` folder, so a dev build can run next to it.
+`main` is protected: work on a branch, one PR per change, green `test` check, squash merge. Debug builds are their own app to macOS (bundle id `fi.yan.shoji.debug`, shown as Shoji Debug, with their own notifications and UserDefaults) and keep their threads and hook socket in `~/Library/Application Support/Shoji-Debug`, apart from the installed app's `Shoji` folder, so a dev build can run next to it.
 
 If a command here is wrong or missing, fix this file in the same change.
 

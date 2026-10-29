@@ -1,11 +1,8 @@
-# Approved sketch provenance
+# Approved portrait provenance
 
-The selected portrait were generated with the built-in imagegen tool using user-supplied Akita and pencil-puppy references. These PNGs are unchanged copies of the approved C portrait master. The reduced SVG experiments are not part of this pack.
+The C portrait was generated with the built-in imagegen tool using user-supplied Akita and pencil-puppy references for structure and expression. The original reference images are not redistributed. The approved PNG is the source master for the vector trace.
 
-The original reference images are not redistributed. They informed canine structure and expression; they were not copied or extracted.
-
-These are historical generation inputs, not the current style specification. The user approved the fuller sketch results and explicitly dropped the single-line simplification goal. Follow README.md and the approved PNGs rather than reapplying the sparse-line restrictions below.
-
+The prompt below records provenance. The approved fuller ink artwork and [final specification](README.md) govern regeneration; do not interpret the historical sparse-line constraints as a new simplification request.
 
 ## C · Quiet balance
 

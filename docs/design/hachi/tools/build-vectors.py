@@ -55,12 +55,6 @@ def main():
     ET.SubElement(rail, NS + "path", {"d": "M320 744h384", "stroke": "#E9E6DD", "stroke-width": "16", "stroke-linecap": "round"})
     save(layers / "04-shoji-rail.svg", rail)
 
-    composite = canvas(1024, "Shoji reference composite; assemble layers in Icon Composer for production")
-    for name in ("00-background", "01-hachi", "02-shoji-left", "03-shoji-right", "04-shoji-rail"):
-        source = ET.parse(layers / f"{name}.svg").getroot()
-        for node in source:
-            composite.append(copy.deepcopy(node))
-    save(ASSETS / "shoji-app-icon.svg", composite)
     composition = {
         "purpose": "Layer manifest, not a native Icon Composer document",
         "canvas": {"width": 1024, "height": 1024},
@@ -69,7 +63,7 @@ def main():
         "instructions": ["Retain full-canvas alignment and source colors.", "Hachi stays opaque and matte; no blur, transparency or material distortion on the face.", "Adjust any restrained panel glass material natively in Icon Composer.", "Do not bake in a corner mask, shadow, glow or lighting.", "Check macOS appearances and 16 pt legibility in Icon Composer before accepting the native document."]
     }
     (layers / "composition.json").write_text(json.dumps(composition, indent=2) + "\n")
-    print("Exported genuine vector portrait, five aligned layer references and a vector-only composite.")
+    print("Exported vector portrait, five aligned layer references and composition manifest.")
 
 
 if __name__ == "__main__":
