@@ -12,7 +12,7 @@ enum Palette {
     static let text = Color(hex: 0xF2F4F8)
     static let terminalBackground = Color(hex: 0x0C0F15)
     /// Room light: panes let a little of the backdrop through, never blurred; 1 with Reduce Transparency.
-    static let paneOpacity = 0.9
+    static let paneOpacity = 0.8
     static let windowBackground = Color(hex: 0x0B0E13)
 }
 

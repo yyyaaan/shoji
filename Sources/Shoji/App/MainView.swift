@@ -18,12 +18,13 @@ struct MainView: View {
                 // No title bar: the shelf shares the top with the window buttons.
                 if store.isCompact {
                     // Hachi beside the window buttons; no shelf, each row picks its thread.
+                    // Seated at the bottom, so the count badge above Hachi stays inside the window.
                     HStack(spacing: 0) {
                         HachiCorner()
                             .padding(.leading, 78)
                         Spacer()
                     }
-                    .frame(height: 40 * zoom)
+                    .frame(height: 44 * zoom, alignment: .bottom)
                 } else {
                     HStack(spacing: 0) {
                         // Clear of the window's close, minimize and zoom buttons; Hachi's corner sits below them.
