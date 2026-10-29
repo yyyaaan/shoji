@@ -1,7 +1,6 @@
 import SwiftUI
 
-/// The ⌘K quick terminal: a fresh shell in your folder, floating over the window with a pane's look.
-/// A click outside, ⌘K, ⌘W or `exit` closes it (`TerminalSessions.closePopup`).
+/// The ⌘K quick terminal, styled like a pane; see `TerminalSessions.Popup`.
 struct QuickTerminal: View {
     let popup: TerminalSessions.Popup
     let close: () -> Void
@@ -12,7 +11,7 @@ struct QuickTerminal: View {
         GeometryReader { proxy in
             let height = 300 * zoom
             ZStack(alignment: .top) {
-                // Like Spotlight: a click anywhere else closes it.
+                // A click outside closes it.
                 Color.black.opacity(0.12)
                     .contentShape(.rect)
                     .onTapGesture(perform: close)
@@ -31,7 +30,7 @@ struct QuickTerminal: View {
                         .allowsHitTesting(false)
                 }
                 .shadow(color: .black.opacity(0.45), radius: 30, y: 12)
-                // A little above centre, like Spotlight: centred reads low, and level with the panes reads as one more pane.
+                // Above centre, like Spotlight; level with the panes it read as one more pane.
                 .padding(.top, max((proxy.size.height - height) * 0.4, 0))
             }
         }
@@ -49,7 +48,6 @@ struct QuickTerminal: View {
                 .lineLimit(1)
                 .truncationMode(.head)
             Spacer(minLength: 8)
-            // Closing never stops a command: it moves to the shelf instead.
             Text(popup.running == nil ? "⌘K to close" : "⌘K keeps it running as a thread")
                 .font(.system(size: 11 * zoom, weight: .medium))
                 .foregroundStyle(.white.opacity(0.5))

@@ -45,8 +45,7 @@ struct ThreadActivity: Equatable, Sendable {
     /// The agent CLI running in the shell right now.
     var agent: Agent?
 
-    /// What the agent says it's working on (its terminal title), unless the title only names the agent or
-    /// repeats its command line ("Claude Code", "codex resume …").
+    /// The agent's terminal title, unless it only names the agent or repeats its command line.
     var topic: String? {
         guard let agent, let title = terminalTitle, !title.isEmpty, !title.lowercased().hasPrefix(agent.rawValue) else { return nil }
         return title

@@ -83,7 +83,7 @@ struct ShojiApp: App {
     }
 }
 
-/// Asks before ⌘Q stops work in progress, naming it; quits at once otherwise.
+/// Confirms ⌘Q only when it would stop something.
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     static var store: ThreadStore?

@@ -7,7 +7,7 @@ struct Shortcut: Identifiable {
     var modifiers: EventModifiers = .command
     /// Shown in place of the key where that reads better ("1–9", "+").
     var keyLabel: String?
-    /// Extra words for the shortcuts sheet only; menus show the title alone.
+    /// Extra words for the shortcuts sheet only.
     var hint: String?
 
     var id: String { title }
@@ -98,7 +98,7 @@ struct ShojiCommands: Commands {
             button(.quickTerminal) { sessions.togglePopup() }
         }
 
-        // Like closing a tab in a terminal app; confirms while the process runs. Closes the quick terminal first.
+        // Closes the quick terminal first; a busy thread confirms.
         CommandGroup(replacing: .saveItem) {
             button(.closeThread) {
                 if sessions.popup != nil { sessions.closePopup() } else { store.focusedThreadId.map(store.requestClose) }
@@ -132,7 +132,6 @@ struct ShojiCommands: Commands {
                         .disabled(store.focusedThreadId == nil)
                 }
             }
-            // Options, one click each (PLAN Decisions › Options live in the Threads menu).
             Divider()
             Toggle("Show Hachi When an Agent Finishes", isOn: Bindable(store).hachiOnFinish)
             if let notifier {
@@ -166,7 +165,6 @@ struct ShojiCommands: Commands {
             button(.grid) { store.arrange(.grid) }
         }
 
-        // How things look: sizes here, Enter Full Screen below from the system.
         CommandGroup(before: .toolbar) {
             Section("Interface Size") {
                 Picker("Interface Size", selection: $interfaceSize) {
@@ -194,7 +192,7 @@ struct ShojiCommands: Commands {
         }
     }
 
-    /// The standard About panel, credits giving the full name and the bundled open-source notices.
+    /// Credits: the full name and the bundled open-source notices.
     private func showAbout() {
         let notices = Bundle.main.url(forResource: "ThirdPartyNotices", withExtension: "txt").flatMap { try? String(contentsOf: $0, encoding: .utf8) } ?? ""
         let centered = NSMutableParagraphStyle()

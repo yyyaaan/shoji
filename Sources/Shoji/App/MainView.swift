@@ -3,7 +3,7 @@ import SwiftUI
 struct MainView: View {
     @Environment(ThreadStore.self) private var store
     @Environment(TerminalSessions.self) private var sessions: TerminalSessions?
-    /// The interface size; terminal text sizes apart (`textZoom`).
+    /// Interface size (chrome); terminal text is `textZoom`.
     @AppStorage(InterfaceSize.storageKey) private var zoom = 1.0
     @AppStorage(TextZoom.storageKey) private var textZoom = 1.0
     @State private var showsShortcuts = false
@@ -15,7 +15,7 @@ struct MainView: View {
             if store.threads.isEmpty {
                 welcome
             } else {
-                // No title bar or toolbar row: the shelf shares the top with the window buttons.
+                // No title bar: the shelf shares the top with the window buttons.
                 HStack(spacing: 0) {
                     // Clear of the window's close, minimize and zoom buttons; Hachi's corner sits below them.
                     HachiCorner()

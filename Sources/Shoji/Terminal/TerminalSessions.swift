@@ -10,7 +10,7 @@ final class TerminalSessions {
     private(set) var backends: [UUID: any TerminalBackend] = [:]
     /// The ⌘K quick terminal while it's open.
     private(set) var popup: Popup?
-    /// The text size every terminal follows (⌘+ / ⌘−); a thread's own steps move it from there.
+    /// The global text level (⌘+ / ⌘−); threads offset from it.
     @ObservationIgnored var textZoom = 1.0 {
         didSet { applyTextSizes() }
     }
@@ -56,7 +56,6 @@ final class TerminalSessions {
         store.apply(StatusEvent(threadId: thread.id, signal: .launched))
     }
 
-    /// After the global size or a thread's steps changed.
     func applyTextSizes() {
         for (id, backend) in backends { backend.setFontSize(fontSize(steps: store.thread(id)?.textSteps)) }
         popup?.backend.setFontSize(fontSize(steps: nil))
@@ -77,12 +76,11 @@ final class TerminalSessions {
 
     // MARK: Quick terminal (⌘K)
 
-    /// A fresh shell floating over the panes, not a thread unless it's closed while running something.
+    /// Not a thread unless closed while running something.
     struct Popup {
-        /// What it becomes on the shelf; its id is the shell's `SHOJI_THREAD_ID` from the start.
+        /// Its id is the shell's `SHOJI_THREAD_ID` from the start, so hooks line up once it's adopted.
         var thread: ShojiThread
         let backend: any TerminalBackend
-        /// The command it's running, from the zsh integration.
         var running: String?
     }
 
@@ -90,7 +88,6 @@ final class TerminalSessions {
         if popup == nil { openPopup() } else { closePopup() }
     }
 
-    /// Opens in the focused thread's folder (home without one).
     func openPopup() {
         guard popup == nil else { return }
         let thread = ShojiThread(folder: store.focusedThreadId.flatMap(store.thread)?.folder ?? "~")
@@ -104,8 +101,7 @@ final class TerminalSessions {
         backend.start(thread.launch(in: context))
     }
 
-    /// ⌘K again, ⌘W, a click outside or `exit`. An idle shell ends; one still running a command becomes a thread
-    /// on the shelf, so closing never stops anything.
+    /// An idle shell ends; one running a command becomes a thread, so closing never stops anything.
     func closePopup() {
         guard let popup else { return }
         self.popup = nil
@@ -116,7 +112,7 @@ final class TerminalSessions {
         } else {
             popup.backend.terminate()
         }
-        // Back to the pane you were in, if it's still on screen.
+        // Never pulls a hidden thread back on screen.
         if let id = store.focusedThreadId, store.layout.visibleThreadIds.contains(id) { store.open(id) }
     }
 

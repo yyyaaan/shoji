@@ -139,6 +139,7 @@ If a command here is wrong or missing, fix this file in the same change.
   `SHOJI_PREFILL`; inherited `SHOJI_*` variables are stripped first.
 - Status is never color-only: every state has its own icon shape plus a text label.
 - Every view gets a SwiftUI preview backed by mock threads (`Threads/Mock.swift`).
+- **Comments:** only the non-obvious why (a platform quirk, an invariant, a compatibility key), one line where possible. Don't narrate behaviour, menu paths or decisions; those live in PLAN.md and the README.
 - Keep changes small; one task per PR when practical.
 
 ## Handoffs between agents

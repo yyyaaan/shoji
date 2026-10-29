@@ -1,7 +1,6 @@
 import SwiftUI
 
-/// Terminal text size, browser style: ⌘+ / ⌘− step every terminal through `levels`, and a thread's own steps
-/// (⌥⌘+ / ⌥⌘−) keep it that many levels away from the others.
+/// Terminal text levels (⌘+ / ⌘−); a thread's `textSteps` offset it.
 enum TextZoom {
     static let storageKey = "zoom"
     static let levels: [Double] = [0.75, 0.85, 1, 1.1, 1.25, 1.4, 1.6, 1.8, 2]
@@ -19,7 +18,7 @@ enum TextZoom {
     }
 }
 
-/// View › Interface Size: the chrome (shelf, cards, pane headers, Hachi) apart from the terminal text.
+/// View › Interface Size: the chrome only.
 enum InterfaceSize: Double, CaseIterable, Identifiable {
     case small = 0.85, standard = 1, large = 1.15, extraLarge = 1.3
 
@@ -38,6 +37,6 @@ enum InterfaceSize: Double, CaseIterable, Identifiable {
 }
 
 extension EnvironmentValues {
-    /// The interface size; every chrome metric multiplies by it.
+    /// The interface size; chrome metrics multiply by it.
     @Entry var zoom: CGFloat = 1
 }

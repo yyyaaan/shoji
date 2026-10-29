@@ -1,10 +1,10 @@
 import AppKit
 
-/// Open in VS Code / Open in Zed: the editors a thread's folder can open in, in menu order.
+/// Editors a thread's folder opens in, in menu order.
 enum Editor: CaseIterable, Identifiable {
     case vsCode, zed
 
-    /// Looked up once; an editor installed while Shoji runs shows up after a relaunch.
+    /// Looked up once; an editor installed later shows up after a relaunch.
     static let installed = allCases.filter { $0.appURL != nil }
 
     var id: Self { self }

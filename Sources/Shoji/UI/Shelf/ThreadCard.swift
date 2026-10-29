@@ -123,8 +123,7 @@ struct ThreadCard: View {
         return (String(executable) as NSString).lastPathComponent.uppercased()
     }
 
-    /// The folder, so you always see where a thread works; a plain command shows its command line instead (its
-    /// title is the folder already), and an agent that needs you shows its question.
+    /// The folder; a plain command's line instead (its title is the folder), or an agent's question.
     private var subtitle: String {
         if activity.status == .needsYou { return activity.detail ?? "Waiting for you" }
         if activity.agent == nil, let command = thread.command { return command }

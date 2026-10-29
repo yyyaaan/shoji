@@ -123,7 +123,7 @@ private struct DropSpot: Equatable {
 
 /// A card being dragged, as Shoji's own text payload, so text dragged in from elsewhere is ignored.
 extension UTType {
-    /// A card being dragged; declared in Info.plist and never offered to other apps.
+    /// Declared in Info.plist; never offered to other apps.
     static let shojiThread = UTType(exportedAs: "fi.yan.shoji.thread")
 }
 

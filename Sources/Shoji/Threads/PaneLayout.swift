@@ -1,10 +1,9 @@
 import CoreGraphics
 import Foundation
 
-/// The panes as a split tree, like Ghostty. Its panes in reading order (`panes`) are the order the opening
-/// rules in `ThreadStore` use.
+/// The panes as a split tree; `panes` (reading order) is what `ThreadStore`'s opening rules use.
 struct PaneLayout: Equatable, Sendable {
-    /// The fixed layouts of v0.3, now in the Panes menu (⌥⌘1–4).
+    /// Fixed layouts (Panes menu, ⌥⌘1–4).
     enum Preset: String, Codable, CaseIterable, Sendable {
         /// `threePanes` is one tall pane on the left with two stacked on the right.
         case single, twoColumns, threePanes, grid
@@ -18,8 +17,7 @@ struct PaneLayout: Equatable, Sendable {
             }
         }
 
-        /// The first `capacity` threads in this layout; fewer threads fill what they can (three in a grid
-        /// are two up, one down).
+        /// Fewer threads fill what they can; three in a grid are two up, one down.
         func tree(_ ids: [UUID], columnSplit: Double = 0.5, rowSplit: Double = 0.5) -> PaneNode? {
             let panes = ids.prefix(capacity).map { PaneNode.pane(id: $0) }
             func columns(_ first: PaneNode, _ second: PaneNode) -> PaneNode {
@@ -39,7 +37,6 @@ struct PaneLayout: Equatable, Sendable {
         }
     }
 
-    /// Which side of a pane a split puts the new one.
     enum Side: Sendable {
         case left, right, up, down
     }
@@ -56,7 +53,7 @@ struct PaneLayout: Equatable, Sendable {
         maximizedThreadId.map { [$0] } ?? panes
     }
 
-    /// Puts a thread on screen in place of `replaced` (the last pane when nil), or as the only pane.
+    /// In place of `replaced` (the last pane when nil), or as the only pane.
     mutating func show(_ id: UUID, replacing replaced: UUID?) {
         maximizedThreadId = nil
         guard !panes.contains(id) else { return }
@@ -78,7 +75,7 @@ struct PaneLayout: Equatable, Sendable {
         }
     }
 
-    /// A new pane for `id` on `side` of `target`'s, splitting it in half; `id` leaves its old pane if it had one.
+    /// `id` leaves its old pane if it had one.
     mutating func split(_ target: UUID, side: Side, with id: UUID) {
         maximizedThreadId = nil
         guard id != target, panes.contains(target) else { return }
@@ -91,7 +88,6 @@ struct PaneLayout: Equatable, Sendable {
         }
     }
 
-    /// The pane goes, and the other side of its split takes the space.
     mutating func removePane(_ id: UUID) {
         root = root?.removing(id)
         if maximizedThreadId == id { maximizedThreadId = nil }
@@ -119,11 +115,11 @@ extension PaneLayout {
 extension PaneLayout: Codable {
     private enum CodingKeys: String, CodingKey {
         case root, maximizedThreadId
-        // v0.3 and earlier: a fixed layout and its threads in pane order. Their pins are ignored.
+        // v0.3: a fixed layout and its pane order; pins are ignored.
         case mode, openThreadIds, columnSplit, rowSplit
     }
 
-    /// Every key may be missing, so older files load; one from before splits becomes its fixed layout.
+    /// Every key may be missing; a file from before splits becomes its fixed layout.
     init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         if let root = try container.decodeIfPresent(PaneNode.self, forKey: .root) {
@@ -152,7 +148,6 @@ extension PaneLayout: Codable {
 
 /// One pane showing a thread, or a split: `first` left of or above `second`, `ratio` being first's share.
 indirect enum PaneNode: Codable, Equatable, Sendable {
-    /// Side by side, or one above the other.
     enum Axis: String, Codable, Sendable {
         case columns, rows
     }
@@ -168,7 +163,6 @@ indirect enum PaneNode: Codable, Equatable, Sendable {
         }
     }
 
-    /// Every pane replaced by `transform`'s node; splits keep their shape.
     func mapPanes(_ transform: (UUID) -> PaneNode) -> PaneNode {
         switch self {
         case .pane(let id): transform(id)
@@ -177,7 +171,7 @@ indirect enum PaneNode: Codable, Equatable, Sendable {
         }
     }
 
-    /// Without `id`'s pane: the other side of its split takes the space. Nil when it was the only pane.
+    /// The other side of `id`'s split takes its space; nil when it was the only pane.
     func removing(_ id: UUID) -> PaneNode? {
         switch self {
         case .pane(let pane):
@@ -214,10 +208,10 @@ indirect enum PaneNode: Codable, Equatable, Sendable {
     }
 }
 
-/// Where each pane goes, and the gaps between them that work as split handles.
+/// Pane frames, and the gaps between them that work as split handles.
 struct PaneTiles {
     struct Handle: Identifiable {
-        /// The split it moves (see `PaneNode.ratio(at:)`).
+        /// See `PaneNode.ratio(at:)`.
         let path: [Int]
         let axis: PaneNode.Axis
         let rect: CGRect

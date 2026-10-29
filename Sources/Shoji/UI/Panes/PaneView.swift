@@ -11,7 +11,7 @@ struct PaneView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @AppStorage(TextZoom.storageKey) private var textZoom = 1.0
     @State private var dropZone: DropZone?
-    /// 0…1, the ivory glow after a go-to lands here.
+    /// Go-to glow, 0…1.
     @State private var glow = 0.0
     @State private var size = CGSize.zero
     @State private var isHovering = false
@@ -54,7 +54,7 @@ struct PaneView: View {
                     .allowsHitTesting(false)
             }
         }
-        // "Here it is": a card click, ⌘1–9, ⌃Tab, ⌘J, Hachi or a notification moved focus to this pane.
+        // Go-to glow (`ThreadStore.paneGlow`).
         .overlay {
             RoundedRectangle(cornerRadius: 18 * zoom)
                 .strokeBorder(Palette.done.opacity(0.85 * glow), lineWidth: 2)
@@ -171,7 +171,7 @@ struct PaneView: View {
     }
 }
 
-/// Where a card dragged over a pane would land: on an edge it splits the pane there, in the middle it takes it.
+/// Where a dragged card lands: an edge splits the pane, the middle takes it.
 enum DropZone: Equatable {
     case center
     case edge(PaneLayout.Side)
@@ -198,8 +198,7 @@ enum DropZone: Equatable {
     }
 }
 
-/// Cards split or take the pane (see `DropZone`). Files and text from other apps paste into the terminal, like
-/// Terminal: a file as its path, so a dropped screenshot reaches Claude Code.
+/// Files and text from other apps paste like Terminal; a file as its path, so screenshots reach Claude Code.
 private struct PaneDrop: DropDelegate {
     static let types: [UTType] = [.shojiThread, .fileURL, .plainText]
 
@@ -266,7 +265,7 @@ private struct PaneDrop: DropDelegate {
 }
 
 enum FileDrop {
-    /// Paths as Terminal pastes dropped files: shell characters escaped with a backslash, a space after each.
+    /// As Terminal pastes dropped files: backslash-escaped, a space after each.
     static func text(for paths: [String]) -> String {
         paths.map { path in
             path.reduce(into: "") { escaped, character in

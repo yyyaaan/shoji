@@ -17,7 +17,7 @@ final class ThreadStore {
     private(set) var recentThreadIds: [UUID] = []
     /// A pane that should take keyboard focus once its terminal is on screen.
     private(set) var focusRequest: UUID?
-    /// The last "go to" that moved focus to a pane already on screen; that pane glows briefly (`PaneView`).
+    /// The last go-to that landed on a pane already on screen; that pane glows.
     private(set) var paneGlow: PaneGlow?
     /// A busy thread the user asked to close; the window confirms before `close` runs.
     var closeRequest: UUID?
@@ -32,8 +32,7 @@ final class ThreadStore {
         }
     }
 
-    /// Where the panes are drawn, kept current by `PaneGrid`, so a split never leaves a pane too small to use.
-    /// Zero (tests, before the first layout) allows every split.
+    /// Kept current by `PaneGrid` so splits stay usable; zero (tests) allows any split.
     @ObservationIgnored var paneAreaSize = CGSize.zero
     static let minimumPaneSize = CGSize(width: 320, height: 160)
 
@@ -79,7 +78,7 @@ final class ThreadStore {
             threads[index].command = line
             activity.agent = Agent(commandLine: line)
             activity.detail = nil
-            // A new program sets its own title; an earlier agent's topic must not stick to it.
+            // An earlier agent's topic mustn't stick.
             activity.terminalTitle = nil
             // An agent waits at its own prompt until a hook says otherwise; anything else is running.
             activity.transition(to: activity.agent == nil ? .running : .idle, at: now)
@@ -143,14 +142,12 @@ final class ThreadStore {
         return activity.status == .needsYou || (hachiOnFinish && activity.isUnseen)
     }
 
-    /// What quitting would cut short: threads working, waiting on you, or running a command. An agent idle at its
-    /// prompt doesn't count; it resumes on relaunch.
+    /// What quitting would stop. An agent idle at its prompt resumes on relaunch, so it doesn't count.
     var busyThreads: [ShojiThread] {
         shelfOrder.filter { [.working, .needsYou, .running].contains(activity(for: $0.id).status) }
     }
 
-    /// The threads that want you in shelf order, those waiting on an answer first: Hachi's count, the Dock badge
-    /// and notifications.
+    /// Shelf order, needs-you first: Hachi's count, the Dock badge and notifications.
     var wantingYou: [ShojiThread] {
         let waiting = shelfOrder.filter { wantsYou($0.id) }
         let asking = waiting.filter { activity(for: $0.id).status == .needsYou }
@@ -188,8 +185,7 @@ final class ThreadStore {
         return thread.id
     }
 
-    /// The ⌘K quick terminal closed while running something: its shell joins the shelf right after the focused
-    /// card, still running, without taking a pane.
+    /// A quick terminal closed while running something joins the shelf after the focused card, without a pane.
     func adopt(_ thread: ShojiThread, running command: String, at now: Date = .now) {
         insert(thread, after: focusedThreadId, at: now)
         apply(StatusEvent(threadId: thread.id, signal: .directory(thread.folder)), at: now)
@@ -210,9 +206,7 @@ final class ThreadStore {
         arrange(groups)
     }
 
-    /// The user's name for the thread, else the running agent's topic, else its folder's name. Threads going by
-    /// folders of the same name are numbered oldest first ("shoji", "shoji 2"), so a `cd` into a subfolder and
-    /// back changes nothing. Cards, pane headers, menus and notifications all use it.
+    /// Your rename, else the agent's topic, else the folder's name. Same-named folders are numbered oldest first, so a `cd` and back changes nothing.
     func name(of thread: ShojiThread) -> String {
         if let title = thread.title { return title }
         if let topic = activities[thread.id]?.topic { return topic }
@@ -240,8 +234,7 @@ final class ThreadStore {
         }
     }
 
-    /// Removes the thread; `TerminalSessions.sync` then stops its process. Its pane goes too, unless it's the
-    /// last one, which shows your most recent other thread.
+    /// `TerminalSessions.sync` then stops its process. The last pane shows your most recent other thread.
     func close(_ id: UUID) {
         if closeRequest == id { closeRequest = nil }
         let taker = layout.root?.sibling(of: id)?.panes.first
@@ -358,9 +351,7 @@ final class ThreadStore {
 
     // MARK: Panes
 
-    /// Shows the thread in the pane you're in (or, with none, the one used longest ago that isn't waiting for
-    /// you), and focuses it. A thread already on screen just takes focus; one that's gone (a late notification
-    /// click) is ignored.
+    /// In your pane, else the least recently used one not waiting for you. On screen: focus only; gone: ignored.
     func open(_ id: UUID) {
         guard thread(id) != nil else { return }
         if layout.panes.contains(id), id != focusedThreadId {
@@ -392,8 +383,7 @@ final class ThreadStore {
         recentThreadIds.firstIndex(of: id) ?? .max
     }
 
-    /// Panes › Single Pane … Grid of Four: snaps the panes into a fixed layout, keeping the pane you're in on screen, and filling
-    /// new panes with your most recent threads, then the shelf's.
+    /// Keeps your pane on screen and fills new panes from recent threads, then the shelf.
     func arrange(_ preset: PaneLayout.Preset) {
         var ids = layout.panes
         if let focused = focusedThreadId, let index = ids.firstIndex(of: focused), index >= preset.capacity {
@@ -407,8 +397,7 @@ final class ThreadStore {
         layout.maximizedThreadId = nil
     }
 
-    /// Splits `target`'s pane (yours when nil) and shows your most recent thread that isn't on screen in the
-    /// new pane, else a new shell in that folder. False when there's no such pane or it's too small to split.
+    /// The new pane shows your most recent hidden thread, else a new shell. False when the pane is gone or too small.
     @discardableResult
     func split(_ target: UUID? = nil, side: PaneLayout.Side) -> Bool {
         guard let target = target ?? focusedThreadId, canSplit(target, side: side) else { return false }
@@ -419,7 +408,7 @@ final class ThreadStore {
         return true
     }
 
-    /// A card dropped on the edge of `target`'s pane: that thread gets a new pane there.
+    /// A card dropped on a pane's edge.
     @discardableResult
     func split(_ target: UUID, side: PaneLayout.Side, showing id: UUID) -> Bool {
         guard id != target, canSplit(target, side: side) else { return false }
@@ -428,7 +417,7 @@ final class ThreadStore {
         return true
     }
 
-    /// Close Pane: the pane goes and its thread keeps running on the shelf. The last pane stays.
+    /// The thread keeps running on the shelf; the last pane stays.
     func closePane(_ id: UUID) {
         guard layout.panes.count > 1, let taker = layout.root?.sibling(of: id)?.panes.first else { return }
         layout.removePane(id)
@@ -448,8 +437,7 @@ final class ThreadStore {
             : (rect.height - PaneTiles.gap) / 2 >= minimum.height
     }
 
-    /// ⌥⌘+ / ⌥⌘−: the thread's terminal text a level bigger or smaller than the others (`global`), while a level
-    /// is left that way; ⌥⌘0 (`by: nil`) puts it back in line.
+    /// Only while a level is left that way, so steps never pile up; `by: nil` puts it back.
     func stepTextSize(of id: UUID, by step: Int?, global: Double) {
         guard let index = threads.firstIndex(where: { $0.id == id }) else { return }
         let current = threads[index].textSteps ?? 0
