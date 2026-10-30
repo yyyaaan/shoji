@@ -4,9 +4,9 @@ The current state of Shoji: what's next, what to watch out for, and why things a
 
 ## Status
 
-- **Released:** v0.4.1. **In review (`side-by-side`, v0.5.0):** Room light (80%), the compact form, a thread dropdown in every pane header, ⌘ card numbers, terminal text down to 50%, notifications only while Shoji is out of sight. 73 tests.
-- **Next up:** the user merges the PR (publishing v0.5.0) and installs it, then the checks in Now; the next session builds the Hub.
-- **Blockers:** none. Design's review of the pane chrome is open (`docs/handoffs/`).
+- **Released:** v0.5.0. **In progress (`hub`, v0.6.0):** the Hub (⇧⌘H) and mini cards. 78 tests.
+- **Next up:** the user tries the Hub on real threads (the Hub checks in Now), then merges, publishing v0.6.0.
+- **Blockers:** none. Design reviews of the pane chrome and the Hub are open (`docs/handoffs/`).
 
 _Agents: update Status and Tasks at the end of every session; record decisions and gotchas as they stand now, not how they got there._
 
@@ -15,6 +15,9 @@ _Agents: update Status and Tasks at the end of every session; record decisions a
 Priorities follow the user's wishes. Keep items one line, small enough for one PR.
 
 ### Now (the user's checks)
+- [ ] Hub: ⇧⌘H and the Threads | Hub switch; no pane shows through and typing reaches no terminal; Esc returns to your pane; a card click, Open, ⌘1–9, ⌘J, Hachi or a notification opens the thread; Esc in ⌘K over the Hub reaches the shell
+- [ ] Hub cards on real threads: the last lines skip Claude Code's and Codex's input box and footer (else tune `Excerpt`), the git branch shows, a working agent names its last tool
+- [ ] Mini cards: card menu › Mini Card; the name reads top to bottom; dragging, drops, ⌘ numbers and the needs-you glow still work
 - [ ] The terminal checklist below
 - [ ] Room light: no seam at the terminal's margin; all panes solid with Reduce Transparency
 - [ ] Compact form: Split View beside a full-screen Zed or Chrome, narrow below 680 pt and back above 720 without flicker; the dropdown (shelf order, bars as separators, status) picks and swaps rows, New Thread; ⇧⌘D adds a row, ⌘D and ⌥⌘2–4 are off; the full layout comes back intact
@@ -24,11 +27,11 @@ Priorities follow the user's wishes. Keep items one line, small enough for one P
 - [ ] Not yet seen: a screenshot dragged from Finder onto Claude Code, Open in VS Code / Zed, Codex resuming after quit and reopen, the go-to glow, ⌘Q's busy list, the About panel
 
 ### Next
-- [ ] Design: review the v0.4 chrome (app-to-design handoff)
+- [ ] Design: review the v0.4 chrome and the Hub (app-to-design handoffs)
 
 ### Later
-- [ ] Hub view (see Product › Hub)
 - [ ] "Allow once" from the Hub (see Open questions)
+- [ ] Hub: a running command's listening ports (libproc on the shell's children) with Open in Browser
 - [ ] Developer ID signing and notarization (needs a paid Apple Developer account)
 
 ### Parked
@@ -52,6 +55,7 @@ A calm command center for the terminals the user already runs all day. Claude Co
 - Glass cards in the user's order, split into groups by plain bars (no titles, no fixed meaning); scrolls sideways when full. Drag a card onto another to place it before or after (by half); the card menu also has Move Left / Right and Add / Remove Bar Before.
 - Card: status icon, a tag for what runs (CLAUDE / CODEX / the command's name), name, subtitle, elapsed time; the full folder as a tooltip.
 - **Name:** your rename, else a running agent's topic (its terminal title, unless that only names the agent or repeats its command line), else the folder's name, numbered ("shoji 2") only when two threads would read the same, the newer one getting the number. **Subtitle:** the folder; a plain command's command line; an agent's question while it needs you.
+- **Mini card** (card menu › Mini Card, full form): 44 pt wide, the status icon over the name reading top to bottom; the glow, count badge, ⌘ number and drops still work, and the tooltip has the rest.
 - Needs-you card: orange border and glow, count badge, Hachi. A turn that finishes unseen keeps its tick with ivory chrome and a soft halo; Threads › Show Hachi When an Agent Finishes also brings Hachi, the corner and ⌘J.
 
 ### Panes
@@ -65,16 +69,16 @@ A calm command center for the terminals the user already runs all day. Claude Co
 - Hold ⌘ on its own for a moment and the first nine cards show their ⌘1–9 number; any key or leaving Shoji hides them.
 - ⌃Tab / ⌃⇧Tab: recent threads like ⌘Tab; a tap returns to the previous one, holding ⌃ shows the list, Esc cancels.
 - ⌘K: a quick terminal over the window, a little above centre, in the focused thread's folder. ⌘K, ⌘W, a click outside or `exit` closes it; a command still running then becomes a thread beside the focused card.
-- Menus: **Threads** (cards ⌘1–9, ⌘J, ⌃Tab, Open in VS Code ⌥⇧⌘E / Zed ⇧⌘E, the two options), **Panes** (focus, split, close, maximize, layouts), **View** (Interface Size, text sizes). No submenus; titles come from the `Shortcut` catalog, which also feeds the ⌘/ sheet.
+- Menus: **Threads** (cards ⌘1–9, ⌘J, ⌃Tab, Open in VS Code ⌥⇧⌘E / Zed ⇧⌘E, the two options), **Panes** (focus, split, close, maximize, layouts), **View** (Hub ⇧⌘H, Interface Size, text sizes). No submenus; titles come from the `Shortcut` catalog, which also feeds the ⌘/ sheet.
 - **Sizes:** ⌘+ / ⌘− / ⌘0 step the terminal text (50–200%); View › Interface Size scales the chrome (85–130%); ⌥⌘+ / ⌥⌘− / ⌥⌘0 keep one thread levels apart from the rest.
 - **Reaching you:** Hachi's corner and count, the Dock badge, and macOS notifications while Shoji's window is out of sight (another Space, minimized or covered). All count the same threads; Threads › Notify Me When Shoji Is Away turns notifications off.
 - ⌘Q asks only when something is busy (working, needs you, running a command, or the quick terminal running one), naming it.
 
-### Hub (planned)
-- Threads | Hub switch in the full form; totals pills (needs you / working / tasks down).
-- Agents sorted by attention (needs you → working → done → idle): name, kind, folder and git branch, status, one line on what it's doing or waiting on, the last 3 terminal lines, actions (Open, Allow once, Maximize, Open in Zed, Rename), elapsed time.
-- Tasks: name, command and folder, port, last log line, Restart / Stop / Open.
-- Visual reference: `docs/design/hub.html`.
+### Hub
+- ⇧⌘H or the Threads | Hub switch at the top right, full form only (narrowing the window leaves it). It covers the panes, which stay hosted underneath with no terminal holding the keyboard; Esc, a card click or any go-to returns to Threads.
+- Top row: Hachi, the thread count, and pills for needs you (a click is ⌘J), finished unseen, working, running and failed.
+- Cards in shelf order, bars as section breaks. Each card: status, name, tag, folder and git branch, a status pill, Hachi when it wants you; one line from hooks or the shell (the question, the agent's last tool, the command, the failure); the last 4 lines of its screen, skipping an agent's input box and footer; Open, Open Maximized, Zed / VS Code, Restart once the shell has ended; elapsed time. Right-click is the card menu.
+- Visual reference: `docs/design/hub.html` (drawn before threads were shells; the Hub keeps its look, not its Agents / Tasks split).
 
 ## Architecture
 
@@ -99,17 +103,17 @@ Files live in `~/Library/Application Support/Shoji` (`Shoji-Debug` for Debug bui
   "schemaVersion": 1,
   "threads": [
     { "id": "6F1C…", "title": "auth-refactor", "folder": "~/code/app", "group": 0, "order": 0,
-      "command": "claude", "resumeId": "abc123…", "resumeAgent": "claude", "textSteps": -1 }
+      "command": "claude", "resumeId": "abc123…", "resumeAgent": "claude", "textSteps": -1, "isMini": true }
   ],
   "layout": { "root": { "pane": { "id": "6F1C…" } }, "mode": "single", "openThreadIds": ["6F1C…"] },
   "compactLayout": { "root": { "pane": { "id": "6F1C…" } } }
 }
 ```
 
-- `title` and `textSteps` are optional; `folder` follows the shell; `group` / `order` place the card. The array is in creation order, which decides who gets the number among same-named threads.
+- `title`, `textSteps` and `isMini` are optional; `folder` follows the shell; `group` / `order` place the card. The array is in creation order, which decides who gets the number among same-named threads.
 - `command` is what ran at the last save and `resumeId` its agent session, `resumeAgent` naming the CLI: a relaunch runs `claude --resume <id>` or `codex resume <id>` at the first prompt, or leaves `command` at the prompt for Return.
 - `layout.root` is the split tree; `mode` and `openThreadIds` are still written for older Shoji, and read when `root` is missing. `compactLayout` is optional. Unknown keys are ignored.
-- Runtime only: status, activity, agent, terminal views, which form is showing.
+- Runtime only: status, activity, agent, terminal views, which form is showing, the Hub.
 
 ### Status
 
@@ -117,7 +121,7 @@ Files live in `~/Library/Application Support/Shoji` (`Shoji-Debug` for Debug bui
 |---|---|
 | Idle | at the prompt (launched, or a command ended with 0 / 130); Claude at its own prompt; Done or a failed command once focused |
 | Running | a command other than claude / codex (zsh `preexec`) |
-| Working | Claude or Codex `UserPromptSubmit` / `PostToolUse`; typing into a needs-you thread |
+| Working | Claude or Codex `UserPromptSubmit` / `PostToolUse` (which also names the tool for the Hub); typing into a needs-you thread |
 | Needs you | Claude `Notification` (not `idle_prompt`); Codex `PermissionRequest`; bell while working |
 | Done | Claude or Codex `Stop`; Codex `Interrupt`. Unseen when it lands outside the focused pane or while Shoji is in the background |
 | Exited(code) | a command failed (clears on focus), or the shell ended (Restart) |
@@ -138,6 +142,8 @@ Shell reports from the zsh integration: `cwd;<path>` each prompt, `cmd;<line>` b
 - **Focus requests must settle.** `SwiftTermBackend.focus()` reports `.focused` itself when the view already has focus; `TerminalHost` acts only when a request arrives, so a stale one can't pull typing back; clicks focus in `ShojiTerminalView.mouseDown`.
 - **Terminals keep their size and their host.** Never size one to zero (TUIs redraw badly); `TerminalContainer` keeps the last real size. `PaneGrid` places one `PaneView` per thread by frame, at the same place in both forms, so layout changes don't re-host terminals.
 - **A translucent terminal stacks with whatever is behind it.** SwiftTerm paints its own background at `backgroundOpacity`, so `PaneView` fills only the margin around it (an even-odd `Margin`). Never set the terminal's background to 0 and let SwiftUI draw it: the IME overlay and whole-screen reverse video use that colour.
+- **The Hub hides the panes, it doesn't remove them.** `PaneGrid` stays at opacity 0 underneath so terminals keep their host and size, and `MainView` takes first responder from the terminal. `focusRequest` and `showsHub` clear each other: asking for a pane's focus leaves the Hub, closing a thread from it doesn't. Esc is a key equivalent there, off while ⌘K is open.
+- **The Hub's lines come from the live screen:** `terminalContentSnapshot(region: .history(maximumScrollbackRows: -1))`, whatever the user scrolled to (`visibleRowsText` and `getLine(row:)` follow the scroll). Display only; `Excerpt` cuts at the first box-drawing rule in the last 12 non-blank rows (an agent's input box).
 - **Inside a `GlassEffectContainer`, overlays added after `.glassEffect` draw under the glass.** Put borders and badges first.
 - **Hidden title bar:** content ignores the top safe area; the leading 78 pt stays clear for the window buttons; the window drags by its background.
 - **⌃Tab is a local key monitor** (`RecentSwitchKeys`), since the switcher needs ⌃'s release and the keys must not reach the terminal; it stands down while a sheet or alert is up. The ⌘ card numbers (`CardNumberKeys`) watch the same events but never consume them; ⌘Tab's Tab never reaches the app, so the numbers can show under the app switcher until Shoji goes inactive.
@@ -169,8 +175,6 @@ Run by hand with Claude Code in Shoji after every SwiftTerm bump (AGENTS invaria
 
 - **Allow once:** for any prompt, or only commands approved before? Proposal: only when the prompt is visible on the card, sending exactly the shown keystroke.
 - **Performance:** how many live terminal views before it matters? Keep only SwiftTerm's headless `Terminal` for hidden threads?
-- **Task restart:** SIGINT then relaunch, or SIGTERM with a timeout?
-- **Git branch on Hub cards:** read `.git/HEAD` or run `git`?
 - **Stable local signing identity:** a self-signed certificate (a CI secret) would keep privacy grants across updates without a paid account. Now, or wait for Developer ID?
 
 ## Decisions
@@ -182,6 +186,9 @@ Run by hand with Claude Code in Shoji after every SwiftTerm bump (AGENTS invaria
 - **An unseen finish wants you** like a question does; ivory, not orange, so the two stay apart.
 - **One window, two forms, by width,** because Split View sets the width; the green button stays macOS's.
 - **Room light:** 80% opaque, never blurred; at 90% the backdrop barely moved the colour. More transparency or blur would cost contrast and show colours that mean status.
+- **The Hub follows the shelf:** shelf order with bars as breaks, not attention order or an Agents / Tasks split, so cards stay put and match ⌘1–9; needs-you cards stand out anyway.
+- **You stop processes yourself:** no Stop or command Restart buttons; ⌃C in the terminal and Close Thread (which asks) are the ways. Restart is only for a shell that has ended.
+- **Git branch from `.git/HEAD`** (worktrees too), never a `git` process.
 - **Options are one-click menu items;** there's no Settings window. A wish that would need one gets a menu item or isn't built.
 - **Quiet chrome:** glass on surfaces, not on small controls; pane controls appear on hover.
 - **Native notifications** over own popups: they follow Focus and screen sharing and keep a history.

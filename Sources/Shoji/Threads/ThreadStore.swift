@@ -20,6 +20,7 @@ final class ThreadStore {
     var isCompact = false {
         didSet {
             guard isCompact != oldValue else { return }
+            if isCompact { showsHub = false }
             if layout.root == nil, let id = focusedThreadId ?? (recentThreadIds + shelfOrder.map(\.id)).first {
                 layout.show(id, replacing: nil)
             }
@@ -35,12 +36,28 @@ final class ThreadStore {
     private(set) var focusedThreadId: UUID?
     /// Most recently focused first.
     private(set) var recentThreadIds: [UUID] = []
-    /// A pane that should take keyboard focus once its terminal is on screen.
-    private(set) var focusRequest: UUID?
+    /// A pane that should take keyboard focus once its terminal is on screen; asking for one leaves the Hub.
+    private(set) var focusRequest: UUID? {
+        didSet { if focusRequest != nil, showsHub { showsHub = false } }
+    }
+    /// The Hub over the panes, full form only. While it shows no terminal has focus; leaving gives it back.
+    var showsHub = false {
+        didSet {
+            guard showsHub != oldValue else { return }
+            if showsHub {
+                focusRequest = nil
+            } else if focusRequest == nil {
+                let visible = layout.visibleThreadIds
+                focusRequest = focusedThreadId.flatMap { visible.contains($0) ? $0 : nil } ?? visible.first
+            }
+        }
+    }
     /// The last go-to that landed on a pane already on screen; that pane glows.
     private(set) var paneGlow: PaneGlow?
     /// A busy thread the user asked to close; the window confirms before `close` runs.
     var closeRequest: UUID?
+    /// A card's Rename…; the window asks for the name.
+    var renameRequest: UUID?
     /// ⌃Tab in progress (⌃ still held).
     private(set) var recentSwitch: RecentSwitch?
     /// ⌘ held on its own: the first nine cards show their ⌘1–9 number.
@@ -118,7 +135,7 @@ final class ThreadStore {
             activity.attention = 0
             // 130 is Ctrl-C: stopping a dev server on purpose isn't an error.
             activity.transition(to: code == 0 || code == 130 ? .idle : .exited(code: code), at: now)
-        case .working(let sessionId):
+        case .working(let sessionId, let step):
             activity.agent = activity.agent ?? .claude
             // Prompt and tool hooks only come from a session with content, so its id is safe to resume.
             if let sessionId, threads[index].resumeId != sessionId || threads[index].resumeAgent != activity.agent {
@@ -126,7 +143,7 @@ final class ThreadStore {
                 threads[index].resumeAgent = activity.agent
             }
             activity.transition(to: .working, at: now)
-            activity.detail = nil
+            activity.detail = step
         case .needsYou(let message):
             activity.agent = activity.agent ?? .claude
             activity.transition(to: .needsYou, at: now)
@@ -271,9 +288,10 @@ final class ThreadStore {
         if layout.root == nil, let next = (recentThreadIds + shelfOrder.map(\.id)).first {
             layout.show(next, replacing: nil)
         }
+        // Closing from the Hub stays there; leaving it focuses a pane then.
         if focusedThreadId == id {
             focusedThreadId = nil
-            focusRequest = taker ?? layout.visibleThreadIds.first
+            if !showsHub { focusRequest = taker ?? layout.visibleThreadIds.first }
         }
     }
 
@@ -351,6 +369,11 @@ final class ThreadStore {
             return
         }
         arrange(groups)
+    }
+
+    func toggleMini(_ id: UUID) {
+        guard let index = threads.firstIndex(where: { $0.id == id }) else { return }
+        threads[index].isMini = threads[index].isMini == true ? nil : true
     }
 
     private func position(of id: UUID, in groups: [[UUID]]) -> (group: Int, index: Int)? {

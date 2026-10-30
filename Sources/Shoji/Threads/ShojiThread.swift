@@ -20,6 +20,8 @@ struct ShojiThread: Identifiable, Codable, Hashable, Sendable {
     var command: String?
     /// Text size levels away from the other terminals (⌥⌘+ / ⌥⌘−); nil when the same.
     var textSteps: Int?
+    /// A narrow card on the shelf showing only status and name; nil when full size.
+    var isMini: Bool?
 
     init(
         id: UUID = UUID(),
@@ -30,7 +32,8 @@ struct ShojiThread: Identifiable, Codable, Hashable, Sendable {
         resumeId: String? = nil,
         resumeAgent: Agent? = nil,
         command: String? = nil,
-        textSteps: Int? = nil
+        textSteps: Int? = nil,
+        isMini: Bool? = nil
     ) {
         self.id = id
         self.title = title
@@ -41,6 +44,7 @@ struct ShojiThread: Identifiable, Codable, Hashable, Sendable {
         self.resumeAgent = resumeAgent
         self.command = command
         self.textSteps = textSteps
+        self.isMini = isMini
     }
 
     /// What an unnamed thread goes by.

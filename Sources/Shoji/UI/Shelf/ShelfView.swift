@@ -5,10 +5,7 @@ import UniformTypeIdentifiers
 /// are dragged into place, and the context menu adds or removes bars. Scrolls sideways when the cards overflow.
 struct ShelfView: View {
     @Environment(ThreadStore.self) private var store
-    @Environment(TerminalSessions.self) private var sessions: TerminalSessions?
     @Environment(\.zoom) private var zoom
-    @State private var renaming: ShojiThread?
-    @State private var draftTitle = ""
     @State private var dropSpot: DropSpot?
 
     var body: some View {
@@ -36,13 +33,6 @@ struct ShelfView: View {
                 }
             }
             .scrollIndicators(.automatic)
-            .alert("Rename Thread", isPresented: Binding { renaming != nil } set: { if !$0 { renaming = nil } }, presenting: renaming) { thread in
-                TextField("Name", text: $draftTitle, prompt: Text(thread.folderName))
-                Button("Rename") { store.rename(thread.id, to: draftTitle) }
-                Button("Cancel", role: .cancel) {}
-            } message: { _ in
-                Text("Leave it empty to show the folder’s name.")
-            }
             // Keyboard jumps can land on a card that is scrolled out of view.
             .onChange(of: store.focusedThreadId) { _, id in
                 guard let id else { return }
@@ -72,7 +62,7 @@ struct ShelfView: View {
                 .accessibilityAddTraits(.isButton)
                 .accessibilityAction { store.open(thread.id) }
                 .onDrag { CardDrag.item(for: thread.id) }
-                .onDrop(of: [.shojiThread], delegate: CardDrop(target: thread.id, width: ThreadCard.width * zoom, spot: $dropSpot, store: store))
+                .onDrop(of: [.shojiThread], delegate: CardDrop(target: thread.id, width: (thread.isMini == true ? ThreadCard.miniWidth : ThreadCard.width) * zoom, spot: $dropSpot, store: store))
                 .overlay(alignment: dropSpot?.after == true ? .trailing : .leading) {
                     if dropSpot?.id == thread.id {
                         // Sits in the gap beside the card, outside its glass.
@@ -84,23 +74,26 @@ struct ShelfView: View {
                     }
                 }
                 .id(thread.id)
-                .contextMenu { menu(for: thread) }
+                .contextMenu { CardMenu(thread: thread) }
             }
         }
         .accessibilityElement(children: .contain)
     }
+}
 
-    @ViewBuilder
-    private func menu(for thread: ShojiThread) -> some View {
+/// A card's right-click menu, on the shelf and in the Hub.
+struct CardMenu: View {
+    @Environment(ThreadStore.self) private var store
+    @Environment(TerminalSessions.self) private var sessions: TerminalSessions?
+    let thread: ShojiThread
+
+    var body: some View {
         Button("Show in This Pane") { store.bringHere(thread.id) }
             .disabled(store.focusedThreadId == nil || store.focusedThreadId == thread.id)
         ForEach(Editor.installed) { editor in
             Button("Open in \(editor.name)") { editor.open(thread.folder) }
         }
-        Button("Rename…") {
-            draftTitle = thread.title ?? ""
-            renaming = thread
-        }
+        Button("Rename…") { store.renameRequest = thread.id }
         Divider()
         Button("Move Left") { store.move(thread.id, by: -1) }
             .disabled(!store.canMove(thread.id, by: -1))
@@ -110,6 +103,9 @@ struct ShelfView: View {
             Button("Remove Bar Before") { store.toggleBarBefore(thread.id) }
         } else if store.shelfOrder.first?.id != thread.id {
             Button("Add Bar Before") { store.toggleBarBefore(thread.id) }
+        }
+        if !store.showsHub {
+            Toggle("Mini Card", isOn: Binding { thread.isMini == true } set: { _ in withAnimation(.snappy) { store.toggleMini(thread.id) } })
         }
         Divider()
         if !store.activity(for: thread.id).isAlive {

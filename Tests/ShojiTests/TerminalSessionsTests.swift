@@ -17,6 +17,7 @@ struct TerminalSessionsTests {
         func setFontSize(_ size: CGFloat) { fontSize = size }
         func setBackgroundOpacity(_ opacity: Double) {}
         func paste(_ text: String) {}
+        func screenLines() -> [String] { [] }
     }
 
     private let task = ShojiThread(title: "t", folder: "/tmp")

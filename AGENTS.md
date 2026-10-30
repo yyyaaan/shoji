@@ -2,7 +2,7 @@
 
 Shoji is a native macOS app that hosts the user's terminal sessions ("threads") under a Liquid Glass card shelf. Every thread is the user's own shell: they `cd` anywhere and run coding-agent CLIs (`claude`, `codex`) or long-running commands (`docker compose up`, `pnpm dev`), and quit back to the prompt as usual. Shoji shows what's running and what needs the user. It is NOT an editor, diff viewer or file browser (the user keeps Zed / VS Code for those), and NOT an agent client: it never talks to models or APIs.
 
-Words used everywhere (code, docs, chat): a **thread** is one hosted shell session, whatever runs in it; the **shelf** is the strip of **cards** across the top, one per thread in the user's order, with **bars** splitting it into groups that mean whatever the user wants; a **pane** shows a thread's terminal below the shelf; the **compact form** is the same window made narrow (Split View beside an editor): no shelf, one column of one or two panes; the **Hub** (planned) shows big cards. Mascot: **Hachi**, an Akita who appears on a card and in the window's corner when a thread needs the user.
+Words used everywhere (code, docs, chat): a **thread** is one hosted shell session, whatever runs in it; the **shelf** is the strip of **cards** across the top, one per thread in the user's order, with **bars** splitting it into groups that mean whatever the user wants; a **pane** shows a thread's terminal below the shelf; a **mini card** is a narrow shelf card, status and name only; the **compact form** is the same window made narrow (Split View beside an editor): no shelf, one column of one or two panes; the **Hub** (⇧⌘H) covers the panes with a big card per thread. Mascot: **Hachi**, an Akita who appears on a card and in the window's corner when a thread needs the user.
 
 **`PLAN.md` is the living state file.** Read its Status, Tasks and Gotchas before starting, then check `docs/handoffs/` for work addressed to you. Update Status and Tasks when you finish a session.
 
@@ -28,11 +28,12 @@ Sources/Shoji/
   ThirdPartyNotices.txt     SwiftTerm's MIT licence, shown in the About panel
   App/                      ShojiApp (wiring, window, AppDelegate's quit check), MainView (full and compact forms),
                             Shortcuts (catalog + menus), Notifier (Dock badge, notifications), Editor (VS Code / Zed)
-  Threads/                  ShojiThread, ThreadStore, PaneLayout (split tree, presets, PaneTiles), ThreadFile, launch building, Mock
+  Threads/                  ShojiThread, ThreadStore, PaneLayout (split tree, presets, PaneTiles), ThreadFile, launch building, GitBranch, Mock
   Terminal/                 TerminalBackend protocol, SwiftTerm implementation (only place importing SwiftTerm), TerminalSessions
   Status/                   StatusEvent, HookServer (socket listener), ClaudeHooks, CodexHooks
   UI/                       Theme (palette), StatusIcon, Backdrop, Zoom (text and interface sizes), ShortcutsSheet, RecentSwitch (⌃Tab)
-  UI/Shelf/                 card shelf, bars, card menu, ⌘ card numbers
+  UI/Shelf/                 card shelf, bars, mini cards, card menu (shared with the Hub), ⌘ card numbers
+  UI/Hub/                   HubView (grid, totals, Threads | Hub switch), HubCard (card, screen excerpt)
   UI/Panes/                 PaneGrid (panes and split handles by frame), PaneView (header, thread dropdown, Split menu, drops), TerminalHost, QuickTerminal
   UI/Hachi/                 HachiPortrait, HachiCorner, Hachi.xcassets, AppIcon.icon (spec in docs/design/hachi/README.md)
 Tests/ShojiTests/           Swift Testing
@@ -59,9 +60,9 @@ scripts/package.sh [version]     # universal Release app + DMG, ad-hoc signed
 
 1. **SwiftTerm is pinned** to an exact version. A bump is its own change and re-runs PLAN's terminal checklist.
 2. **Only `Terminal/` imports SwiftTerm.** Everything else talks to `TerminalBackend`, so the engine stays swappable (libghostty is the fallback).
-3. **Glass on chrome only.** Shelf, cards, pane headers, toasts and menus are glass. Terminal content sits on its own background: `Palette.paneOpacity` (80%) in panes with no blur, solid in the quick terminal and with Reduce Transparency.
+3. **Glass on chrome only.** Shelf, cards, Hub cards, pane headers, toasts and menus are glass. Terminal content sits on its own background: `Palette.paneOpacity` (80%) in panes with no blur, solid in the quick terminal, the Hub's screen lines and with Reduce Transparency.
 4. **No tmux or any multiplexer.** Persistence is relaunching with the CLI's own resume (`claude --resume <id>`, `codex resume <id>`).
-5. **One status path.** Every status change is a `StatusEvent` (from the socket, or terminal callbacks: title, bell, exit, the zsh integration's `OSC 1337 ; ShojiEvent=…` reports) applied by `ThreadStore` on the main actor. UI never derives status from terminal output.
+5. **One status path.** Every status change is a `StatusEvent` (from the socket, or terminal callbacks: title, bell, exit, the zsh integration's `OSC 1337 ; ShojiEvent=…` reports) applied by `ThreadStore` on the main actor. UI never derives status from terminal output; the Hub's screen lines are shown, never read.
 6. **Never type into a terminal on the user's behalf** except through an explicit user action (e.g. Hub "Allow once"), sending exactly the keystroke the UI shows, and log it. Relaunching isn't typing: the zsh integration runs the resume at a restored shell's first prompt and leaves any other last command at the prompt for Return.
 7. **Hooks must never slow or break the CLIs.** `shoji-hook` exits 0 within ~100 ms, silently when Shoji isn't running.
 8. **Don't touch the user's global CLI config** (`~/.claude`, `~/.codex`) without an explicit opt-in. Inject per launch (env vars, a settings file, a config override), and verify current CLI flags before relying on them.

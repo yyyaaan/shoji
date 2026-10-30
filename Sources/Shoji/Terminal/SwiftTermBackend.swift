@@ -66,6 +66,10 @@ final class SwiftTermBackend: TerminalBackend, LocalProcessTerminalViewDelegate 
         terminalView.pasteText(text)
     }
 
+    func screenLines() -> [String] {
+        terminalView.terminalContentSnapshot(region: .history(maximumScrollbackRows: -1))?.rows.map(\.text) ?? []
+    }
+
     // MARK: LocalProcessTerminalViewDelegate
 
     func sizeChanged(source: LocalProcessTerminalView, newCols: Int, newRows: Int) {}

@@ -39,7 +39,7 @@ struct ThreadActivity: Equatable, Sendable {
     var attention = 0
     /// Done while you weren't looking (Zed's unread dot); cleared once you look or the thread moves on.
     var isUnseen = false
-    /// What the thread is waiting on, from the hook that raised needs-you.
+    /// From hooks: what the thread waits on while it needs you, or the tool its agent last used while working.
     var detail: String?
     var terminalTitle: String?
     /// The agent CLI running in the shell right now.

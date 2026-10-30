@@ -9,9 +9,11 @@ struct MainView: View {
     @State private var showsShortcuts = false
     @State private var zoomToast: Double?
     @State private var showsRecentSwitch = false
+    @State private var draftTitle = ""
 
     var body: some View {
-        VStack(spacing: store.isCompact ? 6 : 14) {
+        let inHub = store.showsHub && !store.isCompact
+        VStack(spacing: store.isCompact || inHub ? 6 : 14) {
             if store.threads.isEmpty {
                 welcome
             } else {
@@ -25,21 +27,52 @@ struct MainView: View {
                         Spacer()
                     }
                     .frame(height: 44 * zoom, alignment: .bottom)
+                } else if inHub {
+                    // Hachi beside the window buttons, as in the compact form; the switch where the shelf has it.
+                    HStack(spacing: 12 * zoom) {
+                        HachiCorner()
+                            .frame(width: 44 * zoom)
+                            .frame(maxHeight: .infinity, alignment: .bottom)
+                        HubTotals()
+                        Spacer(minLength: 12)
+                        HubSwitch()
+                    }
+                    .padding(.leading, 78)
+                    .padding(.trailing, 18)
+                    .frame(height: 44 * zoom)
                 } else {
-                    HStack(spacing: 0) {
+                    HStack(alignment: .top, spacing: 0) {
                         // Clear of the window's close, minimize and zoom buttons; Hachi's corner sits below them.
                         HachiCorner()
                             .frame(width: 78)
                             .frame(maxHeight: .infinity, alignment: .bottom)
                             .padding(.bottom, 6 * zoom)
                         ShelfView()
+                        HubSwitch()
+                            .frame(height: 44 * zoom)
+                            .padding(.trailing, 18)
                     }
                     .frame(height: 120 * zoom)
                 }
-                // Same place in both forms, so panes on screen in both keep their terminals hosted.
-                PaneGrid()
-                    .padding(.horizontal, store.isCompact ? 10 : 18)
-                    .padding(.bottom, store.isCompact ? 10 : 16)
+                ZStack {
+                    // Same place in both forms and under the Hub, so panes keep their terminals hosted.
+                    PaneGrid()
+                        .padding(.horizontal, store.isCompact ? 10 : 18)
+                        .padding(.bottom, store.isCompact ? 10 : 16)
+                        .opacity(inHub ? 0 : 1)
+                        .allowsHitTesting(!inHub)
+                        .accessibilityHidden(inHub)
+                    if inHub {
+                        HubView()
+                    }
+                }
+                .alert("Rename Thread", isPresented: Binding { store.renameRequest != nil } set: { if !$0 { store.renameRequest = nil } }, presenting: store.renameRequest.flatMap(store.thread)) { thread in
+                    TextField("Name", text: $draftTitle, prompt: Text(thread.folderName))
+                    Button("Rename") { store.rename(thread.id, to: draftTitle) }
+                    Button("Cancel", role: .cancel) {}
+                } message: { _ in
+                    Text("Leave it empty to show the folder’s name.")
+                }
             }
         }
         .ignoresSafeArea(.container, edges: .top)
@@ -81,6 +114,11 @@ struct MainView: View {
             if old != textZoom { withAnimation(.snappy) { zoomToast = textZoom } }
         }
         .onChange(of: store.threads.map(\.textSteps)) { sessions?.applyTextSizes() }
+        .onChange(of: store.renameRequest) { _, id in draftTitle = id.flatMap(store.thread)?.title ?? "" }
+        // Hidden terminals keep their views; none may keep the keyboard while the Hub shows.
+        .onChange(of: inHub) { _, inHub in
+            if inHub { NSApp.keyWindow?.makeFirstResponder(nil) }
+        }
         .onAppear {
             RecentSwitchKeys.install(store: store)
             CardNumberKeys.install(store: store)

@@ -12,7 +12,13 @@ struct StatusEventTests {
 
     @Test func claudeHooksMapToSignals() {
         #expect(event(#"{"hook_event_name":"UserPromptSubmit","session_id":"s1"}"#)?.signal == .working(sessionId: "s1"))
-        #expect(event(#"{"hook_event_name":"PostToolUse","session_id":"s1","tool_name":"Bash"}"#)?.signal == .working(sessionId: "s1"))
+        #expect(event(#"{"hook_event_name":"PostToolUse","session_id":"s1","tool_name":"Bash"}"#)?.signal == .working(sessionId: "s1", step: "Bash"))
+        #expect(event(#"{"hook_event_name":"PostToolUse","session_id":"s1","tool_name":"Edit","tool_input":{"file_path":"/a/src/Header.tsx","old_string":"x"}}"#)?.signal
+            == .working(sessionId: "s1", step: "Edit Header.tsx"))
+        #expect(event(#"{"hook_event_name":"PostToolUse","session_id":"s1","tool_name":"Bash","tool_input":{"command":"pnpm test\nmore"}}"#)?.signal
+            == .working(sessionId: "s1", step: "Bash pnpm test"))
+        #expect(event(#"{"hook_event_name":"PostToolUse","session_id":"s1","tool_name":"mcp__linear__get_issue","tool_input":{"id":"X-1"}}"#)?.signal
+            == .working(sessionId: "s1", step: "get_issue"))
         #expect(event(#"{"hook_event_name":"Stop","session_id":"s1"}"#)?.signal == .finished)
         #expect(event(#"{"hook_event_name":"Notification","message":"Claude needs your permission to use Bash","notification_type":"permission_prompt"}"#)?.signal
             == .needsYou(message: "Claude needs your permission to use Bash"))
