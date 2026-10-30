@@ -1,14 +1,12 @@
 # Design references
 
-Only accepted designs, source artwork and regeneration tools belong here. Keep active agent work in [handoffs](../handoffs/); remove superseded candidates, temporary renders and intermediate exports after sign-off.
+Accepted designs, source artwork and the tools that regenerate it. What ships is described in [PLAN.md](../../PLAN.md); open design work goes through [handoffs](../handoffs/).
 
 | Reference | Purpose |
 |---|---|
-| [Shelf and panes](threads-shelf.html) | Original layout reference; later interaction decisions live in [PLAN.md](../../PLAN.md) |
-| [Hub](hub.html) | Current shelf-ordered Hub structure, responsive totals and compact cards; interactive size reference |
-| [Hub and chrome polish](polish/README.md) | Review findings and native implementation targets for Hub, mini cards, panes and quick terminal |
-| [Hachi and app icon](hachi/README.md) | Approved ink portrait, placement and aligned Icon Composer layers |
-| [Idle Torii](status/README.md) | Status glyph, template PDF and sizing |
-| [Quiet finish](completion/README.md) | Completion chrome and static halo, independent of the Hachi preference |
+| [Hub](hub.html) | Hub layout across Interface Sizes and window widths; interactive |
+| [Hachi and app icon](hachi/README.md) | Ink portrait, its placements, Icon Composer layers |
+| [Idle Torii](status/README.md) | Idle status glyph, also the Hub button |
+| [Quiet finish](completion/README.md) | Chrome and static halo for a turn finished unseen |
 
-Each artwork folder keeps its editable vector master and delivery PDF/imageset under `assets/`, approved raster sources where needed, provenance in `PROMPTS.md`, and reusable exporters under `tools/`. These sources support regeneration; they are not discarded iterations. Layered icon masters stay in `hachi/assets/icon-layers/`; the native Icon Composer document lives in `Sources/Shoji/UI/Hachi/AppIcon.icon`.
+Each artwork folder keeps its vector master under `assets/`, the approved raster source where there is one, provenance in `PROMPTS.md` and exporters under `tools/`. Delivered PDFs live in the app's asset catalog (`Sources/Shoji/UI/Hachi/Hachi.xcassets`); the native icon document is `Sources/Shoji/UI/Hachi/AppIcon.icon`.

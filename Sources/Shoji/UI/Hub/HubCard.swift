@@ -25,7 +25,6 @@ struct HubCard: View {
             }
             excerpt
             actions
-            folderLinks
         }
         .padding(12 * zoom)
         .foregroundStyle(Palette.text)
@@ -51,6 +50,7 @@ struct HubCard: View {
         .task(id: thread.folder) { branch = GitBranch.of(thread.folder) }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(store.name(of: thread))
+        .accessibilityAction(named: "Open") { store.open(thread.id) }
     }
 
     private var title: some View {
@@ -171,10 +171,9 @@ struct HubCard: View {
         }
     }
 
+    /// The card itself opens the thread.
     private var actions: some View {
-        HStack(spacing: 6 * zoom) {
-            Button("Open") { store.open(thread.id) }
-                .buttonStyle(HubButtonStyle(zoom: zoom, fill: needsYou ? Palette.needsYou : .white.opacity(0.16), text: needsYou ? Color(hex: 0x1A1206) : .white))
+        HStack(spacing: 4 * zoom) {
             Button("Open Maximized", systemImage: "arrow.up.left.and.arrow.down.right") {
                 store.open(thread.id)
                 if store.layout.maximizedThreadId != thread.id { store.toggleMaximize(thread.id) }
@@ -182,28 +181,28 @@ struct HubCard: View {
             .labelStyle(.iconOnly)
             .help("Open Maximized")
             if !activity.isAlive {
-                Button("Restart") { sessions?.restart(thread.id) }
+                Button("Restart", systemImage: "arrow.clockwise") { sessions?.restart(thread.id) }
+                    .labelStyle(.titleAndIcon)
             }
-            Spacer(minLength: 0)
             if store.wantsYou(thread.id) {
                 HachiPortrait(size: 26 * zoom)
             }
-        }
-        .buttonStyle(HubButtonStyle(zoom: zoom))
-    }
-
-    private var folderLinks: some View {
-        HStack(spacing: 4 * zoom) {
-            Button("Finder") {
-                NSWorkspace.shared.open(URL(filePath: (thread.folder as NSString).expandingTildeInPath, directoryHint: .isDirectory))
+            Spacer(minLength: 0)
+            HStack(spacing: 4 * zoom) {
+                Button("Finder") {
+                    NSWorkspace.shared.open(URL(filePath: (thread.folder as NSString).expandingTildeInPath, directoryHint: .isDirectory))
+                }
+                .help("Open in Finder")
+                ForEach(Editor.installed) { editor in
+                    Button(editor.name) { editor.open(thread.folder) }
+                        .help("Open in \(editor.name)")
+                }
             }
-            .help("Open in Finder")
-            ForEach(Editor.installed) { editor in
-                Button(editor.name) { editor.open(thread.folder) }
-                    .help("Open in \(editor.name)")
-            }
+            .buttonStyle(FolderLinkStyle(zoom: zoom))
         }
-        .buttonStyle(FolderLinkStyle(zoom: zoom))
+        .buttonStyle(BareButtonStyle(zoom: zoom))
+        // Hachi's height, so cards line up with or without it.
+        .frame(minHeight: 26 * zoom)
     }
 
     private func elapsed(now: Date) -> String {
@@ -257,28 +256,7 @@ enum Excerpt {
     }
 }
 
-/// Scales with Interface Size, which native buttons don't.
-private struct HubButtonStyle: ButtonStyle {
-    let zoom: Double
-    var fill: Color = .white.opacity(0.08)
-    var text: Color = Palette.text
-
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 12 * zoom, weight: .semibold))
-            .foregroundStyle(text)
-            .padding(.horizontal, 10 * zoom)
-            .frame(minWidth: 28 * zoom, minHeight: 26 * zoom)
-            .background(fill, in: .rect(cornerRadius: 8 * zoom))
-            .overlay {
-                RoundedRectangle(cornerRadius: 8 * zoom).strokeBorder(.white.opacity(0.16))
-            }
-            .opacity(configuration.isPressed ? 0.7 : 1)
-            .contentShape(.rect)
-    }
-}
-
-/// The quiet row under a card's actions.
+/// The folder's quiet links at the end of a card's actions.
 private struct FolderLinkStyle: ButtonStyle {
     let zoom: Double
 

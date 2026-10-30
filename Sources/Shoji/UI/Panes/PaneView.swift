@@ -162,7 +162,7 @@ struct PaneView: View {
             .allowsHitTesting(showsControls)
         }
         .labelStyle(.iconOnly)
-        .buttonStyle(HeaderButtonStyle(zoom: zoom))
+        .buttonStyle(BareButtonStyle(zoom: zoom))
         .foregroundStyle(Palette.text)
         .padding(.leading, 16 * zoom)
         .padding(.trailing, 12 * zoom)
@@ -364,8 +364,8 @@ private struct Margin: Shape {
     }
 }
 
-/// A bare icon or label in the pane header: no glass or bezel.
-private struct HeaderButtonStyle: ButtonStyle {
+/// A bare icon or label, no glass or bezel: pane headers and Hub cards.
+struct BareButtonStyle: ButtonStyle {
     let zoom: Double
 
     func makeBody(configuration: Configuration) -> some View {

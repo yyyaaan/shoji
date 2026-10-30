@@ -176,15 +176,14 @@ struct HubButton: View {
 
     var body: some View {
         Button { store.showsHub.toggle() } label: {
+            // Just the glyph; brighter while the Hub shows.
             Image(.idleTorii)
                 .resizable()
                 .scaledToFit()
-                .frame(width: 18 * zoom, height: 18 * zoom)
-                .foregroundStyle(store.showsHub ? Palette.text : .white.opacity(0.7))
+                .frame(width: 20 * zoom, height: 20 * zoom)
+                .foregroundStyle(store.showsHub ? Palette.text : .white.opacity(0.55))
                 .frame(width: 34 * zoom, height: 34 * zoom)
-                .background(.white.opacity(store.showsHub ? 0.2 : 0.06), in: .circle)
-                .overlay { Circle().strokeBorder(.white.opacity(store.showsHub ? 0.32 : 0.14)) }
-                .contentShape(.circle)
+                .contentShape(.rect)
         }
         .buttonStyle(.plain)
         .help(store.showsHub ? "Back to Threads (Esc)" : "Hub (⇧⌘H)")

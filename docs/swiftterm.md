@@ -28,7 +28,7 @@ What Shoji relies on, found by reading the pinned source. Re-check this file whe
 ## Rendering
 
 - Metal is off by default. Call `setUseMetal(true)` after the view is in a window (Shoji does it in `viewDidMoveToWindow`). It throws on hardware without Metal, and the view stays on CoreGraphics.
-- v1.99.1 redraws a hidden terminal correctly when it is shown again (#769). Shoji detaches terminal views from the window instead of hiding or zero-sizing them, so the PTY size stays stable.
+- v1.99.1 redraws a hidden terminal correctly when it is shown again (#769). Shoji detaches a terminal that leaves the screen, and the Hub covers panes at opacity 0; neither hides nor zero-sizes the view, so the PTY size stays stable.
 - `nativeBackgroundColor` / `nativeForegroundColor` set the default colors; `installColors` sets the 16-color palette (for themes).
 - `backgroundOpacity` (the alpha of `nativeBackgroundColor`) makes only the default background translucent and updates the Metal layer's `isOpaque`; text, caret, selections, explicit cell backgrounds and SGR reverse stay opaque. The IME overlay and whole-screen reverse video use the background colour as is.
 

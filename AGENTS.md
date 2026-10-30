@@ -37,7 +37,7 @@ Sources/Shoji/
   UI/Panes/                 PaneGrid (panes and split handles by frame), PaneView (header, thread dropdown, Split menu, drops), TerminalHost, QuickTerminal
   UI/Hachi/                 HachiPortrait, HachiCorner, Hachi.xcassets, AppIcon.icon (spec in docs/design/hachi/README.md)
 Tests/ShojiTests/           Swift Testing
-docs/design/                accepted design references (HTML mockups, artwork sources)
+docs/design/                accepted design references (the Hub mockup, artwork sources and their tools)
 docs/handoffs/              open handoffs between agents (local, gitignored)
 docs/images/                README images; README.md there: retaking the screenshot with invented threads
 docs/swiftterm.md           SwiftTerm API notes for the pinned version
@@ -102,7 +102,7 @@ Agents (e.g. app and design) pass work through files in `docs/handoffs/`, which 
 
 ## Design reference
 
-`docs/design/` holds the accepted references (`threads-shelf.html`, `hub.html`, Hachi, status and completion artwork). Read the HTML for layout, spacing, radii and colours and translate it to SwiftUI; don't port the CSS literally. Status palette (dark UI):
+`docs/design/` holds the accepted references (`hub.html`, Hachi, status and completion artwork). Read the HTML for layout, spacing, radii and colours and translate it to SwiftUI; don't port the CSS literally. Status palette (dark UI):
 
 | State | Color | Icon |
 |---|---|---|
