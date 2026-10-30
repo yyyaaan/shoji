@@ -48,7 +48,15 @@ struct ThreadCard: View {
                 .strokeBorder(borderColor, lineWidth: 1)
         }
         .overlay(alignment: .topLeading) {
-            if let number {
+            if let number, isMini {
+                // In the leading gutter: an overhanging badge would hit the previous card's count badge.
+                Text("\(number)")
+                    .font(.system(size: 10 * zoom, weight: .semibold))
+                    .foregroundStyle(Palette.text)
+                    .frame(width: 8 * zoom)
+                    .offset(x: 4 * zoom, y: 34 * zoom)
+                    .transition(.opacity)
+            } else if let number {
                 Text("\(number)")
                     .font(.system(size: 12 * zoom, weight: .bold, design: .rounded))
                     .foregroundStyle(Palette.terminalBackground)
@@ -60,7 +68,8 @@ struct ThreadCard: View {
         }
         .overlay(alignment: .topTrailing) {
             if activity.attention > 0 {
-                Text("\(activity.attention)")
+                // A wider badge would cover a mini card's status icon.
+                Text(isMini && activity.attention > 9 ? "9+" : "\(activity.attention)")
                     .font(.system(size: 12 * zoom, weight: .bold))
                     .foregroundStyle(Color(hex: 0x1A1206))
                     .padding(.horizontal, 6 * zoom)
@@ -87,18 +96,18 @@ struct ThreadCard: View {
     @ViewBuilder
     private var content: some View {
         if isMini {
-            VStack(spacing: 6 * zoom) {
+            VStack(spacing: 3 * zoom) {
                 StatusIcon(status: activity.status, size: 18 * zoom)
                 // Reads top to bottom, like a book's spine.
                 Text(name)
-                    .font(.system(size: 12 * zoom, weight: .semibold))
-                    .fontWidth(.condensed)
+                    .font(.system(size: 11 * zoom, weight: .medium, design: .monospaced))
+                    .foregroundStyle(needsYou ? Palette.needsYouText : .white.opacity(0.75))
                     .lineLimit(1)
-                    .frame(width: 56 * zoom, height: 16 * zoom, alignment: .leading)
+                    .frame(width: 63 * zoom, height: 14 * zoom, alignment: .leading)
                     .rotationEffect(.degrees(90))
-                    .frame(width: 16 * zoom, height: 56 * zoom)
+                    .frame(width: 14 * zoom, height: 63 * zoom)
             }
-            .padding(.top, 10 * zoom)
+            .padding(.top, 6 * zoom)
             .frame(maxWidth: .infinity)
         } else {
             VStack(alignment: .leading, spacing: 6 * zoom) {

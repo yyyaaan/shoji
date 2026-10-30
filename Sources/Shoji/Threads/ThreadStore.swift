@@ -40,7 +40,7 @@ final class ThreadStore {
     private(set) var focusRequest: UUID? {
         didSet { if focusRequest != nil, showsHub { showsHub = false } }
     }
-    /// The Hub over the panes, full form only. While it shows no terminal has focus; leaving gives it back.
+    /// Full form only. No terminal has focus while it shows; leaving gives it back.
     var showsHub = false {
         didSet {
             guard showsHub != oldValue else { return }
@@ -288,7 +288,6 @@ final class ThreadStore {
         if layout.root == nil, let next = (recentThreadIds + shelfOrder.map(\.id)).first {
             layout.show(next, replacing: nil)
         }
-        // Closing from the Hub stays there; leaving it focuses a pane then.
         if focusedThreadId == id {
             focusedThreadId = nil
             if !showsHub { focusRequest = taker ?? layout.visibleThreadIds.first }
@@ -477,7 +476,8 @@ final class ThreadStore {
         }
     }
 
-    private func canSplit(_ target: UUID, side: PaneLayout.Side) -> Bool {
+    /// What `split` checks, so a drop only previews a split that would happen.
+    func canSplit(_ target: UUID, side: PaneLayout.Side) -> Bool {
         guard layout.panes.contains(target) else { return false }
         if isCompact, side == .left || side == .right || layout.panes.count > 1 { return false }
         guard paneAreaSize != .zero else { return true }

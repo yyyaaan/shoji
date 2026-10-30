@@ -2,210 +2,36 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Agent Hub — Hub view</title>
-</head>
-<body>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shoji — Hub design reference</title>
 <style>
-body{margin:0;background:#0B0E13}
-a{color:#8CC4FF}a:hover{color:#B8DBFF}
-@keyframes spin{to{transform:rotate(360deg)}}
-@keyframes pulse{0%{opacity:.9;transform:scale(1)}100%{opacity:0;transform:scale(2.4)}}
+:root{color-scheme:dark;--u:1;--ink:#f2f4f8;--muted:#a9b2c0;--orange:#ff9f43;--blue:#74b8ff;--done:#e2e8f0;--green:#4fd1b5;--red:#ff8787}
+*{box-sizing:border-box}body{margin:0;padding:24px;background:#0b0e13;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif}button,select,input{font:inherit}button{cursor:pointer;color:inherit}button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--blue);outline-offset:3px}.reference{max-width:1360px;margin:auto}.reference h1{font-size:19px;margin:0 0 8px}.reference>p{color:var(--muted);font-size:13px;line-height:1.5;max-width:850px}.settings{display:flex;align-items:center;flex-wrap:wrap;gap:16px;margin:18px 0;font-size:13px}.settings label{display:flex;align-items:center;gap:7px}.settings select{padding:5px 8px;background:#202630;border:1px solid #46505e;border-radius:6px}.window{container-type:inline-size;max-width:1360px;margin:auto;background:radial-gradient(ellipse at 0 0,#23385a80,transparent 65%),radial-gradient(ellipse at 100% 20%,#56352260,transparent 70%),#111722;border:1px solid #ffffff29;border-radius:18px;overflow:hidden;box-shadow:0 18px 60px #0005}.top{display:grid;grid-template-columns:78px calc(44px * var(--u)) max-content minmax(0,1fr) calc(34px * var(--u));gap:calc(12px * var(--u));align-items:center;padding:calc(6px * var(--u)) 18px 0 0;min-height:calc(44px * var(--u))}.lights{display:flex;gap:7px;padding-left:14px;align-self:start;margin-top:10px}.lights i{width:11px;height:11px;border-radius:50%;background:#ff5f57}.lights i:nth-child(2){background:#febc2e}.lights i:nth-child(3){background:#28c840}.corner{height:calc(44px * var(--u));display:flex;align-items:center;position:relative}.corner img{width:calc(36px * var(--u));height:calc(36px * var(--u));object-fit:contain}.corner .count{position:absolute;top:0;right:0;background:var(--orange);color:#1a1206;border-radius:99px;padding:1px 5px;font-size:calc(10px * var(--u));font-weight:700}.thread-count{font-size:calc(13px * var(--u));white-space:nowrap;color:#f2f4f8b8}.totals{display:flex;flex-wrap:wrap;gap:calc(8px * var(--u));align-items:center;min-width:0}.pill{font-size:calc(11px * var(--u));font-weight:600;line-height:1.3;padding:calc(3px * var(--u)) calc(8px * var(--u));border:1px solid color-mix(in srgb,var(--tone) 50%,transparent);border-radius:99px;background:color-mix(in srgb,var(--tone) 14%,transparent);color:var(--tone);white-space:nowrap}.totals .pill{font-size:calc(12px * var(--u));padding:calc(5px * var(--u)) calc(10px * var(--u))}.pill.ask{background:var(--orange);color:#1a1206;border-color:transparent}.gate{width:calc(34px * var(--u));height:calc(34px * var(--u));padding:calc(8px * var(--u));border:1px solid #ffffff52;border-radius:50%;background:#fff3;display:grid;place-items:center}.gate img{width:100%;height:100%}.grid-area{padding:calc(8px * var(--u)) 18px 16px}.group{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,calc(320px * var(--u))),1fr));gap:calc(10px * var(--u))}.break{height:1px;background:#ffffff29;border:0;margin:calc(14px * var(--u)) 0}.card{--tone:var(--done);padding:calc(12px * var(--u));display:flex;flex-direction:column;gap:calc(8px * var(--u));border:1px solid #ffffff24;border-radius:calc(16px * var(--u));background:#ffffff0a;min-width:0;position:relative}.card.needs{--tone:var(--orange);border-color:#ffa94dd9;background:#ff9f4316}.card.finished{border-color:#e2e8f05c;background:#e2e8f008}.card.working{--tone:var(--blue)}.card.running{--tone:var(--green)}.card.failed{--tone:var(--red);border-color:#ff878799}.identity{display:flex;align-items:center;gap:calc(8px * var(--u));min-width:0}.symbol{width:calc(24px * var(--u));height:calc(24px * var(--u));flex-shrink:0;display:grid;place-items:center;color:var(--tone);font-size:calc(18px * var(--u))}.symbol.ring{border:calc(1.6px * var(--u)) solid var(--tone);border-radius:50%;font-size:calc(15px * var(--u))}.symbol img{width:100%;height:100%;opacity:.55}.name{font-size:calc(14px * var(--u));font-weight:600;margin:0;min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.metadata{display:flex;align-items:center;gap:calc(6px * var(--u));min-width:0}.tag{font-size:calc(9px * var(--u));font-weight:700;padding:calc(2px * var(--u)) calc(5px * var(--u));border-radius:calc(5px * var(--u));background:#ffffff1a;flex-shrink:0;max-width:calc(72px * var(--u));overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.folder{font:500 calc(11px * var(--u)) ui-monospace,SFMono-Regular,monospace;min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#ffffffbf}.elapsed{white-space:nowrap;color:#ffffffa6;font-size:calc(10px * var(--u));font-variant-numeric:tabular-nums}.summary{font-size:calc(12px * var(--u));line-height:1.3;padding:calc(6px * var(--u)) calc(10px * var(--u));background:#ffffff0f;border-radius:calc(9px * var(--u));overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.needs .summary{color:#ffe0c2;background:#ff9f431a;border:1px solid #ffa94d59}.excerpt{margin:0;background:#0c0f15;color:#a9b2c0;border-radius:calc(9px * var(--u));padding:calc(7px * var(--u)) calc(10px * var(--u));font:400 calc(10.5px * var(--u))/1.25 ui-monospace,SFMono-Regular,monospace;height:calc(54px * var(--u));overflow:hidden;white-space:pre}.primary,.secondary{display:flex;align-items:center;gap:calc(6px * var(--u));flex-wrap:wrap}.primary{min-height:calc(26px * var(--u));margin-top:auto}.primary button{font-size:calc(12px * var(--u));font-weight:600;min-height:calc(26px * var(--u));padding:0 calc(10px * var(--u));border:1px solid #ffffff29;background:#ffffff14;border-radius:calc(8px * var(--u))}.primary .open{background:#ffffff29}.needs .primary .open{background:var(--orange);color:#1a1206}.secondary{font-size:calc(11px * var(--u));color:#ffffffb8;min-height:calc(22px * var(--u))}.secondary button{border:0;background:none;padding:calc(3px * var(--u)) calc(4px * var(--u));color:inherit}.secondary button:hover{text-decoration:underline}.hachi{margin-left:auto;width:calc(26px * var(--u));height:calc(26px * var(--u));object-fit:contain;flex-shrink:0}.ordinal{display:none;position:absolute;left:calc(-6px * var(--u));top:calc(-6px * var(--u));border-radius:calc(6px * var(--u));background:var(--ink);color:#0c0f15;padding:calc(3px * var(--u)) calc(6px * var(--u));font-weight:700;font-size:calc(12px * var(--u))}.numbers .ordinal{display:block}.note{font-size:12px;color:var(--muted);line-height:1.6}.top.wrap{grid-template-columns:78px calc(44px * var(--u)) minmax(0,1fr) calc(34px * var(--u))}.top.wrap .totals{grid-row:2;grid-column:2 / 5;padding-bottom:calc(6px * var(--u))}.top.wrap .gate{grid-column:4;grid-row:1}.top.wrap .thread-count{grid-column:3;grid-row:1}@media(max-width:600px){body{padding:10px}}
 </style>
-<div style="position: relative; min-height: 1040px; box-sizing: border-box; padding: 40px; overflow: hidden; background: #0B0E13; font-family: Inter, -apple-system, system-ui, sans-serif; color: #F2F4F8">
-  <div aria-hidden="true" style="position: absolute; left: -140px; top: -120px; width: 660px; height: 660px; border-radius: 50%; background: #3557D6; opacity: 0.52; filter: blur(120px)"></div>
-  <div aria-hidden="true" style="position: absolute; right: -120px; top: 80px; width: 560px; height: 560px; border-radius: 50%; background: #D9631E; opacity: 0.36; filter: blur(120px)"></div>
-  <div aria-hidden="true" style="position: absolute; left: 30%; bottom: -220px; width: 700px; height: 560px; border-radius: 50%; background: #1C9A86; opacity: 0.32; filter: blur(120px)"></div>
-
-  <div style="position: relative; max-width: 1360px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; padding: 16px 20px 24px; box-sizing: border-box; border-radius: 26px; background: rgba(255,255,255,0.09); backdrop-filter: blur(28px) saturate(170%); -webkit-backdrop-filter: blur(28px) saturate(170%); border: 1px solid rgba(255,255,255,0.16); box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 30px 80px rgba(0,0,0,0.45)">
-
-    <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap">
-      <div aria-hidden="true" style="display: flex; gap: 8px">
-        <div style="width: 12px; height: 12px; border-radius: 50%; background: #FF5F57"></div>
-        <div style="width: 12px; height: 12px; border-radius: 50%; background: #FEBC2E"></div>
-        <div style="width: 12px; height: 12px; border-radius: 50%; background: #28C840"></div>
-      </div>
-      <div style="font-size: 14px; font-weight: 600">Agent Hub</div>
-      <div style="flex: 1 1 40px"></div>
-      <div style="display: flex; padding: 3px; border-radius: 12px; background: rgba(0,0,0,0.28); border: 1px solid rgba(255,255,255,0.10)">
-        <button type="button" style="height: 32px; padding: 0 16px; border-radius: 9px; border: 1px solid transparent; background: transparent; color: rgba(242,244,248,0.78); font: 500 13px Inter, system-ui, sans-serif">Threads</button>
-        <button type="button" style="height: 32px; padding: 0 16px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.22); background: rgba(255,255,255,0.16); color: #FFFFFF; font: 600 13px Inter, system-ui, sans-serif; box-shadow: inset 0 1px 0 rgba(255,255,255,0.25)">Hub</button>
-      </div>
-      <div style="flex: 1 1 40px"></div>
-      <div style="display: flex; gap: 8px; flex-wrap: wrap">
-        <div style="display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: rgba(255,159,67,0.18); border: 1px solid rgba(255,169,77,0.6); font-size: 12px; font-weight: 600; color: #FFC078">1 needs you</div>
-        <div style="display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: rgba(116,184,255,0.14); border: 1px solid rgba(116,184,255,0.45); font-size: 12px; font-weight: 600; color: #A5D0FF">1 working</div>
-        <div style="display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: rgba(255,135,135,0.14); border: 1px solid rgba(255,135,135,0.45); font-size: 12px; font-weight: 600; color: #FFB3B3">1 task down</div>
-      </div>
-    </div>
-
-    <div style="display: flex; flex-direction: column; gap: 12px">
-      <div style="display: flex; align-items: baseline; gap: 10px; padding: 0 4px">
-        <div style="font-size: 22px; font-weight: 700">Agents</div>
-        <div style="font-size: 13px; color: rgba(242,244,248,0.72)">4 threads · sorted by attention</div>
-      </div>
-      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); gap: 14px">
-
-        <div style="display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: 22px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,169,77,0.85); box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), 0 0 0 4px rgba(255,159,67,0.16), 0 18px 44px rgba(255,140,40,0.22)">
-          <div style="display: flex; align-items: center; gap: 12px">
-            <svg role="img" aria-label="Needs you" width="40" height="40" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="rgba(255,159,67,0.18)" stroke="#FFA94D" stroke-width="2.4"></circle><path d="M16 9.5v8" stroke="#FFC078" stroke-width="2.6" stroke-linecap="round"></path><circle cx="16" cy="22" r="1.6" fill="#FFC078"></circle></svg>
-            <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto">
-              <div style="display: flex; align-items: center; gap: 8px">
-                <div style="font-size: 20px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">auth-refactor</div>
-                <div style="font-size: 10px; font-weight: 700; letter-spacing: 0.6px; padding: 3px 7px; border-radius: 6px; background: rgba(255,255,255,0.14); color: rgba(242,244,248,0.88)">CLAUDE</div>
-              </div>
-              <div style="font: 500 12px 'JetBrains Mono', ui-monospace, monospace; color: rgba(242,244,248,0.75)">~/code/gosta · feat/token-store</div>
-            </div>
-            <div style="padding: 5px 12px; border-radius: 999px; background: #FF9F43; color: #1A1206; font-size: 12px; font-weight: 700">Needs you</div>
-          </div>
-          <div style="padding: 10px 12px; border-radius: 12px; background: rgba(255,159,67,0.10); border: 1px solid rgba(255,169,77,0.35); font-size: 13px; color: #FFE0C2">Waiting for permission — <span style="font-family: 'JetBrains Mono', ui-monospace, monospace">uv run pytest services/auth</span></div>
-          <div style="padding: 10px 12px; border-radius: 12px; background: #0C0F15; font: 400 12px/1.6 'JetBrains Mono', ui-monospace, monospace; color: #A9B2C0; overflow: hidden; white-space: nowrap">
-            <div>● Update services/auth/session.py +38 −21</div>
-            <div>● Bash uv run pytest services/auth</div>
-            <div style="color: #FFC078">Allow this command?  ❯ 1. Yes</div>
-          </div>
-          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
-            <button type="button" style="height: 36px; padding: 0 16px; border-radius: 10px; border: none; background: #FF9F43; color: #1A1206; font: 600 13px Inter, system-ui, sans-serif">Open thread</button>
-            <button type="button" style="height: 36px; padding: 0 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.10); color: #F2F4F8; font: 500 13px Inter, system-ui, sans-serif">Allow once</button>
-            <div style="flex: 1 1 auto"></div>
-            <div style="font-size: 12px; color: rgba(242,244,248,0.75)">waiting 2m</div>
-          </div>
-        </div>
-
-        <div style="display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: 22px; background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.14); box-shadow: inset 0 1px 0 rgba(255,255,255,0.20), 0 14px 34px rgba(0,0,0,0.25)">
-          <div style="display: flex; align-items: center; gap: 12px">
-            <svg role="img" aria-label="Working" width="40" height="40" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="none" stroke="rgba(116,184,255,0.22)" stroke-width="2.4"></circle><g style="transform-origin: 16px 16px; animation: spin 1.4s linear infinite"><circle cx="16" cy="16" r="13" fill="none" stroke="#74B8FF" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="22 60"></circle></g><circle cx="16" cy="16" r="3.5" fill="#74B8FF"></circle></svg>
-            <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto">
-              <div style="display: flex; align-items: center; gap: 8px">
-                <div style="font-size: 20px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">extension popup</div>
-                <div style="font-size: 10px; font-weight: 700; letter-spacing: 0.6px; padding: 3px 7px; border-radius: 6px; background: rgba(255,255,255,0.14); color: rgba(242,244,248,0.88)">CLAUDE</div>
-              </div>
-              <div style="font: 500 12px 'JetBrains Mono', ui-monospace, monospace; color: rgba(242,244,248,0.75)">~/code/gosta-browser-extension · main</div>
-            </div>
-            <div style="padding: 5px 12px; border-radius: 999px; background: rgba(116,184,255,0.18); border: 1px solid rgba(116,184,255,0.5); color: #A5D0FF; font-size: 12px; font-weight: 600">Working</div>
-          </div>
-          <div style="padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,0.06); font-size: 13px; color: rgba(242,244,248,0.88)">Editing <span style="font-family: 'JetBrains Mono', ui-monospace, monospace">src/popup/Header.tsx</span></div>
-          <div style="padding: 10px 12px; border-radius: 12px; background: #0C0F15; font: 400 12px/1.6 'JetBrains Mono', ui-monospace, monospace; color: #A9B2C0; overflow: hidden; white-space: nowrap">
-            <div>● Update src/popup/App.tsx +24 −9</div>
-            <div>● Update src/popup/Header.tsx +31</div>
-            <div style="color: #74B8FF">✻ Working…</div>
-          </div>
-          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
-            <button type="button" style="height: 36px; padding: 0 16px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.22); background: rgba(255,255,255,0.14); color: #FFFFFF; font: 600 13px Inter, system-ui, sans-serif">Open thread</button>
-            <button type="button" aria-label="Maximize" style="width: 36px; height: 36px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.08); color: #F2F4F8; display: flex; align-items: center; justify-content: center">
-              <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"></path></svg>
-            </button>
-            <div style="flex: 1 1 auto"></div>
-            <div style="font-size: 12px; color: rgba(242,244,248,0.75)">running 6m</div>
-          </div>
-        </div>
-
-        <div style="display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: 22px; background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.14); box-shadow: inset 0 1px 0 rgba(255,255,255,0.20), 0 14px 34px rgba(0,0,0,0.25)">
-          <div style="display: flex; align-items: center; gap: 12px">
-            <svg role="img" aria-label="Done" width="40" height="40" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="rgba(255,255,255,0.08)" stroke="rgba(226,232,240,0.7)" stroke-width="2"></circle><path d="M10.5 16.5l3.6 3.6 7.4-7.6" fill="none" stroke="#E2E8F0" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-            <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto">
-              <div style="display: flex; align-items: center; gap: 8px">
-                <div style="font-size: 20px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">helm cleanup</div>
-                <div style="font-size: 10px; font-weight: 700; letter-spacing: 0.6px; padding: 3px 7px; border-radius: 6px; background: rgba(255,255,255,0.14); color: rgba(242,244,248,0.88)">CODEX</div>
-              </div>
-              <div style="font: 500 12px 'JetBrains Mono', ui-monospace, monospace; color: rgba(242,244,248,0.75)">~/code/home-lab/k3s · chore/helm</div>
-            </div>
-            <div style="padding: 5px 12px; border-radius: 999px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.28); color: #E2E8F0; font-size: 12px; font-weight: 600">Done</div>
-          </div>
-          <div style="padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,0.06); font-size: 13px; color: rgba(242,244,248,0.88)">Turn complete — ready for review in Zed</div>
-          <div style="padding: 10px 12px; border-radius: 12px; background: #0C0F15; font: 400 12px/1.6 'JetBrains Mono', ui-monospace, monospace; color: #A9B2C0; overflow: hidden; white-space: nowrap">
-            <div>Removed 3 unused values files</div>
-            <div>helm lint charts/ — 0 failures</div>
-            <div>▌</div>
-          </div>
-          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
-            <button type="button" style="height: 36px; padding: 0 16px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.22); background: rgba(255,255,255,0.14); color: #FFFFFF; font: 600 13px Inter, system-ui, sans-serif">Open thread</button>
-            <button type="button" style="height: 36px; padding: 0 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.08); color: #F2F4F8; font: 500 13px Inter, system-ui, sans-serif">Open folder in Zed</button>
-            <div style="flex: 1 1 auto"></div>
-            <div style="font-size: 12px; color: rgba(242,244,248,0.75)">finished 14m ago</div>
-          </div>
-        </div>
-
-        <div style="display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: 22px; background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.14); box-shadow: inset 0 1px 0 rgba(255,255,255,0.20), 0 14px 34px rgba(0,0,0,0.25)">
-          <div style="display: flex; align-items: center; gap: 12px">
-            <svg role="img" aria-label="Idle" width="40" height="40" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="none" stroke="rgba(226,232,240,0.55)" stroke-width="2" stroke-dasharray="3 4"></circle></svg>
-            <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto">
-              <div style="display: flex; align-items: center; gap: 8px">
-                <div style="font-size: 20px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">agent-hub spike</div>
-                <div style="font-size: 10px; font-weight: 700; letter-spacing: 0.6px; padding: 3px 7px; border-radius: 6px; background: rgba(255,255,255,0.14); color: rgba(242,244,248,0.88)">CLAUDE</div>
-              </div>
-              <div style="font: 500 12px 'JetBrains Mono', ui-monospace, monospace; color: rgba(242,244,248,0.75)">~/code/personal/agent-hub · main</div>
-            </div>
-            <div style="padding: 5px 12px; border-radius: 999px; background: transparent; border: 1px dashed rgba(255,255,255,0.4); color: rgba(242,244,248,0.85); font-size: 12px; font-weight: 600">Idle</div>
-          </div>
-          <div style="padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,0.06); font-size: 13px; color: rgba(242,244,248,0.88)">At the prompt — last turn scaffolded the SwiftUI window</div>
-          <div style="padding: 10px 12px; border-radius: 12px; background: #0C0F15; font: 400 12px/1.6 'JetBrains Mono', ui-monospace, monospace; color: #A9B2C0; overflow: hidden; white-space: nowrap">
-            <div>● Write Sources/Hub/HubWindow.swift</div>
-            <div>Next: wire the hook listener so cards can show "needs you".</div>
-            <div>&gt; ▌</div>
-          </div>
-          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
-            <button type="button" style="height: 36px; padding: 0 16px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.22); background: rgba(255,255,255,0.14); color: #FFFFFF; font: 600 13px Inter, system-ui, sans-serif">Open thread</button>
-            <button type="button" style="height: 36px; padding: 0 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.08); color: #F2F4F8; font: 500 13px Inter, system-ui, sans-serif">Rename</button>
-            <div style="flex: 1 1 auto"></div>
-            <div style="font-size: 12px; color: rgba(242,244,248,0.75)">idle 38m</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div style="display: flex; flex-direction: column; gap: 12px">
-      <div style="display: flex; align-items: baseline; gap: 10px; padding: 0 4px">
-        <div style="font-size: 22px; font-weight: 700">Tasks</div>
-        <div style="font-size: 13px; color: rgba(242,244,248,0.72)">3 terminals · long-running commands</div>
-      </div>
-      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 14px">
-
-        <div style="display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 20px; background: rgba(255,255,255,0.09); border: 1px solid rgba(255,135,135,0.6); box-shadow: inset 0 1px 0 rgba(255,255,255,0.20), 0 14px 34px rgba(0,0,0,0.25)">
-          <div style="display: flex; align-items: center; gap: 10px">
-            <svg role="img" aria-label="Exited with error" width="30" height="30" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="rgba(255,107,107,0.16)" stroke="#FF8787" stroke-width="2.2"></circle><path d="M11.5 11.5l9 9M20.5 11.5l-9 9" stroke="#FFA8A8" stroke-width="2.4" stroke-linecap="round"></path></svg>
-            <div style="font-size: 17px; font-weight: 700; flex: 1 1 auto">extension watch</div>
-            <div style="font: 600 12px 'JetBrains Mono', ui-monospace, monospace; color: #FFB3B3">exit 1</div>
-          </div>
-          <div style="font: 500 12px 'JetBrains Mono', ui-monospace, monospace; color: rgba(242,244,248,0.8)">pnpm build --watch · gosta-browser-extension</div>
-          <div style="padding: 8px 10px; border-radius: 10px; background: #0C0F15; font: 400 12px/1.6 'JetBrains Mono', ui-monospace, monospace; color: #FFA8A8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">error TS2307: Cannot find module './OrgSwitcher'</div>
-          <div style="display: flex; gap: 8px">
-            <button type="button" style="height: 34px; padding: 0 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.22); background: rgba(255,255,255,0.14); color: #FFFFFF; font: 600 12px Inter, system-ui, sans-serif">Restart</button>
-            <button type="button" style="height: 34px; padding: 0 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.08); color: #F2F4F8; font: 500 12px Inter, system-ui, sans-serif">Open</button>
-          </div>
-        </div>
-
-        <div style="display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 20px; background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.14); box-shadow: inset 0 1px 0 rgba(255,255,255,0.20), 0 14px 34px rgba(0,0,0,0.25)">
-          <div style="display: flex; align-items: center; gap: 10px">
-            <svg role="img" aria-label="Running" width="30" height="30" viewBox="0 0 32 32"><circle cx="16" cy="16" r="6" fill="#4FD1B5" style="transform-origin: 16px 16px; animation: pulse 1.8s ease-out infinite"></circle><circle cx="16" cy="16" r="6" fill="#4FD1B5"></circle></svg>
-            <div style="font-size: 17px; font-weight: 700; flex: 1 1 auto">api stack</div>
-            <div style="font: 600 12px 'JetBrains Mono', ui-monospace, monospace; color: #7EE2CB">:8000</div>
-          </div>
-          <div style="font: 500 12px 'JetBrains Mono', ui-monospace, monospace; color: rgba(242,244,248,0.8)">docker compose up · gosta</div>
-          <div style="padding: 8px 10px; border-radius: 10px; background: #0C0F15; font: 400 12px/1.6 'JetBrains Mono', ui-monospace, monospace; color: #A9B2C0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">api-1 | POST /v1/auth/refresh 200</div>
-          <div style="display: flex; gap: 8px">
-            <button type="button" style="height: 34px; padding: 0 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.22); background: rgba(255,255,255,0.14); color: #FFFFFF; font: 600 12px Inter, system-ui, sans-serif">Open</button>
-            <button type="button" style="height: 34px; padding: 0 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.08); color: #F2F4F8; font: 500 12px Inter, system-ui, sans-serif">Stop</button>
-          </div>
-        </div>
-
-        <div style="display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 20px; background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.14); box-shadow: inset 0 1px 0 rgba(255,255,255,0.20), 0 14px 34px rgba(0,0,0,0.25)">
-          <div style="display: flex; align-items: center; gap: 10px">
-            <svg role="img" aria-label="Running" width="30" height="30" viewBox="0 0 32 32"><circle cx="16" cy="16" r="6" fill="#4FD1B5" style="transform-origin: 16px 16px; animation: pulse 1.8s ease-out infinite"></circle><circle cx="16" cy="16" r="6" fill="#4FD1B5"></circle></svg>
-            <div style="font-size: 17px; font-weight: 700; flex: 1 1 auto">web dev</div>
-            <div style="font: 600 12px 'JetBrains Mono', ui-monospace, monospace; color: #7EE2CB">:5173</div>
-          </div>
-          <div style="font: 500 12px 'JetBrains Mono', ui-monospace, monospace; color: rgba(242,244,248,0.8)">pnpm dev · gosta/apps/web</div>
-          <div style="padding: 8px 10px; border-radius: 10px; background: #0C0F15; font: 400 12px/1.6 'JetBrains Mono', ui-monospace, monospace; color: #A9B2C0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">hmr update /src/routes/settings.tsx</div>
-          <div style="display: flex; gap: 8px">
-            <button type="button" style="height: 34px; padding: 0 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.22); background: rgba(255,255,255,0.14); color: #FFFFFF; font: 600 12px Inter, system-ui, sans-serif">Open</button>
-            <button type="button" style="height: 34px; padding: 0 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.08); color: #F2F4F8; font: 500 12px Inter, system-ui, sans-serif">Stop</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-</body>
-</html>
+</head>
+<body><main class="reference">
+<h1>Hub — accepted structure, polish reference</h1>
+<p>Cards follow the shelf’s order; bars separate groups. This reference carries the existing palette, Hachi and Torii into the current compact Hub structure. Browser glass and symbols are approximations; translate to SwiftUI.</p>
+<div class="settings"><label>Interface size <select id="size"><option value=".85">85%</option><option value="1" selected>100%</option><option value="1.15">115%</option><option value="1.3">130%</option></select></label><label>Window width <select id="width"><option value="1360">1360 pt</option><option value="1000">1000 pt</option><option value="740">740 pt</option></select></label><label><input type="checkbox" id="numbers">Show ⌘ card numbers</label></div>
+<section class="window" aria-label="Hub mockup"><header class="top"><div class="lights" aria-hidden="true"><i></i><i></i><i></i></div><div class="corner"><img src="hachi/assets/hachi-c.png" alt=""><span class="count">2</span></div><span class="thread-count">7 threads</span><div class="totals"><button class="pill" style="--tone:var(--orange)" title="Next thread that needs you (⌘J)">1 needs you</button><span class="pill" style="--tone:var(--done)">1 finished</span><span class="pill" style="--tone:var(--blue)">1 working</span><span class="pill" style="--tone:var(--green)">2 running</span><span class="pill" style="--tone:var(--red)">1 failed</span></div><button class="gate" aria-label="Back to Threads" aria-pressed="true" title="Back to Threads (Esc)"><img src="status/assets/torii-idle.svg" alt=""></button></header><div class="grid-area" id="cards"></div></section>
+<p class="note">Layout targets: 320 pt minimum cards, 12 pt padding, 16 pt corners, 10 pt grid gaps. Torii retains the approved glyph; its circular control and selected fill distinguish navigation from idle status. No new artwork or decorative motifs.</p>
+<p class="note">Polish shown: totals wrap below the anchored header controls when needed; identity has its own row; editor links occupy a quiet secondary row; idle uses a faint solid pill. See <a href="polish/README.md">native review and implementation notes</a>.</p>
+</main>
+<script>
+const groups=[[
+['needs','!','auth-refactor','CLAUDE','~/code/service · feat/auth','Needs you','waiting now','Allow Bash: uv run pytest services/auth',['Updated session validation','Bash uv run pytest services/auth','Waiting for your permission'],true],
+['working','◔','Synchronize workspace permissions and extension settings','CLAUDE','~/code/browser-extension · main','Working','working 6m','Edit preferences.swift',['Reading preference keys','Updated interface size handling','Preparing focused checks'],false],
+['finished','✓','helm cleanup','CODEX','~/home-lab/k3s · maintenance','Done','finished 2m ago','Finished while you were away',['Removed unused service entries','Validated chart templates','Ready for your review'],true],
+['idle','torii','shoji','','~/lab/shoji · hub','Idle','idle 12m','At the prompt',['~/lab/shoji','git status --short',''],false]
+],[
+['running','●','api stack','DOCKER','~/code/service · main','Running','running 25m','docker compose up',['api | listening on :8080','db  | ready for connections','api | GET /health 200'],false],
+['running','●','web dev','PNPM','~/code/web · main','Running','running 25m','pnpm dev',['Local: http://localhost:5173','Ready in 208 ms','Client connected'],false],
+['failed','×','extension watch','PNPM','~/code/extension · settings','Failed','failed 3m ago','The shell has ended',['Build failed: missing export','Check settings/index.ts','Process exited with code 1'],false,true]
+]];
+const safe=s=>s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;');let ordinal=0;
+document.querySelector('#cards').innerHTML=groups.map((group,g)=>(g?'<hr class="break" aria-label="Shelf group break">':'')+'<div class="group">'+group.map(([state,icon,name,tag,folder,status,time,summary,lines,hachi,restart])=>`<article class="card ${state}"><span class="ordinal">${++ordinal}</span><div class="identity"><span class="symbol ${state==='needs'||state==='failed'?'ring':''}" aria-hidden="true">${icon==='torii'?'<img src="status/assets/torii-idle.svg" alt="">':icon}</span><h2 class="name" title="${safe(name)}">${safe(name)}</h2><span class="pill ${state==='needs'?'ask':''}">${status}</span></div><div class="metadata">${tag?`<span class="tag">${tag}</span>`:''}<span class="folder" title="${safe(folder)}">${safe(folder)}</span><span class="elapsed">${time}</span></div><div class="summary" title="${safe(summary)}">${safe(summary)}</div><pre class="excerpt">${lines.map(safe).join('\n')}</pre><div class="primary"><button class="open">Open</button><button aria-label="Open Maximized" title="Open Maximized">⤢</button>${restart?'<button>Restart</button>':''}${hachi?'<img class="hachi" src="hachi/assets/hachi-c.png" alt="">':''}</div><div class="secondary"><span>Folder:</span><button>VS Code</button><button>Zed</button></div></article>`).join('')+'</div>').join('');
+const windowView=document.querySelector('.window'),topRow=document.querySelector('.top');
+const query=new URLSearchParams(location.search);if(query.has("size"))document.querySelector("#size").value=query.get("size");if(query.has("width"))document.querySelector("#width").value=query.get("width");
+function fit(){const u=Number(document.querySelector('#size').value);document.documentElement.style.setProperty('--u',u);windowView.style.maxWidth=document.querySelector('#width').value+'px';topRow.classList.toggle('wrap',windowView.clientWidth<960*u)}
+document.querySelector('#size').addEventListener('change',fit);document.querySelector('#width').addEventListener('change',fit);document.querySelector('#numbers').addEventListener('change',e=>windowView.classList.toggle('numbers',e.target.checked));new ResizeObserver(fit).observe(windowView);fit();
+</script></body></html>

@@ -5,7 +5,8 @@ Only accepted designs, source artwork and regeneration tools belong here. Keep a
 | Reference | Purpose |
 |---|---|
 | [Shelf and panes](threads-shelf.html) | Original layout reference; later interaction decisions live in [PLAN.md](../../PLAN.md) |
-| [Hub](hub.html) | Hub look reference; the app keeps cards in shelf order, without the Agents / Tasks split |
+| [Hub](hub.html) | Current shelf-ordered Hub structure, responsive totals and compact cards; interactive size reference |
+| [Hub and chrome polish](polish/README.md) | Review findings and native implementation targets for Hub, mini cards, panes and quick terminal |
 | [Hachi and app icon](hachi/README.md) | Approved ink portrait, placement and aligned Icon Composer layers |
 | [Idle Torii](status/README.md) | Status glyph, template PDF and sizing |
 | [Quiet finish](completion/README.md) | Completion chrome and static halo, independent of the Hachi preference |

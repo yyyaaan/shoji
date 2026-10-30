@@ -20,7 +20,7 @@ struct ShojiThread: Identifiable, Codable, Hashable, Sendable {
     var command: String?
     /// Text size levels away from the other terminals (⌥⌘+ / ⌥⌘−); nil when the same.
     var textSteps: Int?
-    /// A narrow card on the shelf showing only status and name; nil when full size.
+    /// A narrow shelf card, status and name only; nil when full size.
     var isMini: Bool?
 
     init(

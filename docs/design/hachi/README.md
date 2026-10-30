@@ -36,9 +36,9 @@ The trace suppresses isolated speckles up to two source pixels and quantizes gra
 | Existing count badge | Keep current minimum 22 pt and 7 pt overhang; allow digit-driven width |
 | Hachi on shelf | 32 × 32 pt, aspect fit; top **6 pt**, trailing **38 pt** |
 | Hachi in the window corner | 36 × 36 pt, capped at 58 pt (the column is 78 pt at any zoom); centered under the window buttons, bottom aligned with the cards; count badge top-trailing |
-| Hachi on future Hub needs-you card | 48 × 48 pt, trailing in header, 12 pt text gap; hide first if space is insufficient |
+| Hachi on Hub cards | 26 × 26 pt, trailing in the primary action row, when `wantsYou`; reserve its space separately from editor links |
 
-Every chrome dimension and offset uses the existing `@Environment(\.zoom)` scale. Shelf portrait bounds at 100% are x=118…150, y=6…38. The title begins at y=40 in the current layout. The portrait moves left from the previous proposal so a **999** count badge can grow left without touching it. The ring and CLI kind retain the leading header area. Pixel density is independent of zoom; vector assets cover 75–200% at 1×/2× without a bitmap upscale.
+Every chrome dimension and offset uses the existing `@Environment(\.zoom)` Interface Size scale (85–130%), separate from terminal text size. Shelf portrait bounds at 100% are x=118…150, y=6…38. The title begins at y=40 in the current layout. The placement leaves room for a **999** count badge to grow left without touching the portrait. The ring and CLI kind retain the leading header area. Vector assets scale independently of display density. See [Hub and chrome polish](../polish/README.md) for mini cards and the Hub footer.
 
 Design geometry checks covered portrait-vs-status, portrait-vs-badge and portrait-vs-title spacing for counts 1 and 999 at 75/100/200%, plus portrait containment. Native SwiftUI validation is the app agent's responsibility.
 

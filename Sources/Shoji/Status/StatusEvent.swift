@@ -53,7 +53,7 @@ private struct HookPayload: Decodable {
         case toolInput = "tool_input"
     }
 
-    /// Only a shell command, a file or a search pattern is shown; tools' input has any shape.
+    /// Tools' input has any shape; only a command, file or pattern is read.
     struct ToolInput: Decodable {
         let command: String?
         let filePath: String?

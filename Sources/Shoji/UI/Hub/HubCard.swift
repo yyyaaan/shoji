@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// A thread in the Hub: where it is, what it's doing or waiting on, its last lines, and the way in.
+/// A thread in the Hub.
 struct HubCard: View {
     let thread: ShojiThread
     /// Its ⌘1–9 number, while ⌘ is held.
@@ -17,19 +17,22 @@ struct HubCard: View {
     private var finishedUnseen: Bool { activity.status == .done && activity.isUnseen }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12 * zoom) {
-            header
-            summary
+        VStack(alignment: .leading, spacing: 8 * zoom) {
+            title
+            metadata
+            if let summaryText {
+                summary(summaryText)
+            }
             excerpt
             actions
+            folderLinks
         }
-        .padding(18 * zoom)
+        .padding(12 * zoom)
         .foregroundStyle(Palette.text)
         .contentShape(.rect)
         .onTapGesture { store.open(thread.id) }
-        // Overlays must precede the glass: inside a GlassEffectContainer the glass draws over later ones.
         .overlay {
-            RoundedRectangle(cornerRadius: 22 * zoom)
+            RoundedRectangle(cornerRadius: 16 * zoom)
                 .strokeBorder(borderColor, lineWidth: 1)
         }
         .overlay(alignment: .topLeading) {
@@ -43,45 +46,57 @@ struct HubCard: View {
                     .transition(.opacity)
             }
         }
-        .glassEffect(.regular.tint(tint), in: .rect(cornerRadius: 22 * zoom))
+        .glassEffect(.regular.tint(tint), in: .rect(cornerRadius: 16 * zoom))
         .contextMenu { CardMenu(thread: thread) }
         .task(id: thread.folder) { branch = GitBranch.of(thread.folder) }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(store.name(of: thread))
     }
 
-    private var header: some View {
-        HStack(spacing: 12 * zoom) {
-            StatusIcon(status: activity.status, size: 34 * zoom)
-            VStack(alignment: .leading, spacing: 3 * zoom) {
-                HStack(spacing: 8 * zoom) {
-                    Text(store.name(of: thread))
-                        .font(.system(size: 18 * zoom, weight: .bold))
-                        .lineLimit(1)
-                    if let tag = ThreadCard.tag(of: thread, activity) {
-                        Text(tag)
-                            .font(.system(size: 10 * zoom, weight: .bold))
-                            .tracking(0.6 * zoom)
-                            .foregroundStyle(.white.opacity(0.88))
-                            .lineLimit(1)
-                            .fixedSize()
-                            .padding(.horizontal, 7 * zoom)
-                            .padding(.vertical, 3 * zoom)
-                            .background(.white.opacity(0.14), in: .rect(cornerRadius: 6 * zoom))
-                    }
-                }
-                Text([thread.displayFolder, branch].compactMap(\.self).joined(separator: " · "))
-                    .font(.system(size: 12 * zoom, weight: .medium, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.75))
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-            }
-            Spacer(minLength: 0)
-            if store.wantsYou(thread.id) {
-                HachiPortrait(size: 34 * zoom)
-            }
+    private var title: some View {
+        HStack(spacing: 8 * zoom) {
+            StatusIcon(status: activity.status, size: 24 * zoom)
+            Text(store.name(of: thread))
+                .font(.system(size: 14 * zoom, weight: .semibold))
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .help(store.name(of: thread))
             statusPill
         }
+    }
+
+    private var metadata: some View {
+        let place = [thread.displayFolder, branch].compactMap(\.self).joined(separator: " · ")
+        return HStack(spacing: 6 * zoom) {
+            if let tag = ThreadCard.tag(of: thread, activity) {
+                // About 72 pt at most, so a long command name can't crowd out the folder.
+                Text(tag.count > 10 ? tag.prefix(9) + "…" : tag)
+                    .font(.system(size: 9 * zoom, weight: .bold))
+                    .tracking(0.5 * zoom)
+                    .foregroundStyle(.white.opacity(0.88))
+                    .fixedSize()
+                    .padding(.horizontal, 5 * zoom)
+                    .padding(.vertical, 2 * zoom)
+                    .background(.white.opacity(0.14), in: .rect(cornerRadius: 5 * zoom))
+                    .help(tag)
+            }
+            Text(place)
+                .font(.system(size: 11 * zoom, weight: .medium, design: .monospaced))
+                .foregroundStyle(.white.opacity(0.75))
+                .lineLimit(1)
+                .truncationMode(.middle)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .help(place)
+            TimelineView(.periodic(from: .now, by: 30)) { context in
+                Text(elapsed(now: context.date))
+                    .font(.system(size: 10 * zoom))
+                    .foregroundStyle(.white.opacity(0.65))
+                    .monospacedDigit()
+                    .fixedSize()
+            }
+        }
+        // The tag chip's height, so cards without one line up.
+        .frame(minHeight: 15 * zoom)
     }
 
     private var statusPill: some View {
@@ -90,74 +105,74 @@ struct HubCard: View {
         case .working: (Palette.working.opacity(0.18), Palette.working.opacity(0.5), Color(hex: 0xA5D0FF))
         case .running: (Palette.running.opacity(0.18), Palette.running.opacity(0.5), Color(hex: 0x7EE2CB))
         case .exited(let code) where code != 0: (Palette.exited.opacity(0.16), Palette.exited.opacity(0.5), Palette.exitedText)
-        case .idle: (.clear, .white.opacity(0.4), .white.opacity(0.85))
+        case .idle: (.clear, .white.opacity(contrast == .increased ? 0.36 : 0.18), .white.opacity(0.85))
         default: (.white.opacity(0.12), .white.opacity(0.28), Palette.done)
         }
         return Text(activity.status.label)
-            .font(.system(size: 12 * zoom, weight: .semibold))
+            .font(.system(size: 11 * zoom, weight: .semibold))
             .foregroundStyle(text)
             .lineLimit(1)
             .fixedSize()
-            .padding(.horizontal, 12 * zoom)
-            .padding(.vertical, 5 * zoom)
+            .padding(.horizontal, 8 * zoom)
+            .padding(.vertical, 2 * zoom)
             .background(fill, in: .capsule)
             .overlay {
-                Capsule().strokeBorder(stroke, style: StrokeStyle(lineWidth: 1, dash: activity.status == .idle ? [3, 3] : []))
+                Capsule().strokeBorder(stroke)
             }
-            // The status icon already says it.
             .accessibilityHidden(true)
     }
 
-    private var summary: some View {
-        Text(summaryText)
-            .font(.system(size: 13 * zoom, design: activity.status == .running ? .monospaced : .default))
+    private func summary(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 12 * zoom, design: activity.status == .running ? .monospaced : .default))
             .foregroundStyle(needsYou ? Color(hex: 0xFFE0C2) : .white.opacity(0.88))
             .lineLimit(1)
-            .padding(.horizontal, 12 * zoom)
-            .padding(.vertical, 9 * zoom)
+            .padding(.horizontal, 10 * zoom)
+            .padding(.vertical, 6 * zoom)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(needsYou ? Palette.needsYou.opacity(0.1) : .white.opacity(0.06), in: .rect(cornerRadius: 12 * zoom))
+            .background(needsYou ? Palette.needsYou.opacity(0.1) : .white.opacity(0.06), in: .rect(cornerRadius: 9 * zoom))
             .overlay {
                 if needsYou {
-                    RoundedRectangle(cornerRadius: 12 * zoom).strokeBorder(Palette.needsYouStroke.opacity(0.35))
+                    RoundedRectangle(cornerRadius: 9 * zoom).strokeBorder(Palette.needsYouStroke.opacity(0.35))
                 }
             }
-            .help(summaryText)
+            .help(text)
     }
 
-    /// From hooks and the shell integration, never read off the screen (AGENTS invariant 5).
-    private var summaryText: String {
+    /// From hooks and the shell, never the screen (AGENTS invariant 5); none while idle.
+    private var summaryText: String? {
         switch activity.status {
         case .needsYou: activity.detail ?? "Waiting for you"
         case .working: activity.detail ?? "Working"
         case .done: activity.isUnseen ? "Finished while you were away" : "Finished its turn"
         case .running: thread.command ?? "Running a command"
-        case .idle: activity.agent.map { "\($0.rawValue.capitalized) is at its prompt" } ?? "At the prompt"
+        case .idle: nil
         case .exited: activity.isAlive ? "The last command failed" : "The shell has ended"
         }
     }
 
-    /// Read once a second while the Hub shows.
+    /// Without a summary it takes that room, so cards stay one height.
     private var excerpt: some View {
         TimelineView(.periodic(from: .now, by: 1)) { _ in
-            let lines = Excerpt.lines(sessions?.terminal(for: thread.id)?.screenLines() ?? [], count: 4)
-            VStack(alignment: .leading, spacing: 2 * zoom) {
+            let roomy = summaryText == nil
+            let lines = Excerpt.lines(sessions?.terminal(for: thread.id)?.screenLines() ?? [], count: roomy ? 5 : 3)
+            VStack(alignment: .leading, spacing: 1 * zoom) {
                 ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
                     Text(line).lineLimit(1)
                 }
             }
-            .font(.system(size: 11.5 * zoom, design: .monospaced))
+            .font(.system(size: 10.5 * zoom, design: .monospaced))
             .foregroundStyle(Color(hex: 0xA9B2C0))
-            .frame(maxWidth: .infinity, minHeight: 62 * zoom, maxHeight: 62 * zoom, alignment: .bottomLeading)
+            .frame(maxWidth: .infinity, minHeight: (roomy ? 75 : 40) * zoom, maxHeight: (roomy ? 75 : 40) * zoom, alignment: .bottomLeading)
             .clipped()
-            .padding(.horizontal, 12 * zoom)
-            .padding(.vertical, 10 * zoom)
-            .background(Palette.terminalBackground, in: .rect(cornerRadius: 12 * zoom))
+            .padding(.horizontal, 10 * zoom)
+            .padding(.vertical, 7 * zoom)
+            .background(Palette.terminalBackground, in: .rect(cornerRadius: 9 * zoom))
         }
     }
 
     private var actions: some View {
-        HStack(spacing: 8 * zoom) {
+        HStack(spacing: 6 * zoom) {
             Button("Open") { store.open(thread.id) }
                 .buttonStyle(HubButtonStyle(zoom: zoom, fill: needsYou ? Palette.needsYou : .white.opacity(0.16), text: needsYou ? Color(hex: 0x1A1206) : .white))
             Button("Open Maximized", systemImage: "arrow.up.left.and.arrow.down.right") {
@@ -166,23 +181,29 @@ struct HubCard: View {
             }
             .labelStyle(.iconOnly)
             .help("Open Maximized")
-            ForEach(Editor.installed) { editor in
-                Button(editor.name) { editor.open(thread.folder) }
-                    .help("Open in \(editor.name)")
-            }
             if !activity.isAlive {
                 Button("Restart") { sessions?.restart(thread.id) }
             }
             Spacer(minLength: 0)
-            TimelineView(.periodic(from: .now, by: 30)) { context in
-                Text(elapsed(now: context.date))
-                    .font(.system(size: 12 * zoom))
-                    .foregroundStyle(.white.opacity(0.75))
-                    .lineLimit(1)
-                    .fixedSize()
+            if store.wantsYou(thread.id) {
+                HachiPortrait(size: 26 * zoom)
             }
         }
         .buttonStyle(HubButtonStyle(zoom: zoom))
+    }
+
+    private var folderLinks: some View {
+        HStack(spacing: 4 * zoom) {
+            Button("Finder") {
+                NSWorkspace.shared.open(URL(filePath: (thread.folder as NSString).expandingTildeInPath, directoryHint: .isDirectory))
+            }
+            .help("Open in Finder")
+            ForEach(Editor.installed) { editor in
+                Button(editor.name) { editor.open(thread.folder) }
+                    .help("Open in \(editor.name)")
+            }
+        }
+        .buttonStyle(FolderLinkStyle(zoom: zoom))
     }
 
     private func elapsed(now: Date) -> String {
@@ -216,8 +237,7 @@ struct HubCard: View {
     }
 }
 
-/// The last lines of a thread's screen for its Hub card. An agent's input box and footer start at a rule of
-/// box-drawing characters near the bottom; they're left out so the lines show the work.
+/// A thread's last screen lines, without an agent's input box and footer (from a box-drawing rule near the bottom).
 enum Excerpt {
     static func lines(_ screen: [String], count: Int) -> [String] {
         var rows = Array(screen.reversed().drop(while: isBlank).reversed())
@@ -237,7 +257,7 @@ enum Excerpt {
     }
 }
 
-/// Plain rounded buttons sized by the interface size, like the mockup's (`docs/design/hub.html`).
+/// Scales with Interface Size, which native buttons don't.
 private struct HubButtonStyle: ButtonStyle {
     let zoom: Double
     var fill: Color = .white.opacity(0.08)
@@ -245,15 +265,30 @@ private struct HubButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 13 * zoom, weight: .semibold))
+            .font(.system(size: 12 * zoom, weight: .semibold))
             .foregroundStyle(text)
-            .padding(.horizontal, 14 * zoom)
-            .frame(minWidth: 34 * zoom, minHeight: 32 * zoom)
-            .background(fill, in: .rect(cornerRadius: 10 * zoom))
+            .padding(.horizontal, 10 * zoom)
+            .frame(minWidth: 28 * zoom, minHeight: 26 * zoom)
+            .background(fill, in: .rect(cornerRadius: 8 * zoom))
             .overlay {
-                RoundedRectangle(cornerRadius: 10 * zoom).strokeBorder(.white.opacity(0.16))
+                RoundedRectangle(cornerRadius: 8 * zoom).strokeBorder(.white.opacity(0.16))
             }
             .opacity(configuration.isPressed ? 0.7 : 1)
+            .contentShape(.rect)
+    }
+}
+
+/// The quiet row under a card's actions.
+private struct FolderLinkStyle: ButtonStyle {
+    let zoom: Double
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 11 * zoom, weight: .medium))
+            .foregroundStyle(.white.opacity(0.75))
+            .padding(.horizontal, 7 * zoom)
+            .frame(minHeight: 22 * zoom)
+            .background(.white.opacity(configuration.isPressed ? 0.12 : 0.05), in: .rect(cornerRadius: 6 * zoom))
             .contentShape(.rect)
     }
 }
@@ -263,7 +298,7 @@ private struct HubButtonStyle: ButtonStyle {
     VStack(spacing: 14) {
         ForEach(store.threads.prefix(3)) { HubCard(thread: $0) }
     }
-    .frame(width: 520)
+    .frame(width: 340)
     .padding(24)
     .environment(store)
     .background(Backdrop())

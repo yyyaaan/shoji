@@ -28,18 +28,7 @@ struct MainView: View {
                     }
                     .frame(height: 44 * zoom, alignment: .bottom)
                 } else if inHub {
-                    // Hachi beside the window buttons, as in the compact form; the switch where the shelf has it.
-                    HStack(spacing: 12 * zoom) {
-                        HachiCorner()
-                            .frame(width: 44 * zoom)
-                            .frame(maxHeight: .infinity, alignment: .bottom)
-                        HubTotals()
-                        Spacer(minLength: 12)
-                        HubSwitch()
-                    }
-                    .padding(.leading, 78)
-                    .padding(.trailing, 18)
-                    .frame(height: 44 * zoom)
+                    HubHeader()
                 } else {
                     HStack(alignment: .top, spacing: 0) {
                         // Clear of the window's close, minimize and zoom buttons; Hachi's corner sits below them.
@@ -48,14 +37,14 @@ struct MainView: View {
                             .frame(maxHeight: .infinity, alignment: .bottom)
                             .padding(.bottom, 6 * zoom)
                         ShelfView()
-                        HubSwitch()
+                        HubButton()
                             .frame(height: 44 * zoom)
                             .padding(.trailing, 18)
                     }
                     .frame(height: 120 * zoom)
                 }
                 ZStack {
-                    // Same place in both forms and under the Hub, so panes keep their terminals hosted.
+                    // Same place in both forms and under the Hub, so terminals stay hosted.
                     PaneGrid()
                         .padding(.horizontal, store.isCompact ? 10 : 18)
                         .padding(.bottom, store.isCompact ? 10 : 16)
@@ -115,7 +104,7 @@ struct MainView: View {
         }
         .onChange(of: store.threads.map(\.textSteps)) { sessions?.applyTextSizes() }
         .onChange(of: store.renameRequest) { _, id in draftTitle = id.flatMap(store.thread)?.title ?? "" }
-        // Hidden terminals keep their views; none may keep the keyboard while the Hub shows.
+        // A hidden terminal mustn't keep the keyboard.
         .onChange(of: inHub) { _, inHub in
             if inHub { NSApp.keyWindow?.makeFirstResponder(nil) }
         }

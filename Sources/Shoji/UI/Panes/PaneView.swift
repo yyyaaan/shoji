@@ -16,10 +16,17 @@ struct PaneView: View {
     @State private var glow = 0.0
     @State private var size = CGSize.zero
     @State private var isHovering = false
+    @FocusState private var focusedControl: HeaderControl?
+
+    private enum HeaderControl {
+        case threads, split, maximize
+    }
 
     private var isFocused: Bool { store.focusedThreadId == thread.id }
     private var isMaximized: Bool { store.layout.maximizedThreadId == thread.id }
     private var opacity: Double { reduceTransparency ? 1 : Palette.paneOpacity }
+    /// On hover, or while one has keyboard focus (Full Keyboard Access).
+    private var showsControls: Bool { isHovering || focusedControl != nil }
     private static let margin = CGSize(width: 10, height: 8)
 
     var body: some View {
@@ -113,9 +120,12 @@ struct PaneView: View {
                     .menuIndicator(.hidden)
                     .fixedSize()
                     .help("Show another thread here")
-                    .opacity(isHovering ? 1 : 0)
-                    .allowsHitTesting(isHovering)
+                    .focused($focusedControl, equals: .threads)
+                    .opacity(showsControls ? 1 : 0)
+                    .allowsHitTesting(showsControls)
                 }
+                // The name before the folder when the pane is narrow.
+                .layoutPriority(1)
             }
             Text(thread.displayFolder)
                 .font(.system(size: 12 * zoom, weight: .medium, design: .monospaced))
@@ -128,8 +138,8 @@ struct PaneView: View {
                     sessions?.restart(thread.id)
                 }
                 .labelStyle(.titleAndIcon)
+                .fixedSize()
             }
-            // Only while the pointer is over the header.
             Menu {
                 splitItems
             } label: {
@@ -139,21 +149,24 @@ struct PaneView: View {
             .menuIndicator(.hidden)
             .fixedSize()
             .help("Split this pane, or close it")
-            .opacity(isHovering ? 1 : 0)
-            .allowsHitTesting(isHovering)
+            .focused($focusedControl, equals: .split)
+            .opacity(showsControls ? 1 : 0)
+            .allowsHitTesting(showsControls)
             Button(isMaximized ? "Restore" : "Maximize", systemImage: isMaximized ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right") {
                 store.toggleMaximize(thread.id)
             }
             .help(isMaximized ? "Restore, or double-click the header" : "Maximize, or double-click the header")
-            .opacity(isHovering ? 1 : 0)
-            .allowsHitTesting(isHovering)
+            .fixedSize()
+            .focused($focusedControl, equals: .maximize)
+            .opacity(showsControls ? 1 : 0)
+            .allowsHitTesting(showsControls)
         }
         .labelStyle(.iconOnly)
         .buttonStyle(HeaderButtonStyle(zoom: zoom))
         .foregroundStyle(Palette.text)
         .padding(.leading, 16 * zoom)
         .padding(.trailing, 12 * zoom)
-        .padding(.vertical, 8 * zoom)
+        .padding(.vertical, 6 * zoom)
         .frame(maxWidth: .infinity)
         .contentShape(.rect)
         .onHover { isHovering = $0 }
@@ -173,7 +186,7 @@ struct PaneView: View {
                 Button("Open in \(editor.name)") { editor.open(thread.folder) }
             }
         }
-        .animation(.easeOut(duration: 0.15), value: isHovering)
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: showsControls)
         .glassEffect(.regular, in: .rect)
     }
 
@@ -274,9 +287,11 @@ private struct PaneDrop: DropDelegate {
 
     func dropUpdated(info: DropInfo) -> DropProposal? {
         let isCard = info.hasItemsConforming(to: [.shojiThread])
-        let next = isCard ? DropZone(info.location, in: size) : .center
+        var next: DropZone? = isCard ? DropZone(info.location, in: size) : .center
+        // Only a split that would happen gets a preview.
+        if case .edge(let side) = next, !store.canSplit(target, side: side) { next = nil }
         if zone != next { zone = next }
-        return DropProposal(operation: isCard ? .move : .copy)
+        return DropProposal(operation: next == nil ? .forbidden : isCard ? .move : .copy)
     }
 
     func dropExited(info: DropInfo) {
@@ -357,7 +372,7 @@ private struct HeaderButtonStyle: ButtonStyle {
         configuration.label
             .font(.system(size: 13 * zoom, weight: .medium))
             .padding(.horizontal, 4 * zoom)
-            .padding(.vertical, 2 * zoom)
+            .frame(minWidth: 24 * zoom, minHeight: 24 * zoom)
             .contentShape(.rect)
             .opacity(configuration.isPressed ? 0.5 : 0.85)
     }
