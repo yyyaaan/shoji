@@ -33,7 +33,7 @@ Shoji is deliberately not an editor, a diff viewer or an agent client. It never 
 - **The Hub.** ⇧⌘H, or the lantern at the top right, swaps the panes for a card per thread, in your shelf's order: what it's waiting on or just did, its folder and git branch, its last lines, and one click into it. Esc goes back.
 - **Panes that stay out of the way.** Split any pane in any direction (⌘D, ⇧⌘D, its header's menu, or drop a card on its edge) and drag the gaps to resize. Click a card to go to its thread; ⌥-click brings it to your pane, and dropping a card, or picking it from the chevron beside a pane's name, puts it exactly there. Other panes never change behind your back, so a dev server's log stays put. Files dropped on a terminal paste their paths, so a screenshot reaches Claude Code.
 - **Beside your editor.** Put Shoji in Split View next to a full-screen Zed or Chrome and drag the divider narrow: it turns compact, one column of one or two terminals, each picking its thread from a dropdown. Widen it and your full layout is back.
-- **Keyboard first.** ⌘K pops up a quick terminal in your thread's folder; ⌃Tab flips back to the thread you were just in, like ⌘Tab; ⌘J finds the next agent waiting on you. Hold ⌘ to see each card's number for ⌘1–9, and ⌘/ for every shortcut.
+- **Keyboard first.** ⌘K (or the bamboo at the top right) pops up a quick terminal in your thread's folder; ⌃Tab flips back to the thread you were just in, like ⌘Tab; ⌘J finds the next agent waiting on you. Hold ⌘ to see each card's number for ⌘1–9, and ⌘/ for every shortcut.
 - **Sizes your way.** ⌘+ and ⌘− size the terminal text, View › Interface Size the chrome, and ⌥⌘+ / ⌥⌘− keep one pane bigger or smaller than the rest.
 - **Real terminals, native chrome.** SwiftTerm with Metal, your login shell's environment, 10,000 lines of scrollback. Liquid Glass on the chrome; terminals sit on a dark background that lets a little of the window's light through, never blurred.
 - **Status from the CLI itself.** Claude Code and Codex report through their own hooks, added per launch, so `~/.claude` and `~/.codex` are never touched. Shoji never scrapes terminal output.
@@ -120,7 +120,7 @@ open build/Build/Products/Debug/Shoji.app
 
 ## Roadmap
 
-- **Now (v0.6):** the Hub, and mini cards
+- **Now (v0.6):** the Hub, mini cards, and a corner of zen controls: the Hub, a new thread in any folder, the quick terminal
 - **Next:** "Allow once" from the Hub, and a signed, notarized build
 
 The live list is in [PLAN.md](PLAN.md#tasks).

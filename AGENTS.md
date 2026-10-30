@@ -32,7 +32,7 @@ Sources/Shoji/
   Terminal/                 TerminalBackend protocol, SwiftTerm implementation (only place importing SwiftTerm), TerminalSessions
   Status/                   StatusEvent, HookServer (socket listener), ClaudeHooks, CodexHooks
   UI/                       Theme (palette), StatusIcon, Backdrop, Zoom (text and interface sizes), ShortcutsSheet, RecentSwitch (⌃Tab),
-                            CornerControls (lantern: Hub; stones: new thread in a folder), Artwork.xcassets (Hachi, Torii, zen icons)
+                            CornerControls (lantern: Hub; stones: new thread in a folder; bamboo: ⌘K), Artwork.xcassets (Hachi, Torii, zen icons)
   UI/Shelf/                 card shelf, bars, mini cards, card menu (shared with the Hub), ⌘ card numbers
   UI/Hub/                   HubView (grid, header), HubCard (card, screen excerpt)
   UI/Panes/                 PaneGrid (panes and split handles by frame), PaneView (header, thread dropdown, Split menu, drops), TerminalHost, QuickTerminal

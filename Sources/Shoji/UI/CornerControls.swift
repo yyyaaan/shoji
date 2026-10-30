@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The window's top-right column, at the same spot in Threads and the Hub: the lantern over the stones.
+/// The window's top-right column, at the same spot in Threads and the Hub: the lantern, the stones, the bamboo.
 struct CornerControls: View {
     @Environment(\.zoom) private var zoom
 
@@ -8,6 +8,7 @@ struct CornerControls: View {
         VStack(spacing: 2 * zoom) {
             HubButton()
             FolderMenu()
+            QuickTerminalButton()
         }
         // Puts the lantern on the window buttons' line.
         .padding(.top, 5 * zoom)
@@ -33,6 +34,27 @@ struct HubButton: View {
         .help(store.showsHub ? "Back to Threads (Esc)" : "Hub (⇧⌘H)")
         .accessibilityLabel("Hub")
         .accessibilityAddTraits(store.showsHub ? .isSelected : [])
+    }
+}
+
+/// The bamboo: the ⌘K quick terminal, for the mouse.
+struct QuickTerminalButton: View {
+    @Environment(TerminalSessions.self) private var sessions: TerminalSessions?
+    @Environment(\.zoom) private var zoom
+
+    var body: some View {
+        Button { sessions?.togglePopup() } label: {
+            Image(.zenBamboo)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 20 * zoom, height: 20 * zoom)
+                .foregroundStyle(sessions?.popup != nil ? Palette.text : .white.opacity(0.55))
+                .frame(width: 34 * zoom, height: 34 * zoom)
+                .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .help("Quick Terminal (⌘K)")
+        .accessibilityLabel("Quick Terminal")
     }
 }
 

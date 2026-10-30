@@ -88,6 +88,10 @@ struct HubHeader: View {
         let activities = store.threads.map { store.activity(for: $0.id) }
         let count = { (test: (ThreadActivity) -> Bool) in activities.filter(test).count }
         let asking = count { $0.status == .needsYou }
+        let finished = count { $0.status == .done && $0.isUnseen }
+        let working = count { $0.status == .working }
+        let running = count { $0.status == .running }
+        let failed = count { if case .exited(let code) = $0.status { code != 0 } else { false } }
         if asking > 0 {
             Button { store.openNextNeedingYou() } label: {
                 pill(asking == 1 ? "1 needs you" : "\(asking) need you", color: Palette.needsYou, stroke: Palette.needsYouStroke, text: Palette.needsYouText)
@@ -95,10 +99,24 @@ struct HubHeader: View {
             .buttonStyle(.plain)
             .help("Next thread that needs you (⌘J)")
         }
-        pill(count { $0.status == .done && $0.isUnseen }, "finished", color: Palette.done, text: Palette.done)
-        pill(count { $0.status == .working }, "working", color: Palette.working, text: Color(hex: 0xA5D0FF))
-        pill(count { $0.status == .running }, "running", color: Palette.running, text: Color(hex: 0x7EE2CB))
-        pill(count { if case .exited(let code) = $0.status { code != 0 } else { false } }, "failed", color: Palette.exited, text: Palette.exitedText)
+        pill(finished, "finished", color: Palette.done, text: Palette.done)
+        pill(working, "working", color: Palette.working, text: Color(hex: 0xA5D0FF))
+        pill(running, "running", color: Palette.running, text: Color(hex: 0x7EE2CB))
+        pill(failed, "failed", color: Palette.exited, text: Palette.exitedText)
+        // Only where no pill shows, so it never stands in for a status.
+        if asking + finished + working + running + failed == 0 {
+            Label {
+                Text("All quiet")
+                    .font(.system(size: 12 * zoom, weight: .medium))
+            } icon: {
+                Image(.zenBonsai)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 18 * zoom, height: 18 * zoom)
+            }
+            .foregroundStyle(.white.opacity(0.55))
+            .fixedSize()
+        }
     }
 
     @ViewBuilder
