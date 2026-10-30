@@ -11,7 +11,7 @@ Hachi, an Akita in fuller ink (Quiet Balance C, one ear tip relaxed), is static 
 | Asset | Use |
 |---|---|
 | [hachi-c.svg](assets/hachi-c.svg) | Four-tone vector portrait, paths only |
-| `Sources/Shoji/UI/Hachi/Hachi.xcassets/HachiPortrait.imageset` | The delivered PDF (about 200 × 200 pt, Preserve Vector Data) |
+| `Sources/Shoji/UI/Artwork.xcassets/HachiPortrait.imageset` | The delivered PDF (about 200 × 200 pt, Preserve Vector Data) |
 | [Icon Composer layers](assets/icon-layers/) | 1024 × 1024 aligned canvases, imported in numeric order; [composition.json](assets/icon-layers/composition.json) is the manifest |
 | [hachi-c.png](assets/hachi-c.png) | The approved raster the vectors are traced from |
 

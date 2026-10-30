@@ -8,12 +8,12 @@
 | Needs you | Orange ring and exclamation, plus Hachi |
 | Running / error | Pulsing dot / ring with × |
 
-The Torii means an idle prompt, not a finished agent turn. The app icon has no Torii, and toolbar, pane and shortcut glyphs stay SF Symbols. The one other use is the Hub button at the window's top right: the bare glyph at 20 pt, white at 55%, full while the Hub shows.
+The Torii means an idle prompt, not a finished agent turn. The app icon has no Torii, and the Hub button is the [zen lantern](../zen/README.md). Other control glyphs stay SF Symbols.
 
 ## Assets
 
 - [torii-idle.svg](assets/torii-idle.svg): 24-unit vector master, ink `#E2E8F0` at full opacity, no raster.
-- The delivered template PDF (24 × 24 pt, Preserve Vector Data) is `Sources/Shoji/UI/Hachi/Hachi.xcassets/IdleTorii.imageset`; `tools/export-torii.swift <pdf>` regenerates it with CoreGraphics.
+- The delivered template PDF (24 × 24 pt, Preserve Vector Data) is `Sources/Shoji/UI/Artwork.xcassets/IdleTorii.imageset`; `tools/export-torii.swift <pdf>` regenerates it with CoreGraphics.
 
 Tint it once, natively: `Palette.done.opacity(0.55)` as a status. No vermilion, glow, ring or animation.
 

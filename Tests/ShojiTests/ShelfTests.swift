@@ -31,6 +31,12 @@ struct ShelfTests {
         let home = empty.newThread()
         #expect(empty.thread(home)?.folder == "~")
         #expect(empty.thread(home).map(empty.name) == "~")
+
+        // The stones pick the folder.
+        let picked = store.newThread(folder: "~/code/shoji")
+        #expect(store.thread(picked)?.folder == "~/code/shoji")
+        #expect(store.shelfOrder.map(\.id) == [first.id, picked, id, second.id])
+        #expect(store.focusRequest == picked)
     }
 
     @Test func numbersOnlyTellApartThreadsInSameNamedFolders() {

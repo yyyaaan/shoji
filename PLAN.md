@@ -4,9 +4,9 @@ The current state of Shoji: what's next, what to watch out for, and why things a
 
 ## Status
 
-- **Released:** v0.5.0. **In progress (`hub`, v0.6.0):** the Hub (⇧⌘H) and mini cards, with design's polish on the Hub, mini cards, pane headers, drop previews and ⌘K. 78 tests.
+- **Released:** v0.5.0. **In progress (`hub`, v0.6.0):** the Hub (⇧⌘H, the lantern), mini cards and the stones (a new thread in a folder), with design's polish on the Hub, mini cards, pane headers, drop previews and ⌘K. 78 tests.
 - **Next up:** the user tries the Hub on real threads (the Hub checks in Now), then merges, publishing v0.6.0.
-- **Blockers:** none. Design reference now matches the current Hub; full-card shortcut/count separation is specified and handed to app (`docs/handoffs/2026-10-30-design-to-app-card-numbers.md`).
+- **Blockers:** none.
 
 _Agents: update Status and Tasks at the end of every session; record decisions and gotchas as they stand now, not how they got there._
 
@@ -15,7 +15,8 @@ _Agents: update Status and Tasks at the end of every session; record decisions a
 Priorities follow the user's wishes. Keep items one line, small enough for one PR.
 
 ### Now (the user's checks)
-- [ ] Hub: ⇧⌘H and the Torii button; no pane shows through and typing reaches no terminal; Esc returns to your pane; a card click, ⌘1–9, ⌘J, Hachi or a notification opens the thread; Esc in ⌘K over the Hub reaches the shell
+- [ ] Stones (under the lantern): the folders in home until you Choose Folder to List… (remembered); picking one opens a new thread there, after your card
+- [ ] Hub: ⇧⌘H and the lantern; no pane shows through and typing reaches no terminal; Esc returns to your pane; a card click, ⌘1–9, ⌘J, Hachi or a notification opens the thread; Esc in ⌘K over the Hub reaches the shell
 - [ ] Hub cards on real threads: the last lines skip Claude Code's and Codex's input box and footer (else tune `Excerpt`), the git branch shows, a working agent names its last tool
 - [ ] Mini cards: card menu › Mini Card; the name reads top to bottom in the subtitle's style; dragging, drops, ⌘ numbers (in the left margin) and the needs-you glow still work
 - [ ] From design's review, natively: Interface Size 85–130% at window widths near 740 and 1360, compact and ⌘K at 480 pt; VoiceOver, Full Keyboard Access (pane header controls show while focused), Increase Contrast, Reduce Transparency, Reduce Motion; a card dragged to a pane edge previews only a split that would happen
@@ -28,7 +29,7 @@ Priorities follow the user's wishes. Keep items one line, small enough for one P
 - [ ] Not yet seen: a screenshot dragged from Finder onto Claude Code, Open in VS Code / Zed, Codex resuming after quit and reopen, the go-to glow, ⌘Q's busy list, the About panel
 
 ### Next
-- [ ] App: center full-card ⌘ number markers above their own cards to separate them from neighboring attention counts; `docs/design/cards.md` and design-to-app handoff. Hub reference/spec review complete.
+- [ ] Design: catch `hub.html` up (lantern over stones, no idle pill, 2 screen lines) and drop its centred ⌘ markers (app-to-design handoff)
 
 ### Later
 - [ ] "Allow once" from the Hub (see Open questions)
@@ -48,7 +49,7 @@ A calm command center for the terminals the user already runs all day. Claude Co
 
 ### The window
 - **One window, two forms, by width** (the Split View divider sets it): full above 720 pt, compact below 680, unchanged in between so a drag doesn't flicker; the window goes down to 480 pt (about 60 columns). Each form keeps its own panes; closing a thread removes it from both.
-- **Full form:** no title bar; the shelf shares the top row with the window buttons, Hachi's corner below them (empty until something needs you; a click opens it). Panes fill the rest.
+- **Full form:** no title bar; the shelf shares the top row with the window buttons, Hachi's corner below them (empty until something needs you; a click opens it), and the lantern over the stones at the top right. Panes fill the rest.
 - **Compact form** (made for Split View beside a full-screen editor or browser): no shelf; a slim strip with Hachi beside the window buttons; one column of one or two rows. The first visit shows your thread; ⇧⌘D adds the second row; ⌘D and ⌥⌘2–4 are off.
 - **Room light:** panes are `Palette.paneOpacity` (80%) opaque with no blur, so the backdrop tints them, cool on the left and warm on the right; text, caret, selections and coloured cells stay opaque. The quick terminal stays solid, and Reduce Transparency makes every pane solid.
 
@@ -67,7 +68,8 @@ A calm command center for the terminals the user already runs all day. Claude Co
 - Files or text dropped on a pane paste into its terminal (files as escaped paths, like Terminal).
 
 ### Getting around
-- Hold ⌘ on its own for a moment and the first nine cards show their ⌘1–9 number; any key or leaving Shoji hides them. Full-card placement target: top center, separate from attention counts (`docs/design/cards.md`, integration in Next); minis keep their leading-gutter numeral.
+- Hold ⌘ on its own for a moment and the first nine cards show their ⌘1–9 number; any key or leaving Shoji hides them. Full cards show it as a badge over their top-leading corner, mini cards as a numeral in their left margin.
+- **Stones** (under the lantern): the folders inside one you choose, home until you do (Choose Folder to List… in the same menu, remembered; hidden folders and app bundles left out). Picking one opens a new thread there, after your card.
 - ⌃Tab / ⌃⇧Tab: recent threads like ⌘Tab; a tap returns to the previous one, holding ⌃ shows the list, Esc cancels.
 - ⌘K: a quick terminal over the window, a little above centre, in the focused thread's folder. ⌘K, ⌘W, a click outside or `exit` closes it; a command still running then becomes a thread beside the focused card. When narrow, its hint takes a second line.
 - Menus: **Threads** (cards ⌘1–9, ⌘J, ⌃Tab, Open in VS Code ⌥⇧⌘E / Zed ⇧⌘E, the two options), **Panes** (focus, split, close, maximize, layouts), **View** (Hub ⇧⌘H, Interface Size, text sizes). No submenus; titles come from the `Shortcut` catalog, which also feeds the ⌘/ sheet.
@@ -76,9 +78,9 @@ A calm command center for the terminals the user already runs all day. Claude Co
 - ⌘Q asks only when something is busy (working, needs you, running a command, or the quick terminal running one), naming it.
 
 ### Hub
-- ⇧⌘H or the Torii at the top right (brighter while the Hub shows), full form only (narrowing the window leaves it). It covers the panes, which stay hosted underneath with no terminal holding the keyboard; Esc, a card click or any go-to returns to Threads. ⌘W is off there, since the focused thread is out of sight.
-- Top row: Hachi, the thread count, and pills for needs you (a click is ⌘J), finished unseen, working, running and failed; when they don't fit, the pills wrap onto rows below and the Torii stays put.
-- Small cards (from 320 pt, about four across) in shelf order, bars as section breaks, all one height. Each card: status, name and status pill; tag, folder and git branch, elapsed time; one line from hooks or the shell (the question, the agent's last tool, the command, the failure; none while idle, where the screen gets its room); the last 3 lines of its screen (5 when idle), skipping an agent's input box and footer; a last row with Open Maximized, Restart once the shell has ended and Hachi when it wants you, then Finder, VS Code and Zed at the end. A click on the card opens the thread; right-click is the card menu.
+- ⇧⌘H or the lantern at the top right (brighter while the Hub shows), full form only (narrowing the window leaves it). It covers the panes, which stay hosted underneath with no terminal holding the keyboard; Esc, a card click or any go-to returns to Threads. ⌘W is off there, since the focused thread is out of sight.
+- Top row: Hachi, the thread count, and pills for needs you (a click is ⌘J), finished unseen, working, running and failed; when they don't fit, the pills wrap onto rows below and the lantern and stones stay put.
+- Small cards (from 320 pt, about four across) in shelf order, bars as section breaks, all one height. Each card: status, name and status pill (none while idle); tag, folder and git branch, elapsed time; one line from hooks or the shell (the question, the agent's last tool, the command, the failure; none while idle, where the screen gets its room); the last 2 lines of its screen (4 when idle), skipping an agent's input box and footer; a last row with Open Maximized, Restart once the shell has ended and Hachi when it wants you, then Finder, VS Code and Zed at the end. A click on the card opens the thread; right-click is the card menu.
 - Visual reference: `docs/design/hub.html`.
 
 ## Architecture
@@ -174,6 +176,8 @@ Run by hand with Claude Code in Shoji after every SwiftTerm bump (AGENTS invaria
 
 ## Open questions
 
+- **Bamboo and bonsai** (drawn, not placed): bonsai as an "All quiet" mark in the Hub's top row when no pill shows? Bamboo as a third corner control under the stones, for ⌘K's quick terminal?
+
 - **Allow once:** for any prompt, or only commands approved before? Proposal: only when the prompt is visible on the card, sending exactly the shown keystroke.
 - **Performance:** how many live terminal views before it matters? Keep only SwiftTerm's headless `Terminal` for hidden threads?
 - **Stable local signing identity:** a self-signed certificate (a CI secret) would keep privacy grants across updates without a paid account. Now, or wait for Developer ID?
@@ -190,8 +194,10 @@ Run by hand with Claude Code in Shoji after every SwiftTerm bump (AGENTS invaria
 - **The Hub follows the shelf:** shelf order with bars as breaks, not attention order or an Agents / Tasks split, so cards stay put and match ⌘1–9; needs-you cards stand out anyway.
 - **You stop processes yourself:** no Stop or command Restart buttons; ⌃C in the terminal and Close Thread (which asks) are the ways. Restart is only for a shell that has ended.
 - **Git branch from `.git/HEAD`** (worktrees too), never a `git` process.
+- **Hub screen lines once a second, only while the Hub shows and only for cards in view:** a snapshot costs about 1 ms for a pane-sized screen (Debug build).
 - **Options are one-click menu items;** there's no Settings window. A wish that would need one gets a menu item or isn't built.
-- **Quiet chrome:** glass on surfaces, never on small controls (the Torii and a Hub card's buttons are bare); pane controls appear on hover.
+- **Quiet chrome:** glass on surfaces, never on small controls (the lantern, the stones and a Hub card's buttons are bare); pane controls appear on hover. The lantern and stones are the only custom control glyphs; the rest are SF Symbols.
+- **⌘ numbers overhang a full card's top-leading corner,** which the user kept over a centred marker; a mini card's sit in its margin.
 - **Native notifications** over own popups: they follow Focus and screen sharing and keep a history.
 - **⌘K is a popup terminal**, not a command field: completion, aliases and interactive commands come free. ⌘/ shows shortcuts, as a sheet so Esc never reaches a terminal.
 - **`schemaVersion` only for shapes another Shoji can't read;** optional additions stay on version 1 (AGENTS invariant 9).

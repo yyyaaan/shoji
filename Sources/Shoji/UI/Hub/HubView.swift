@@ -43,30 +43,28 @@ struct HubView: View {
     }
 }
 
-/// The Hub's top row: Hachi, the thread count and a pill per state worth a look, with the Torii anchored at the
-/// end. When the pills don't fit beside it they wrap onto rows of their own below.
+/// The Hub's top row: Hachi, the thread count and a pill per state worth a look, beside the corner controls.
+/// When the pills don't fit they wrap onto rows of their own below.
 struct HubHeader: View {
     @Environment(ThreadStore.self) private var store
     @Environment(\.zoom) private var zoom
 
     var body: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(spacing: 12 * zoom) {
-                identity
-                HStack(spacing: 8 * zoom) { pills }
-                Spacer(minLength: 12)
-                HubButton()
-            }
-            .frame(height: 44 * zoom)
-            VStack(alignment: .leading, spacing: 4 * zoom) {
+        HStack(alignment: .top, spacing: 12 * zoom) {
+            ViewThatFits(in: .horizontal) {
                 HStack(spacing: 12 * zoom) {
                     identity
-                    Spacer(minLength: 12)
-                    HubButton()
+                    HStack(spacing: 8 * zoom) { pills }
                 }
                 .frame(height: 44 * zoom)
-                FlowRows(spacing: 8 * zoom) { pills }
+                VStack(alignment: .leading, spacing: 4 * zoom) {
+                    HStack(spacing: 12 * zoom) { identity }
+                        .frame(height: 44 * zoom)
+                    FlowRows(spacing: 8 * zoom) { pills }
+                }
             }
+            Spacer(minLength: 0)
+            CornerControls()
         }
         .lineLimit(1)
         // Hachi beside the window buttons, as in the compact form.
@@ -166,29 +164,6 @@ private struct FlowRows: Layout {
             }
         }
         return rows
-    }
-}
-
-/// Through the Torii to the Hub and back; the same spot in both rows.
-struct HubButton: View {
-    @Environment(ThreadStore.self) private var store
-    @Environment(\.zoom) private var zoom
-
-    var body: some View {
-        Button { store.showsHub.toggle() } label: {
-            // Just the glyph; brighter while the Hub shows.
-            Image(.idleTorii)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 20 * zoom, height: 20 * zoom)
-                .foregroundStyle(store.showsHub ? Palette.text : .white.opacity(0.55))
-                .frame(width: 34 * zoom, height: 34 * zoom)
-                .contentShape(.rect)
-        }
-        .buttonStyle(.plain)
-        .help(store.showsHub ? "Back to Threads (Esc)" : "Hub (⇧⌘H)")
-        .accessibilityLabel("Hub")
-        .accessibilityAddTraits(store.showsHub ? .isSelected : [])
     }
 }
 

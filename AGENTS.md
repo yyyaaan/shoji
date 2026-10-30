@@ -2,7 +2,7 @@
 
 Shoji is a native macOS app that hosts the user's terminal sessions ("threads") under a Liquid Glass card shelf. Every thread is the user's own shell: they `cd` anywhere and run coding-agent CLIs (`claude`, `codex`) or long-running commands (`docker compose up`, `pnpm dev`), and quit back to the prompt as usual. Shoji shows what's running and what needs the user. It is NOT an editor, diff viewer or file browser (the user keeps Zed / VS Code for those), and NOT an agent client: it never talks to models or APIs.
 
-Words used everywhere (code, docs, chat): a **thread** is one hosted shell session, whatever runs in it; the **shelf** is the strip of **cards** across the top, one per thread in the user's order, with **bars** splitting it into groups that mean whatever the user wants; a **pane** shows a thread's terminal below the shelf; a **mini card** is a narrow shelf card, status and name only; the **compact form** is the same window made narrow (Split View beside an editor): no shelf, one column of one or two panes; the **Hub** (⇧⌘H, the Torii button) covers the panes with a card per thread. Mascot: **Hachi**, an Akita who appears on a card and in the window's corner when a thread needs the user.
+Words used everywhere (code, docs, chat): a **thread** is one hosted shell session, whatever runs in it; the **shelf** is the strip of **cards** across the top, one per thread in the user's order, with **bars** splitting it into groups that mean whatever the user wants; a **pane** shows a thread's terminal below the shelf; a **mini card** is a narrow shelf card, status and name only; the **compact form** is the same window made narrow (Split View beside an editor): no shelf, one column of one or two panes; the **Hub** (⇧⌘H, the lantern) covers the panes with a card per thread. Mascot: **Hachi**, an Akita who appears on a card and in the window's corner when a thread needs the user.
 
 **`PLAN.md` is the living state file.** Read its Status, Tasks and Gotchas before starting, then check `docs/handoffs/` for work addressed to you. Update Status and Tasks when you finish a session.
 
@@ -31,11 +31,12 @@ Sources/Shoji/
   Threads/                  ShojiThread, ThreadStore, PaneLayout (split tree, presets, PaneTiles), ThreadFile, launch building, GitBranch, Mock
   Terminal/                 TerminalBackend protocol, SwiftTerm implementation (only place importing SwiftTerm), TerminalSessions
   Status/                   StatusEvent, HookServer (socket listener), ClaudeHooks, CodexHooks
-  UI/                       Theme (palette), StatusIcon, Backdrop, Zoom (text and interface sizes), ShortcutsSheet, RecentSwitch (⌃Tab)
+  UI/                       Theme (palette), StatusIcon, Backdrop, Zoom (text and interface sizes), ShortcutsSheet, RecentSwitch (⌃Tab),
+                            CornerControls (lantern: Hub; stones: new thread in a folder), Artwork.xcassets (Hachi, Torii, zen icons)
   UI/Shelf/                 card shelf, bars, mini cards, card menu (shared with the Hub), ⌘ card numbers
-  UI/Hub/                   HubView (grid, header, Torii button), HubCard (card, screen excerpt)
+  UI/Hub/                   HubView (grid, header), HubCard (card, screen excerpt)
   UI/Panes/                 PaneGrid (panes and split handles by frame), PaneView (header, thread dropdown, Split menu, drops), TerminalHost, QuickTerminal
-  UI/Hachi/                 HachiPortrait, HachiCorner, Hachi.xcassets, AppIcon.icon (spec in docs/design/hachi/README.md)
+  UI/Hachi/                 HachiPortrait, HachiCorner, AppIcon.icon (spec in docs/design/hachi/README.md)
 Tests/ShojiTests/           Swift Testing
 docs/design/                accepted design references (the Hub mockup, artwork sources and their tools)
 docs/handoffs/              open handoffs between agents (local, gitignored)
@@ -102,7 +103,7 @@ Agents (e.g. app and design) pass work through files in `docs/handoffs/`, which 
 
 ## Design reference
 
-`docs/design/` holds the accepted references (`hub.html`, Hachi, status and completion artwork). Read the HTML for layout, spacing, radii and colours and translate it to SwiftUI; don't port the CSS literally. Status palette (dark UI):
+`docs/design/` holds the accepted references (`hub.html`, Hachi, status, completion and zen artwork). Read the HTML for layout, spacing, radii and colours and translate it to SwiftUI; don't port the CSS literally. Status palette (dark UI):
 
 | State | Color | Icon |
 |---|---|---|

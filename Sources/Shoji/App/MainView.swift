@@ -37,8 +37,7 @@ struct MainView: View {
                             .frame(maxHeight: .infinity, alignment: .bottom)
                             .padding(.bottom, 6 * zoom)
                         ShelfView()
-                        HubButton()
-                            .frame(height: 44 * zoom)
+                        CornerControls()
                             .padding(.trailing, 18)
                     }
                     .frame(height: 120 * zoom)

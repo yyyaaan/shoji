@@ -211,18 +211,18 @@ final class ThreadStore {
 
     // MARK: Adding and removing
 
-    /// Opens a fresh shell right after the focused card, in that thread's folder (home when nothing is focused);
-    /// with `target`, after that card and in its pane.
+    /// Opens a fresh shell right after the focused card, in `folder` or else that thread's (home when nothing is
+    /// focused); with `target`, after that card and in its pane.
     @discardableResult
-    func newThread(inPaneOf target: UUID? = nil, at now: Date = .now) -> UUID {
-        let id = addThread(after: target ?? focusedThreadId, at: now)
+    func newThread(inPaneOf target: UUID? = nil, folder: String? = nil, at now: Date = .now) -> UUID {
+        let id = addThread(after: target ?? focusedThreadId, folder: folder, at: now)
         if let target { show(id, inPaneOf: target) } else { open(id) }
         return id
     }
 
-    /// A fresh shell right after `neighbour`'s card, in its folder (home without one).
-    private func addThread(after neighbour: UUID?, at now: Date = .now) -> UUID {
-        let thread = ShojiThread(folder: neighbour.flatMap(thread)?.folder ?? "~")
+    /// A fresh shell right after `neighbour`'s card, in `folder` or else the neighbour's (home without one).
+    private func addThread(after neighbour: UUID?, folder: String? = nil, at now: Date = .now) -> UUID {
+        let thread = ShojiThread(folder: folder ?? neighbour.flatMap(thread)?.folder ?? "~")
         insert(thread, after: neighbour, at: now)
         return thread.id
     }

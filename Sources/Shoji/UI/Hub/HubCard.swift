@@ -61,7 +61,10 @@ struct HubCard: View {
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .help(store.name(of: thread))
-            statusPill
+            // Idle is the quiet state: the Torii and "idle 12m" say it.
+            if activity.status != .idle {
+                statusPill
+            }
         }
     }
 
@@ -105,7 +108,6 @@ struct HubCard: View {
         case .working: (Palette.working.opacity(0.18), Palette.working.opacity(0.5), Color(hex: 0xA5D0FF))
         case .running: (Palette.running.opacity(0.18), Palette.running.opacity(0.5), Color(hex: 0x7EE2CB))
         case .exited(let code) where code != 0: (Palette.exited.opacity(0.16), Palette.exited.opacity(0.5), Palette.exitedText)
-        case .idle: (.clear, .white.opacity(contrast == .increased ? 0.36 : 0.18), .white.opacity(0.85))
         default: (.white.opacity(0.12), .white.opacity(0.28), Palette.done)
         }
         return Text(activity.status.label)
@@ -155,7 +157,7 @@ struct HubCard: View {
     private var excerpt: some View {
         TimelineView(.periodic(from: .now, by: 1)) { _ in
             let roomy = summaryText == nil
-            let lines = Excerpt.lines(sessions?.terminal(for: thread.id)?.screenLines() ?? [], count: roomy ? 5 : 3)
+            let lines = Excerpt.lines(sessions?.terminal(for: thread.id)?.screenLines() ?? [], count: roomy ? 4 : 2)
             VStack(alignment: .leading, spacing: 1 * zoom) {
                 ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
                     Text(line).lineLimit(1)
@@ -163,7 +165,7 @@ struct HubCard: View {
             }
             .font(.system(size: 10.5 * zoom, design: .monospaced))
             .foregroundStyle(Color(hex: 0xA9B2C0))
-            .frame(maxWidth: .infinity, minHeight: (roomy ? 75 : 40) * zoom, maxHeight: (roomy ? 75 : 40) * zoom, alignment: .bottomLeading)
+            .frame(maxWidth: .infinity, minHeight: (roomy ? 61 : 26) * zoom, maxHeight: (roomy ? 61 : 26) * zoom, alignment: .bottomLeading)
             .clipped()
             .padding(.horizontal, 10 * zoom)
             .padding(.vertical, 7 * zoom)
