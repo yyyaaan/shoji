@@ -19,5 +19,5 @@ Tint it once, natively: `Palette.done.opacity(0.55)` as a status. No vermilion, 
 
 ## Sizing
 
-- `StatusIcon` fits it to the whole `size` canvas (the artwork carries its own optical padding), not the rings' inner frame: 22 pt on cards, 16 pt in pane headers, 18 pt in the ⌃Tab switcher, 24 pt on Hub cards, all times Interface Size.
+- `StatusIcon` fits it to the whole `size` canvas (the artwork carries its own optical padding), not the rings' inner frame: 22 pt on full shelf cards, 18 pt on mini cards and in the ⌃Tab switcher, 16 pt in pane headers, 24 pt on Hub cards, all times Interface Size.
 - At 22 pt the 1.7-unit strokes read at about 18 pt wide, the weight of the other states.

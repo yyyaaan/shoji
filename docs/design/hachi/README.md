@@ -25,13 +25,13 @@ The portrait's white face is opaque and everything outside the silhouette transp
 | Mini card | None |
 | Window corner | 36 × 36, capped at 58 (the column is 78 at any size), under the window buttons, bottom aligned with the cards; count badge top-trailing |
 | Hub corner | 36 × 36 beside the window buttons, bottom aligned in the 44 pt row |
-| Hub card | 26 × 26 in the action row, after Open Maximized |
+| Hub card | 26 × 26 after the pane actions and before the trailing folder links |
 
 ## Rendering
 
 - Overlays go before `.glassEffect` inside a `GlassEffectContainer`; the portrait doesn't take hits and is hidden from accessibility, leaving the card's label and actions as they are.
 - Static by default and under Reduce Motion; any later fade stays subtle, off with Reduce Motion, and never repeats on count or hook updates.
-- Dark UI only: terminal `#0C0F15`, window `#0B0E13`, glass on chrome, a solid surface behind terminal text.
+- Dark UI only: terminal `#0C0F15`, window `#0B0E13`, glass on chrome. Panes use `Palette.paneOpacity` without blur; quick-terminal and Hub screen boxes stay solid, as do panes under Reduce Transparency.
 
 ## App icon layers
 

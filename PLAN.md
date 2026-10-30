@@ -6,7 +6,7 @@ The current state of Shoji: what's next, what to watch out for, and why things a
 
 - **Released:** v0.5.0. **In progress (`hub`, v0.6.0):** the Hub (⇧⌘H) and mini cards, with design's polish on the Hub, mini cards, pane headers, drop previews and ⌘K. 78 tests.
 - **Next up:** the user tries the Hub on real threads (the Hub checks in Now), then merges, publishing v0.6.0.
-- **Blockers:** none.
+- **Blockers:** none. Design reference now matches the current Hub; full-card shortcut/count separation is specified and handed to app (`docs/handoffs/2026-10-30-design-to-app-card-numbers.md`).
 
 _Agents: update Status and Tasks at the end of every session; record decisions and gotchas as they stand now, not how they got there._
 
@@ -28,7 +28,7 @@ Priorities follow the user's wishes. Keep items one line, small enough for one P
 - [ ] Not yet seen: a screenshot dragged from Finder onto Claude Code, Open in VS Code / Zed, Codex resuming after quit and reopen, the go-to glow, ⌘Q's busy list, the About panel
 
 ### Next
-- [ ] Design: bring `hub.html` up to the shipped Hub, and settle a full card's ⌘ number beside the previous card's count badge, which reads as one number ("9+ 2") (app-to-design handoff)
+- [ ] App: center full-card ⌘ number markers above their own cards to separate them from neighboring attention counts; `docs/design/cards.md` and design-to-app handoff. Hub reference/spec review complete.
 
 ### Later
 - [ ] "Allow once" from the Hub (see Open questions)
@@ -67,7 +67,7 @@ A calm command center for the terminals the user already runs all day. Claude Co
 - Files or text dropped on a pane paste into its terminal (files as escaped paths, like Terminal).
 
 ### Getting around
-- Hold ⌘ on its own for a moment and the first nine cards show their ⌘1–9 number; any key or leaving Shoji hides them.
+- Hold ⌘ on its own for a moment and the first nine cards show their ⌘1–9 number; any key or leaving Shoji hides them. Full-card placement target: top center, separate from attention counts (`docs/design/cards.md`, integration in Next); minis keep their leading-gutter numeral.
 - ⌃Tab / ⌃⇧Tab: recent threads like ⌘Tab; a tap returns to the previous one, holding ⌃ shows the list, Esc cancels.
 - ⌘K: a quick terminal over the window, a little above centre, in the focused thread's folder. ⌘K, ⌘W, a click outside or `exit` closes it; a command still running then becomes a thread beside the focused card. When narrow, its hint takes a second line.
 - Menus: **Threads** (cards ⌘1–9, ⌘J, ⌃Tab, Open in VS Code ⌥⇧⌘E / Zed ⇧⌘E, the two options), **Panes** (focus, split, close, maximize, layouts), **View** (Hub ⇧⌘H, Interface Size, text sizes). No submenus; titles come from the `Shortcut` catalog, which also feeds the ⌘/ sheet.

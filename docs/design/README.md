@@ -5,6 +5,7 @@ Accepted designs, source artwork and the tools that regenerate it. What ships is
 | Reference | Purpose |
 |---|---|
 | [Hub](hub.html) | Hub layout across Interface Sizes and window widths; interactive |
+| [Card shortcut markers](cards.md) | Full-card number placement, distinct from attention counts; native integration pending |
 | [Hachi and app icon](hachi/README.md) | Ink portrait, its placements, Icon Composer layers |
 | [Idle Torii](status/README.md) | Idle status glyph, also the Hub button |
 | [Quiet finish](completion/README.md) | Chrome and static halo for a turn finished unseen |
