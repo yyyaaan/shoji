@@ -27,12 +27,13 @@ Shoji is deliberately not an editor, a diff viewer or an agent client. It never 
 
 ## Features
 
-- **Every thread is your shell.** ⌘N opens one next to the card you're on. `cd` anywhere, run `claude`, `codex` or `pnpm dev`, quit back to the prompt; the card follows along, named after what an agent is working on. Reopen Shoji and your threads, layout and Claude or Codex conversations come back.
+- **Every thread is your shell.** ⌘N opens one next to the card you're on, and the stones under the lantern open one in any folder of, say, `~/code`. `cd` anywhere, run `claude`, `codex` or `pnpm dev`, quit back to the prompt; the card follows along, named after what an agent is working on. Reopen Shoji and your threads, layout and Claude or Codex conversations come back.
 - **Know who needs you.** Every status has its own shape and label. A card that needs you turns orange and brings out Hachi, who also peeks out by the window buttons: one click opens it. Out of sight, a macOS notification says which thread wants you, and the Dock badge keeps the count. A finish you didn't see gets a soft ivory glow, like an unread mark.
-- **Your shelf, your groups.** Drag cards into place and drop plain bars between them; groups mean whatever you want.
+- **Your shelf, your groups.** Drag cards into place and drop plain bars between them; groups mean whatever you want. Make a card mini, just its status and name down the side, for threads you keep around but rarely visit.
+- **The Hub.** ⇧⌘H, or the lantern at the top right, swaps the panes for a card per thread, in your shelf's order: what it's waiting on or just did, its folder and git branch, its last lines, and one click into it. Esc goes back.
 - **Panes that stay out of the way.** Split any pane in any direction (⌘D, ⇧⌘D, its header's menu, or drop a card on its edge) and drag the gaps to resize. Click a card to go to its thread; ⌥-click brings it to your pane, and dropping a card, or picking it from the chevron beside a pane's name, puts it exactly there. Other panes never change behind your back, so a dev server's log stays put. Files dropped on a terminal paste their paths, so a screenshot reaches Claude Code.
 - **Beside your editor.** Put Shoji in Split View next to a full-screen Zed or Chrome and drag the divider narrow: it turns compact, one column of one or two terminals, each picking its thread from a dropdown. Widen it and your full layout is back.
-- **Keyboard first.** ⌘K pops up a quick terminal in your thread's folder; ⌃Tab flips back to the thread you were just in, like ⌘Tab; ⌘J finds the next agent waiting on you. Hold ⌘ to see each card's number for ⌘1–9, and ⌘/ for every shortcut.
+- **Keyboard first.** ⌘K (or the bamboo at the top right) pops up a quick terminal in your thread's folder; ⌃Tab flips back to the thread you were just in, like ⌘Tab; ⌘J finds the next agent waiting on you. Hold ⌘ to see each card's number for ⌘1–9, and ⌘/ for every shortcut.
 - **Sizes your way.** ⌘+ and ⌘− size the terminal text, View › Interface Size the chrome, and ⌥⌘+ / ⌥⌘− keep one pane bigger or smaller than the rest.
 - **Real terminals, native chrome.** SwiftTerm with Metal, your login shell's environment, 10,000 lines of scrollback. Liquid Glass on the chrome; terminals sit on a dark background that lets a little of the window's light through, never blurred.
 - **Status from the CLI itself.** Claude Code and Codex report through their own hooks, added per launch, so `~/.claude` and `~/.codex` are never touched. Shoji never scrapes terminal output.
@@ -72,6 +73,7 @@ Every version merged to `main` publishes a DMG on [Releases](https://github.com/
 | Quick terminal in this folder (closing keeps a running command as a thread) | ⌘K |
 | Close thread (asks while something runs) | ⌘W |
 | Jump to card 1–9 (hold ⌘ to see the numbers) | ⌘1 … ⌘9 |
+| Hub (Esc goes back) | ⇧⌘H |
 | Show a card in your pane (swaps if it's on screen) | ⌥-click the card |
 | Previous thread (hold ⌃ to keep going, like ⌘Tab) | ⌃⇥ / ⌃⇧⇥ |
 | Next thread that needs you | ⌘J |
@@ -95,7 +97,7 @@ flowchart LR
     Zsh["zsh integration"] -- "folder · command · exit code<br/>(OSC 1337)" --> PTY
     PTY["SwiftTerm PTY"] -- "title · bell · shell reports · exit" --> Store
     Server -- "StatusEvent" --> Store["ThreadStore"]
-    Store --> UI["Cards and panes"]
+    Store --> UI["Cards, panes and Hub"]
 ```
 
 - Each thread is your login shell with `SHOJI_THREAD_ID` and `SHOJI_SOCKET` in its environment. For zsh, Shoji points `ZDOTDIR` at a tiny loader that restores yours, so your dotfiles load unchanged, then adds prompt hooks that report the folder and each command.
@@ -118,8 +120,8 @@ open build/Build/Products/Debug/Shoji.app
 
 ## Roadmap
 
-- **Now (v0.5):** a compact form for Split View beside your editor, and panes that let the window's light through
-- **Next:** a Hub view of every agent sorted by attention, with "Allow once"
+- **Now (v0.6):** the Hub, mini cards, and a corner of zen controls: the Hub, a new thread in any folder, the quick terminal
+- **Next:** "Allow once" from the Hub, and a signed, notarized build
 
 The live list is in [PLAN.md](PLAN.md#tasks).
 

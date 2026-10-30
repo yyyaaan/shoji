@@ -112,8 +112,8 @@ final class TerminalSessions {
         } else {
             popup.backend.terminate()
         }
-        // Never pulls a hidden thread back on screen.
-        if let id = store.focusedThreadId, store.layout.visibleThreadIds.contains(id) { store.open(id) }
+        // Never pulls a hidden thread back on screen, or leaves the Hub.
+        if !store.showsHub, let id = store.focusedThreadId, store.layout.visibleThreadIds.contains(id) { store.open(id) }
     }
 
     private func handlePopup(_ event: TerminalEvent) {

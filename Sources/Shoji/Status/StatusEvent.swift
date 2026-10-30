@@ -4,7 +4,8 @@ import Foundation
 struct StatusEvent: Equatable, Sendable {
     enum Signal: Equatable, Sendable {
         case launched
-        case working(sessionId: String?)
+        /// `step` is the tool just used ("Edit Header.tsx"), shown on the Hub card.
+        case working(sessionId: String?, step: String? = nil)
         case needsYou(message: String?)
         case finished
         case userInput
@@ -52,21 +53,41 @@ private struct HookPayload: Decodable {
         case toolInput = "tool_input"
     }
 
-    /// Only a shell command is shown; other tools' input has any shape.
+    /// Tools' input has any shape; only a command, file or pattern is read.
     struct ToolInput: Decodable {
         let command: String?
+        let filePath: String?
+        let pattern: String?
 
-        enum CodingKeys: String, CodingKey { case command }
+        enum CodingKeys: String, CodingKey {
+            case command
+            case filePath = "file_path"
+            case pattern
+        }
 
         init(from decoder: any Decoder) throws {
-            command = try? decoder.container(keyedBy: CodingKeys.self).decode(String.self, forKey: .command)
+            let container = try? decoder.container(keyedBy: CodingKeys.self)
+            command = try? container?.decode(String.self, forKey: .command)
+            filePath = try? container?.decode(String.self, forKey: .filePath)
+            pattern = try? container?.decode(String.self, forKey: .pattern)
         }
+    }
+
+    /// "Edit Header.tsx", "Bash pnpm test"; MCP tools (`mcp__server__tool`) by their own name.
+    var step: String? {
+        guard let toolName else { return nil }
+        let tool = toolName.components(separatedBy: "__").last ?? toolName
+        let command = toolInput?.command?.split(separator: "\n").first.map(String.init)
+        let target = command ?? toolInput?.filePath.map { ($0 as NSString).lastPathComponent } ?? toolInput?.pattern
+        return [tool, target].compactMap(\.self).joined(separator: " ")
     }
 
     var signal: StatusEvent.Signal? {
         switch hookEventName {
-        case "UserPromptSubmit", "PostToolUse":
+        case "UserPromptSubmit":
             .working(sessionId: sessionId)
+        case "PostToolUse":
+            .working(sessionId: sessionId, step: step)
         case "Notification":
             // idle_prompt repeats "waiting for input" after a finished turn; that's Done, not Needs you.
             ["idle_prompt", "auth_success"].contains(notificationType) ? nil : .needsYou(message: message)

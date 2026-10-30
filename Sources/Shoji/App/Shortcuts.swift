@@ -48,6 +48,7 @@ extension Shortcut {
     static let paneZoomOut = Shortcut(title: "Smaller Text in Pane", key: "-", modifiers: [.command, .option], keyLabel: "−")
     static let paneActualSize = Shortcut(title: "Pane Text Like Others", key: "0", modifiers: [.command, .option])
     static let showShortcuts = Shortcut(title: "Keyboard Shortcuts", key: "/")
+    static let hub = Shortcut(title: "Hub", key: "h", modifiers: [.command, .shift], hint: "Esc goes back")
 
     // Handled inside the terminal; listed for reference only.
     static let newline = Shortcut(title: "New Line in an Agent Prompt", key: .return, modifiers: .shift)
@@ -70,7 +71,7 @@ struct ShortcutSection: Identifiable {
         ],
         [
             ShortcutSection(title: "Arrange", symbol: "square.grid.2x2", shortcuts: [.singlePane, .twoColumns, .threePanes, .grid]),
-            ShortcutSection(title: "View", symbol: "textformat.size", shortcuts: [.zoomIn, .zoomOut, .actualSize, .paneZoomIn, .paneZoomOut, .paneActualSize, .showShortcuts]),
+            ShortcutSection(title: "View", symbol: "textformat.size", shortcuts: [.hub, .zoomIn, .zoomOut, .actualSize, .paneZoomIn, .paneZoomOut, .paneActualSize, .showShortcuts]),
             ShortcutSection(title: "In a terminal", symbol: "terminal", shortcuts: [.newline, .copy, .paste, .openLink]),
         ],
     ]
@@ -98,12 +99,12 @@ struct ShojiCommands: Commands {
             button(.quickTerminal) { sessions.togglePopup() }
         }
 
-        // Closes the quick terminal first; a busy thread confirms.
+        // Closes the quick terminal first; a busy thread confirms. In the Hub the focused thread is out of sight.
         CommandGroup(replacing: .saveItem) {
             button(.closeThread) {
                 if sessions.popup != nil { sessions.closePopup() } else { store.focusedThreadId.map(store.requestClose) }
             }
-            .disabled(store.focusedThreadId == nil && sessions.popup == nil)
+            .disabled((store.focusedThreadId == nil || store.showsHub) && sessions.popup == nil)
         }
 
         CommandMenu("Threads") {
@@ -170,6 +171,10 @@ struct ShojiCommands: Commands {
         }
 
         CommandGroup(before: .toolbar) {
+            Toggle(Shortcut.hub.title, isOn: Bindable(store).showsHub)
+                .keyboardShortcut(Shortcut.hub.key, modifiers: Shortcut.hub.modifiers)
+                .disabled(store.isCompact || store.threads.isEmpty)
+            Divider()
             Section("Interface Size") {
                 Picker("Interface Size", selection: $interfaceSize) {
                     ForEach(InterfaceSize.allCases) { Text($0.name).tag($0.rawValue) }

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ThreadCard: View {
     static let width: CGFloat = 188
+    static let miniWidth: CGFloat = 44
 
     let thread: ShojiThread
     let name: String
@@ -17,48 +18,26 @@ struct ThreadCard: View {
     @Environment(\.zoom) private var zoom
     @Environment(\.colorSchemeContrast) private var contrast
 
+    private var isMini: Bool { thread.isMini == true }
     private var needsYou: Bool { activity.status == .needsYou }
     /// Quiet ivory chrome and halo whatever the Hachi setting (docs/design/completion); orange stays with needs-you.
     private var finishedUnseen: Bool { activity.status == .done && activity.isUnseen }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6 * zoom) {
-            HStack(spacing: 8 * zoom) {
-                StatusIcon(status: activity.status, size: 22 * zoom)
-                if let tag {
-                    Text(tag)
-                        .font(.system(size: 10 * zoom, weight: .bold))
-                        .tracking(0.6 * zoom)
-                        .foregroundStyle(.white.opacity(0.8))
-                        .lineLimit(1)
-                }
-                Spacer(minLength: 0)
-                trailing
-            }
-            Text(name)
-                .font(.system(size: 15 * zoom, weight: .semibold))
-                .lineLimit(1)
-            Text(subtitle)
-                .font(.system(size: 11 * zoom, weight: .medium, design: .monospaced))
-                .foregroundStyle(needsYou ? Palette.needsYouText : .white.opacity(0.75))
-                .lineLimit(1)
-                .truncationMode(.middle)
-        }
+        content
         .foregroundStyle(Palette.text)
-        .padding(.horizontal, 14 * zoom)
-        .padding(.vertical, 12 * zoom)
-        .frame(width: Self.width * zoom, height: 104 * zoom, alignment: .topLeading)
+        .frame(width: (isMini ? Self.miniWidth : Self.width) * zoom, height: 104 * zoom, alignment: .topLeading)
         // Overlays must precede the glass: inside a GlassEffectContainer the glass draws over later ones.
         .overlay(alignment: .bottom) {
             if isOnScreen {
                 Capsule()
                     .fill(.white.opacity(isFocused ? 0.7 : 0.4))
-                    .frame(width: 24 * zoom, height: 3 * zoom)
+                    .frame(width: (isMini ? 16 : 24) * zoom, height: 3 * zoom)
                     .padding(.bottom, 6 * zoom)
             }
         }
         .overlay(alignment: .topTrailing) {
-            if wantsYou {
+            if wantsYou, !isMini {
                 HachiPortrait(size: 32 * zoom)
                     .padding(.top, 6 * zoom)
                     .padding(.trailing, 38 * zoom)
@@ -69,7 +48,15 @@ struct ThreadCard: View {
                 .strokeBorder(borderColor, lineWidth: 1)
         }
         .overlay(alignment: .topLeading) {
-            if let number {
+            if let number, isMini {
+                // In the leading gutter: an overhanging badge would hit the previous card's count badge.
+                Text("\(number)")
+                    .font(.system(size: 10 * zoom, weight: .semibold))
+                    .foregroundStyle(Palette.text)
+                    .frame(width: 8 * zoom)
+                    .offset(x: 4 * zoom, y: 34 * zoom)
+                    .transition(.opacity)
+            } else if let number {
                 Text("\(number)")
                     .font(.system(size: 12 * zoom, weight: .bold, design: .rounded))
                     .foregroundStyle(Palette.terminalBackground)
@@ -81,7 +68,8 @@ struct ThreadCard: View {
         }
         .overlay(alignment: .topTrailing) {
             if activity.attention > 0 {
-                Text("\(activity.attention)")
+                // A wider badge would cover a mini card's status icon.
+                Text(isMini && activity.attention > 9 ? "9+" : "\(activity.attention)")
                     .font(.system(size: 12 * zoom, weight: .bold))
                     .foregroundStyle(Color(hex: 0x1A1206))
                     .padding(.horizontal, 6 * zoom)
@@ -102,7 +90,51 @@ struct ThreadCard: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel([name, tag?.capitalized, activity.status.label, finishedUnseen ? "not seen yet" : nil, subtitle, isOnScreen ? "in a pane" : nil].compactMap(\.self).joined(separator: ", "))
-        .help(thread.displayFolder)
+        .help(isMini ? "\(name)\n\(subtitle)" : thread.displayFolder)
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        if isMini {
+            VStack(spacing: 3 * zoom) {
+                StatusIcon(status: activity.status, size: 18 * zoom)
+                // Reads top to bottom, like a book's spine.
+                Text(name)
+                    .font(.system(size: 11 * zoom, weight: .medium, design: .monospaced))
+                    .foregroundStyle(needsYou ? Palette.needsYouText : .white.opacity(0.75))
+                    .lineLimit(1)
+                    .frame(width: 63 * zoom, height: 14 * zoom, alignment: .leading)
+                    .rotationEffect(.degrees(90))
+                    .frame(width: 14 * zoom, height: 63 * zoom)
+            }
+            .padding(.top, 6 * zoom)
+            .frame(maxWidth: .infinity)
+        } else {
+            VStack(alignment: .leading, spacing: 6 * zoom) {
+                HStack(spacing: 8 * zoom) {
+                    StatusIcon(status: activity.status, size: 22 * zoom)
+                    if let tag {
+                        Text(tag)
+                            .font(.system(size: 10 * zoom, weight: .bold))
+                            .tracking(0.6 * zoom)
+                            .foregroundStyle(.white.opacity(0.8))
+                            .lineLimit(1)
+                    }
+                    Spacer(minLength: 0)
+                    trailing
+                }
+                Text(name)
+                    .font(.system(size: 15 * zoom, weight: .semibold))
+                    .lineLimit(1)
+                Text(subtitle)
+                    .font(.system(size: 11 * zoom, weight: .medium, design: .monospaced))
+                    .foregroundStyle(needsYou ? Palette.needsYouText : .white.opacity(0.75))
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
+            .padding(.horizontal, 14 * zoom)
+            .padding(.vertical, 12 * zoom)
+        }
     }
 
     private var tint: Color {
@@ -129,8 +161,10 @@ struct ThreadCard: View {
         }
     }
 
+    private var tag: String? { Self.tag(of: thread, activity) }
+
     /// The agent, or the running command's executable ("PNPM"); none at an idle prompt.
-    private var tag: String? {
+    static func tag(of thread: ShojiThread, _ activity: ThreadActivity) -> String? {
         if let agent = activity.agent { return agent.label }
         guard let executable = thread.command?.split(whereSeparator: \.isWhitespace).first else { return nil }
         return (String(executable) as NSString).lastPathComponent.uppercased()
@@ -154,7 +188,7 @@ struct ThreadCard: View {
     }
 
     /// "now", "6m", "2h", "3d".
-    private static func compactElapsed(since date: Date, now: Date) -> String {
+    static func compactElapsed(since date: Date, now: Date) -> String {
         let minutes = Int(now.timeIntervalSince(date) / 60)
         switch minutes {
         case ..<1: return "now"
@@ -167,9 +201,18 @@ struct ThreadCard: View {
 
 #Preview {
     let store = Mock.store()
-    HStack(spacing: 10) {
-        ForEach(store.threads) { thread in
-            ThreadCard(thread: thread, name: store.name(of: thread), activity: store.activity(for: thread.id), isFocused: thread.id == Mock.threads[1].id, isOnScreen: store.layout.visibleThreadIds.contains(thread.id), wantsYou: store.wantsYou(thread.id))
+    let minis = store.threads.map { thread in
+        var mini = thread
+        mini.isMini = true
+        return mini
+    }
+    VStack(alignment: .leading, spacing: 18) {
+        ForEach([store.threads, minis], id: \.first?.isMini) { threads in
+            HStack(spacing: 10) {
+                ForEach(threads) { thread in
+                    ThreadCard(thread: thread, name: store.name(of: thread), activity: store.activity(for: thread.id), isFocused: thread.id == Mock.threads[1].id, isOnScreen: store.layout.visibleThreadIds.contains(thread.id), wantsYou: store.wantsYou(thread.id))
+                }
+            }
         }
     }
     .padding(24)

@@ -53,4 +53,6 @@ protocol TerminalBackend: AnyObject {
     func setBackgroundOpacity(_ opacity: Double)
     /// A paste, bracketed when the program asked for it.
     func paste(_ text: String)
+    /// The live screen's rows as text, whatever the user scrolled to; for a glance, never for status.
+    func screenLines() -> [String]
 }
