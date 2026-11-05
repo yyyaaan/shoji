@@ -1,7 +1,6 @@
 import SwiftUI
 
-/// Every thread as a card, drawn over the panes. Groups run left to right like the shelf, each in one or more
-/// columns read top to bottom, with a bar between groups.
+/// Every thread as a card over the panes: groups left to right, each in one or more columns.
 struct HubView: View {
     @Environment(ThreadStore.self) private var store
     @Environment(TerminalSessions.self) private var sessions: TerminalSessions?
@@ -14,14 +13,17 @@ struct HubView: View {
         let spacing = 10 * zoom
         let barGap = 14 * zoom
         let room = max(width - 36, 0)
-        let fit = max(1, Int((room + spacing) / (320 * zoom + spacing)))
+        let bars = CGFloat(max(groups.count - 1, 0)) * (2 * barGap + 1)
+        // As if every gap were a column gap: a bar takes a wider one.
+        let columnRoom = room - bars + CGFloat(max(groups.count - 1, 0)) * spacing
+        let fit = max(1, Int((columnRoom + spacing) / (320 * zoom + spacing)))
         let spans = Self.columns(for: groups.map(\.count), fitting: fit)
         let total = max(spans.reduce(0, +), 1)
-        let bars = CGFloat(max(groups.count - 1, 0)) * (2 * barGap + 1)
         let gaps = CGFloat(total - groups.count) * spacing
         // Filling the width, but never wider than a card would be with every column in use.
-        let columnWidth = max(320 * zoom, min((room - bars - gaps) / CGFloat(total), (room - CGFloat(fit - 1) * spacing) / CGFloat(fit)))
-        ScrollView(total > fit ? [.vertical, .horizontal] : .vertical) {
+        let columnWidth = max(320 * zoom, min((room - bars - gaps) / CGFloat(total), (columnRoom - CGFloat(fit - 1) * spacing) / CGFloat(fit)))
+        let overflows = CGFloat(total) * columnWidth + gaps + bars > room + 0.5
+        ScrollView(overflows ? [.vertical, .horizontal] : .vertical) {
             GlassEffectContainer {
                 HStack(alignment: .top, spacing: barGap) {
                     ForEach(Array(groups.enumerated()), id: \.element.first?.id) { index, threads in
@@ -86,8 +88,7 @@ extension HubView {
     }
 }
 
-/// The Hub's top row: Hachi, the thread count and a pill per state worth a look, beside the corner controls.
-/// When the pills don't fit they wrap onto rows of their own below.
+/// The Hub's top row; the pills wrap below when they don't fit.
 struct HubHeader: View {
     @Environment(ThreadStore.self) private var store
     @Environment(\.zoom) private var zoom
@@ -110,7 +111,7 @@ struct HubHeader: View {
             CornerControls()
         }
         .lineLimit(1)
-        // Hachi beside the window buttons, as in the compact form.
+        // Clear of the window buttons.
         .padding(.leading, 78)
         .padding(.trailing, 18)
     }
@@ -146,7 +147,6 @@ struct HubHeader: View {
         pill(working, "working", color: Palette.working, text: Color(hex: 0xA5D0FF))
         pill(running, "running", color: Palette.running, text: Color(hex: 0x7EE2CB))
         pill(failed, "failed", color: Palette.exited, text: Palette.exitedText)
-        // Only where no pill shows, so it never stands in for a status.
         if asking + finished + working + running + failed == 0 {
             Label {
                 Text("All quiet")

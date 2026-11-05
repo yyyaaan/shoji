@@ -8,9 +8,9 @@ struct ThreadCard: View {
     let name: String
     let activity: ThreadActivity
     var isFocused = false
-    /// Shown in a pane, so a click only moves focus there.
+    /// Shown in a pane.
     var isOnScreen = false
-    /// Needs you, or finished unseen with Hachi on finish (`ThreadStore.wantsYou`): shows Hachi.
+    /// `ThreadStore.wantsYou`: shows Hachi.
     var wantsYou = false
     /// Its ⌘1–9 number, while ⌘ is held.
     var number: Int?
@@ -22,7 +22,7 @@ struct ThreadCard: View {
 
     private var isMini: Bool { thread.isMini == true }
     private var needsYou: Bool { activity.status == .needsYou }
-    /// Quiet ivory chrome and halo whatever the Hachi setting (docs/design/completion); orange stays with needs-you.
+    /// Ivory chrome and halo whatever the Hachi setting (docs/design/completion).
     private var finishedUnseen: Bool { activity.status == .done && activity.isUnseen }
 
     var body: some View {

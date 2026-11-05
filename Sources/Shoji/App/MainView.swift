@@ -17,9 +17,7 @@ struct MainView: View {
             if store.threads.isEmpty {
                 welcome
             } else {
-                // No title bar: the shelf shares the top with the window buttons.
                 if store.isCompact {
-                    // Hachi beside the window buttons; no shelf, each row picks its thread.
                     // Seated at the bottom, so the count badge above Hachi stays inside the window.
                     HStack(spacing: 0) {
                         HachiCorner()
@@ -31,7 +29,7 @@ struct MainView: View {
                     HubHeader()
                 } else {
                     HStack(alignment: .top, spacing: 0) {
-                        // Clear of the window's close, minimize and zoom buttons; Hachi's corner sits below them.
+                        // Clear of the window buttons.
                         HachiCorner()
                             .frame(width: 78)
                             .frame(maxHeight: .infinity, alignment: .bottom)

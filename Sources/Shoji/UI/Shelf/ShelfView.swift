@@ -1,8 +1,7 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// Cards in the user's order, with a bar between groups. Groups mean whatever the user wants; cards
-/// are dragged into place, and the context menu adds or removes bars. Scrolls sideways when the cards overflow.
+/// Cards in the user's order, with a bar between groups.
 struct ShelfView: View {
     @Environment(ThreadStore.self) private var store
     @Environment(\.zoom) private var zoom
@@ -55,7 +54,6 @@ struct ShelfView: View {
                     number: numbers[thread.id]
                 )
                 .contentShape(.rect)
-                // A click goes to the thread; ⌥-click brings it to the pane you're in.
                 .onTapGesture {
                     if NSEvent.modifierFlags.contains(.option) { store.bringHere(thread.id) } else { store.open(thread.id) }
                 }
@@ -115,8 +113,7 @@ struct CardMenu: View {
     }
 }
 
-/// Holding ⌘ alone for a moment numbers the cards for ⌘1–9; any key, another modifier or leaving Shoji hides them,
-/// so quick shortcuts never flash them.
+/// ⌘ held alone for a moment shows the ⌘1–9 numbers, so quick shortcuts never flash them.
 @MainActor
 enum CardNumberKeys {
     private static var monitor: Any?

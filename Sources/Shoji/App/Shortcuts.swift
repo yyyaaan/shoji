@@ -99,7 +99,7 @@ struct ShojiCommands: Commands {
             button(.quickTerminal) { sessions.togglePopup() }
         }
 
-        // Closes the quick terminal first; a busy thread confirms. In the Hub the focused thread is out of sight.
+        // Off in the Hub, where the focused thread is out of sight.
         CommandGroup(replacing: .saveItem) {
             button(.closeThread) {
                 if sessions.popup != nil { sessions.closePopup() } else { store.focusedThreadId.map(store.requestClose) }
@@ -201,7 +201,6 @@ struct ShojiCommands: Commands {
         }
     }
 
-    /// Credits: the full name and the bundled open-source notices.
     private func showAbout() {
         let notices = Bundle.main.url(forResource: "ThirdPartyNotices", withExtension: "txt").flatMap { try? String(contentsOf: $0, encoding: .utf8) } ?? ""
         let centered = NSMutableParagraphStyle()

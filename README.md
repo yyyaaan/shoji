@@ -54,9 +54,7 @@ Shoji is deliberately not an editor, a diff viewer or an agent client. It never 
 ```sh
 brew install xcodegen
 git clone https://github.com/yyyaaan/shoji.git && cd shoji
-scripts/package.sh                         # universal Release build and DMG
-scripts/package.sh --install               # build into /Applications and clear build apps and DMGs
-ditto build/Build/Products/Release/Shoji.app /Applications/Shoji.app
+scripts/package.sh --install   # Release build into /Applications (without --install: build/Shoji-<version>.dmg)
 open /Applications/Shoji.app
 ```
 
@@ -102,10 +100,10 @@ flowchart LR
 ```
 
 - Each thread is your login shell with `SHOJI_THREAD_ID` and `SHOJI_SOCKET` in its environment. For zsh, Shoji points `ZDOTDIR` at a tiny loader that restores yours, so your dotfiles load unchanged, then adds prompt hooks that report the folder and each command.
-- Typing `claude` or `codex` in a thread runs it with Shoji's hooks for that run only (`--settings` for Claude, a `-c` override for Codex), so `~/.claude` and `~/.codex` are never touched. They call the bundled `shoji-hook`, which forwards the event to Shoji in about 10 ms and exits silently when Shoji isn't running, so it never slows the CLI.
+- Typing `claude` or `codex` in a thread runs it with Shoji's hooks for that run only (`--settings` for Claude, a `-c` override for Codex), so `~/.claude` and `~/.codex` are never touched. They call the bundled `shoji-hook`, which forwards the event to Shoji and exits at once, silently when Shoji isn't running, so it never slows the CLI.
 - Every status change, from a hook or from the terminal, goes through one path into `ThreadStore`.
 - No tmux, no multiplexer: threads persist through each CLI's own resume. On relaunch an agent thread runs `claude --resume <id>` or `codex resume <id>` at its first prompt; any other last command waits at the prompt for you to press Return.
-- Shoji never types into a terminal on its own; anything it sends will come from an explicit click, showing exactly what it sends.
+- Shoji never types into a terminal on its own.
 
 ## Development
 
@@ -115,7 +113,7 @@ xcodebuild -scheme Shoji -derivedDataPath build -destination 'platform=macOS' -s
 open build/Build/Products/Debug/Shoji.app
 ```
 
-`project.yml` is the source of truth; the Xcode project is generated and not committed. `-skipPackagePluginValidation` is needed because SwiftTerm runs a build-tool plugin; in Xcode, choose **Trust & Enable** once instead. Tests use Swift Testing, and CI runs them on every pull request and posts the results as a comment (`scripts/test-report.py`).
+The Xcode project is generated from `project.yml` and not committed. `-skipPackagePluginValidation` is needed because SwiftTerm runs a build-tool plugin; in Xcode, choose **Trust & Enable** once instead. CI runs the tests on every pull request and posts the results as a comment.
 
 [AGENTS.md](AGENTS.md) is the contributor guide for people and coding agents alike: layout, conventions and the invariants that keep Shoji safe around your CLIs. [PLAN.md](PLAN.md) holds the current state, gotchas and decisions.
 

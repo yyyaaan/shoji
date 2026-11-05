@@ -58,7 +58,7 @@ struct QuickTerminalButton: View {
     }
 }
 
-/// The stones: a new thread in one of the folders inside a folder you choose, which the menu also changes.
+/// The stones: a new thread in a subfolder of a folder you choose.
 struct FolderMenu: View {
     @Environment(ThreadStore.self) private var store
     @Environment(\.zoom) private var zoom

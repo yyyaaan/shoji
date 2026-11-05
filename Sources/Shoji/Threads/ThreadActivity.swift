@@ -55,18 +55,10 @@ struct ThreadActivity: Equatable, Sendable {
     /// False once the shell itself has ended; Restart starts a new one.
     var isAlive = true
 
-    init(status: ThreadStatus, since: Date, attention: Int = 0, detail: String? = nil, terminalTitle: String? = nil, agent: Agent? = nil) {
-        self.status = status
-        self.since = since
-        self.attention = attention
-        self.detail = detail
-        self.terminalTitle = terminalTitle
-        self.agent = agent
-    }
-
     /// A fresh shell, at its prompt.
     init(launchedAt now: Date) {
-        self.init(status: .idle, since: now)
+        status = .idle
+        since = now
     }
 
     mutating func transition(to status: ThreadStatus, at now: Date) {

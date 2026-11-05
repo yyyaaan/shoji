@@ -1,6 +1,5 @@
 import SwiftUI
 
-/// A thread in the Hub.
 struct HubCard: View {
     let thread: ShojiThread
     /// Its ⌘1–9 number, while ⌘ is held.
@@ -159,7 +158,6 @@ struct HubCard: View {
     private var excerpt: some View {
         TimelineView(.periodic(from: .now, by: 1)) { _ in
             let roomy = summaryText == nil
-            // A snapshot only for cards in view.
             let lines = isInView ? Excerpt.lines(sessions?.terminal(for: thread.id)?.screenLines() ?? [], count: roomy ? 4 : 2) : []
             VStack(alignment: .leading, spacing: 1 * zoom) {
                 ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
@@ -241,8 +239,8 @@ struct HubCard: View {
     }
 }
 
-/// A thread's last screen lines, without an agent's input box and footer (from a box-drawing rule near the bottom)
-/// and the two lines above the box, which are its spinner and hints rather than the reply.
+/// A thread's last screen lines, minus an agent's input box (from a box-drawing rule near the bottom) and the
+/// spinner and hint lines above it.
 enum Excerpt {
     static func lines(_ screen: [String], count: Int) -> [String] {
         var rows = Array(screen.reversed().drop(while: isBlank).reversed())
@@ -264,7 +262,6 @@ enum Excerpt {
     }
 }
 
-/// The folder's quiet links at the end of a card's actions.
 private struct FolderLinkStyle: ButtonStyle {
     let zoom: Double
 

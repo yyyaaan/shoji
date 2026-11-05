@@ -62,7 +62,7 @@ final class ThreadStore {
     private(set) var recentSwitch: RecentSwitch?
     /// ⌘ held on its own: the first nine cards show their ⌘1–9 number.
     var showsCardNumbers = false
-    /// Threads › Show Hachi When an Agent Finishes: an unseen finished turn wants you too, not just its quiet tick.
+    /// An unseen finished turn wants you too, not just its quiet tick.
     var hachiOnFinish = true
     /// False while another app is in front, when even the focused pane is out of sight.
     var isAppActive = true {
@@ -177,7 +177,7 @@ final class ThreadStore {
         }
     }
 
-    /// Waiting on an answer, or (with `hachiOnFinish`) done while you weren't looking: Hachi, orange card, ⌘J.
+    /// Needs you, or (with `hachiOnFinish`) finished unseen: Hachi and ⌘J.
     func wantsYou(_ id: UUID) -> Bool {
         let activity = activity(for: id)
         return activity.status == .needsYou || (hachiOnFinish && activity.isUnseen)
@@ -211,8 +211,7 @@ final class ThreadStore {
 
     // MARK: Adding and removing
 
-    /// Opens a fresh shell right after the focused card, in `folder` or else that thread's (home when nothing is
-    /// focused); with `target`, after that card and in its pane.
+    /// After the focused card and opened like a click; with `target`, after that card and in its pane.
     @discardableResult
     func newThread(inPaneOf target: UUID? = nil, folder: String? = nil, at now: Date = .now) -> UUID {
         let id = addThread(after: target ?? focusedThreadId, folder: folder, at: now)
@@ -264,8 +263,7 @@ final class ThreadStore {
         threads[index].title = title.isEmpty ? nil : title
     }
 
-    /// Closes at once when nothing would be lost (the shell ended, or sits idle at its prompt);
-    /// otherwise asks the window to confirm.
+    /// Closes at once when nothing would be lost; otherwise asks the window to confirm.
     func requestClose(_ id: UUID) {
         let activity = activity(for: id)
         let atPrompt = activity.isIntegrated && activity.agent == nil && thread(id)?.command == nil
@@ -347,14 +345,12 @@ final class ThreadStore {
         arrange(groups)
     }
 
-    /// True when the card starts a group that has another group to its left.
     func hasBarBefore(_ id: UUID) -> Bool {
         guard let place = position(of: id, in: shelfIds) else { return false }
         return place.index == 0 && place.group > 0
     }
 
-    /// Adds a bar before the card, so it and the cards after it form their own group;
-    /// or removes that bar, merging its group into the one on the left.
+    /// Splits the group before the card, or merges the card's group into the left one.
     func toggleBarBefore(_ id: UUID) {
         var groups = shelfIds
         guard let place = position(of: id, in: groups) else { return }
@@ -413,8 +409,7 @@ final class ThreadStore {
         focusRequest = id
     }
 
-    /// ⌥-click on a card, or Show in This Pane: the thread comes to the pane you're in, trading places when
-    /// it's on screen elsewhere. A plain click uses `open` and goes to the thread where it is.
+    /// Into your pane, trading places when it's on screen elsewhere.
     func bringHere(_ id: UUID) {
         guard let focusedThreadId, focusedThreadId != id, layout.panes.contains(focusedThreadId) else { return open(id) }
         show(id, inPaneOf: focusedThreadId)
@@ -543,8 +538,7 @@ final class ThreadStore {
         var selected: UUID { threadIds[index] }
     }
 
-    /// ⌃Tab steps through threads in the order you last used them, ⌃⇧Tab the other way, like ⌘Tab for apps.
-    /// The first ⌃Tab picks the previous thread; `finishRecentSwitch` opens the pick once ⌃ is released.
+    /// The first step picks the previous thread; `finishRecentSwitch` opens the pick.
     func stepRecent(by offset: Int) {
         if var current = recentSwitch {
             current.index = (current.index + offset + current.threadIds.count) % current.threadIds.count
