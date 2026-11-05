@@ -1,7 +1,6 @@
 import SwiftUI
 
-/// The open threads' panes. A pane keeps its identity while the layout changes around it, so its terminal
-/// stays hosted where it is instead of moving to a new host on every layout switch.
+/// One `PaneView` per thread, placed by frame so a layout change never re-hosts a terminal.
 struct PaneGrid: View {
     @Environment(ThreadStore.self) private var store
 

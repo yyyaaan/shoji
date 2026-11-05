@@ -1,7 +1,6 @@
 import SwiftUI
 
-/// The window's top-left corner, under the close, minimize and zoom buttons. Empty until a thread needs you;
-/// then Hachi peeks out with the count, and a click opens the next one (⌘J).
+/// The window's top-left corner: Hachi and the count while a thread wants you.
 struct HachiCorner: View {
     @Environment(ThreadStore.self) private var store
     @Environment(\.zoom) private var zoom

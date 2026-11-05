@@ -12,7 +12,6 @@ struct QuickTerminal: View {
             // At least 18 pt clear of the window's edges.
             let height = min(300 * zoom, proxy.size.height - 36)
             ZStack(alignment: .top) {
-                // A click outside closes it.
                 Color.black.opacity(0.12)
                     .contentShape(.rect)
                     .onTapGesture(perform: close)
@@ -31,13 +30,12 @@ struct QuickTerminal: View {
                         .allowsHitTesting(false)
                 }
                 .shadow(color: .black.opacity(0.45), radius: 30, y: 12)
-                // Above centre, like Spotlight; level with the panes it read as one more pane.
+                // Above centre, like Spotlight, so it doesn't read as one more pane.
                 .padding(.top, max((proxy.size.height - height) * 0.4, 18))
             }
         }
     }
 
-    /// The hint moves to a second line rather than squeezing the title when narrow.
     private var header: some View {
         ViewThatFits(in: .horizontal) {
             HStack(spacing: 10 * zoom) {

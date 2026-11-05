@@ -21,14 +21,15 @@ project.yml                 XcodeGen spec (source of truth for targets and setti
 scripts/
   shoji-hook                hook client bundled into the app: env + JSON -> Shoji socket
   shoji.zsh, zshenv         zsh integration bundled into the app (folder, commands, claude/codex hooks, resume)
-  package.sh                Release build -> build/Shoji-<version>.dmg (used by release.yml)
+  package.sh                Release build -> build/Shoji-<version>.dmg (used by release.yml), or --install
   test-report.py            .xcresult -> Markdown test report (used by ci.yml)
 Sources/Shoji/
   Info.plist                merged with the generated keys; only what has no INFOPLIST_KEY_ setting (the card drag type)
   ThirdPartyNotices.txt     SwiftTerm's MIT licence, shown in the About panel
   App/                      ShojiApp (wiring, window, AppDelegate's quit check), MainView (full and compact forms),
                             Shortcuts (catalog + menus), Notifier (Dock badge, notifications), Editor (VS Code / Zed)
-  Threads/                  ShojiThread, ThreadStore, PaneLayout (split tree, presets, PaneTiles), ThreadFile, launch building, GitBranch, Mock
+  Threads/                  ShojiThread, ThreadActivity (runtime status), ThreadStore, PaneLayout (split tree, presets, PaneTiles),
+                            ThreadFile, ThreadLaunch, GitBranch, Mock
   Terminal/                 TerminalBackend protocol, SwiftTerm implementation (only place importing SwiftTerm), TerminalSessions
   Status/                   StatusEvent, HookServer (socket listener), ClaudeHooks, CodexHooks
   UI/                       Theme (palette), StatusIcon, Backdrop, Zoom (text and interface sizes), ShortcutsSheet, RecentSwitch (⌃Tab),
@@ -51,7 +52,8 @@ xcodegen generate        # after any project.yml change and on a fresh clone (.x
 xcodebuild -scheme Shoji -derivedDataPath build -destination 'platform=macOS' -skipPackagePluginValidation build
 xcodebuild -scheme Shoji -derivedDataPath build -destination 'platform=macOS' -skipPackagePluginValidation test
 open build/Build/Products/Debug/Shoji.app
-scripts/package.sh [version]     # universal Release app + DMG, ad-hoc signed
+scripts/package.sh [version]     # universal Release app + DMG; signed with "Shoji Local" if in the keychain, else ad-hoc
+scripts/package.sh --install     # the same app into /Applications, then removes build apps and DMGs (Spotlight)
 # Releasing: bump MARKETING_VERSION in project.yml in a PR; merging it publishes vX.Y.Z (release.yml)
 ```
 
@@ -120,7 +122,4 @@ Terminal background `#0C0F15`; UI type SF Pro; terminal font the monospaced syst
 
 - Don't add an editor, diff view, file tree or git UI.
 - Don't call model APIs or embed agent SDKs.
-- Don't put glass or blur behind terminal text, or take a pane's background below `Palette.paneOpacity`.
-- Don't parse terminal output for status (invariant 5).
-- Don't hand-edit `.pbxproj`.
 - Don't change an invariant without asking; propose it in PLAN.md Open questions.

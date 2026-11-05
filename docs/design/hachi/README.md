@@ -31,7 +31,7 @@ The portrait's white face is opaque and everything outside the silhouette transp
 
 - Overlays go before `.glassEffect` inside a `GlassEffectContainer`; the portrait doesn't take hits and is hidden from accessibility, leaving the card's label and actions as they are.
 - Static by default and under Reduce Motion; any later fade stays subtle, off with Reduce Motion, and never repeats on count or hook updates.
-- Dark UI only: terminal `#0C0F15`, window `#0B0E13`, glass on chrome. Panes use `Palette.paneOpacity` without blur; quick-terminal and Hub screen boxes stay solid, as do panes under Reduce Transparency.
+- Dark UI only: terminal `#0C0F15`, window `#0B0E13`, glass on chrome only (AGENTS invariant 3).
 
 ## App icon layers
 

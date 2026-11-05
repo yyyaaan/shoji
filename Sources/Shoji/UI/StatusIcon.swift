@@ -54,7 +54,7 @@ struct StatusIcon: View {
         case .done, .exited(code: 0?):
             glyph("checkmark", tint: Palette.done, ring: Palette.done.opacity(0.7), fill: .white.opacity(0.08))
         case .idle:
-            // At a prompt (docs/design/status). Hachi stays reserved for needs-you.
+            // docs/design/status
             Image(.idleTorii)
                 .resizable()
                 .scaledToFit()

@@ -8,19 +8,21 @@ struct ThreadCard: View {
     let name: String
     let activity: ThreadActivity
     var isFocused = false
-    /// Shown in a pane, so a click only moves focus there.
+    /// Shown in a pane.
     var isOnScreen = false
-    /// Needs you, or finished unseen with Hachi on finish (`ThreadStore.wantsYou`): shows Hachi.
+    /// `ThreadStore.wantsYou`: shows Hachi.
     var wantsYou = false
     /// Its ⌘1–9 number, while ⌘ is held.
     var number: Int?
 
     @Environment(\.zoom) private var zoom
     @Environment(\.colorSchemeContrast) private var contrast
+    @State private var isHovering = false
+    @State private var showsPeek = false
 
     private var isMini: Bool { thread.isMini == true }
     private var needsYou: Bool { activity.status == .needsYou }
-    /// Quiet ivory chrome and halo whatever the Hachi setting (docs/design/completion); orange stays with needs-you.
+    /// Ivory chrome and halo whatever the Hachi setting (docs/design/completion).
     private var finishedUnseen: Bool { activity.status == .done && activity.isUnseen }
 
     var body: some View {
@@ -48,15 +50,7 @@ struct ThreadCard: View {
                 .strokeBorder(borderColor, lineWidth: 1)
         }
         .overlay(alignment: .topLeading) {
-            if let number, isMini {
-                // In the leading gutter: an overhanging badge would hit the previous card's count badge.
-                Text("\(number)")
-                    .font(.system(size: 10 * zoom, weight: .semibold))
-                    .foregroundStyle(Palette.text)
-                    .frame(width: 8 * zoom)
-                    .offset(x: 4 * zoom, y: 34 * zoom)
-                    .transition(.opacity)
-            } else if let number {
+            if let number {
                 Text("\(number)")
                     .font(.system(size: 12 * zoom, weight: .bold, design: .rounded))
                     .foregroundStyle(Palette.terminalBackground)
@@ -90,7 +84,15 @@ struct ThreadCard: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel([name, tag?.capitalized, activity.status.label, finishedUnseen ? "not seen yet" : nil, subtitle, isOnScreen ? "in a pane" : nil].compactMap(\.self).joined(separator: ", "))
-        .help(isMini ? "\(name)\n\(subtitle)" : thread.displayFolder)
+        .help(isMini ? "" : thread.displayFolder)
+        .onHover { isHovering = $0 }
+        .task(id: isHovering && isMini) {
+            showsPeek = false
+            guard isHovering, isMini, (try? await Task.sleep(for: .milliseconds(300))) != nil else { return }
+            showsPeek = true
+        }
+        // Drawn by MainView below the shelf: a popover would swallow the click that closes it.
+        .anchorPreference(key: MiniPeek.Key.self, value: .bounds) { showsPeek ? MiniPeek(anchor: $0, name: name, subtitle: subtitle, needsYou: needsYou) : nil }
     }
 
     @ViewBuilder
@@ -195,6 +197,51 @@ struct ThreadCard: View {
         case ..<60: return "\(minutes)m"
         case ..<(60 * 24): return "\(minutes / 60)h"
         default: return "\(minutes / (60 * 24))d"
+        }
+    }
+}
+
+/// A hovered mini card's name and subtitle, shown under it as a full card shows them.
+struct MiniPeek: Equatable {
+    let anchor: Anchor<CGRect>
+    let name: String
+    let subtitle: String
+    let needsYou: Bool
+
+    struct Key: PreferenceKey {
+        static let defaultValue: MiniPeek? = nil
+        static func reduce(value: inout MiniPeek?, nextValue: () -> MiniPeek?) {
+            value = value ?? nextValue()
+        }
+    }
+
+    struct Label: View {
+        let peek: MiniPeek
+        @Environment(\.zoom) private var zoom
+
+        var body: some View {
+            GeometryReader { proxy in
+                let card = proxy[peek.anchor]
+                VStack(alignment: .leading, spacing: 4 * zoom) {
+                    Text(peek.name)
+                        .font(.system(size: 15 * zoom, weight: .semibold))
+                        .foregroundStyle(Palette.text)
+                    Text(peek.subtitle)
+                        .font(.system(size: 11 * zoom, weight: .medium, design: .monospaced))
+                        .foregroundStyle(peek.needsYou ? Palette.needsYouText : .white.opacity(0.75))
+                        .truncationMode(.middle)
+                }
+                .lineLimit(1)
+                .padding(.horizontal, 14 * zoom)
+                .padding(.vertical, 10 * zoom)
+                .glassEffect(.regular, in: .rect(cornerRadius: 14 * zoom))
+                .frame(maxWidth: max(proxy.size.width - card.minX - 12, 120), alignment: .leading)
+                .fixedSize(horizontal: false, vertical: true)
+                .offset(x: card.minX, y: card.maxY + 6 * zoom)
+            }
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+            .transition(.opacity)
         }
     }
 }

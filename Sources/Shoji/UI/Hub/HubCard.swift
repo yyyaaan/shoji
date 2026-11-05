@@ -1,6 +1,5 @@
 import SwiftUI
 
-/// A thread in the Hub.
 struct HubCard: View {
     let thread: ShojiThread
     /// Its ⌘1–9 number, while ⌘ is held.
@@ -11,6 +10,7 @@ struct HubCard: View {
     @Environment(\.zoom) private var zoom
     @Environment(\.colorSchemeContrast) private var contrast
     @State private var branch: String?
+    @State private var isInView = true
 
     private var activity: ThreadActivity { store.activity(for: thread.id) }
     private var needsYou: Bool { activity.status == .needsYou }
@@ -48,6 +48,7 @@ struct HubCard: View {
         .glassEffect(.regular.tint(tint), in: .rect(cornerRadius: 16 * zoom))
         .contextMenu { CardMenu(thread: thread) }
         .task(id: thread.folder) { branch = GitBranch.of(thread.folder) }
+        .onScrollVisibilityChange(threshold: 0.01) { isInView = $0 }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(store.name(of: thread))
         .accessibilityAction(named: "Open") { store.open(thread.id) }
@@ -157,7 +158,7 @@ struct HubCard: View {
     private var excerpt: some View {
         TimelineView(.periodic(from: .now, by: 1)) { _ in
             let roomy = summaryText == nil
-            let lines = Excerpt.lines(sessions?.terminal(for: thread.id)?.screenLines() ?? [], count: roomy ? 4 : 2)
+            let lines = isInView ? Excerpt.lines(sessions?.terminal(for: thread.id)?.screenLines() ?? [], count: roomy ? 4 : 2) : []
             VStack(alignment: .leading, spacing: 1 * zoom) {
                 ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
                     Text(line).lineLimit(1)
@@ -238,14 +239,17 @@ struct HubCard: View {
     }
 }
 
-/// A thread's last screen lines, without an agent's input box and footer (from a box-drawing rule near the bottom).
+/// A thread's last screen lines, minus an agent's input box (from a box-drawing rule near the bottom) and the
+/// spinner and hint lines above it.
 enum Excerpt {
     static func lines(_ screen: [String], count: Int) -> [String] {
         var rows = Array(screen.reversed().drop(while: isBlank).reversed())
+        var hidden = 0
         if let rule = rows.indices.suffix(12).first(where: { isRule(rows[$0]) }) {
             rows.removeSubrange(rule...)
+            hidden = 2
         }
-        return Array(rows.filter { !isBlank($0) }.suffix(count))
+        return Array(rows.filter { !isBlank($0) }.dropLast(hidden).suffix(count))
     }
 
     private static func isBlank(_ line: String) -> Bool {
@@ -258,7 +262,6 @@ enum Excerpt {
     }
 }
 
-/// The folder's quiet links at the end of a card's actions.
 private struct FolderLinkStyle: ButtonStyle {
     let zoom: Double
 

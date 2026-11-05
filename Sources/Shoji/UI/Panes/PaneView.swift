@@ -201,7 +201,7 @@ struct PaneView: View {
             .font(.system(size: 10 * zoom, weight: .bold))
     }
 
-    /// The shelf's cards; picking one puts it in this pane, trading places if it's on screen, like a drop.
+    /// Picking one is like a drop on this pane.
     @ViewBuilder
     private var threadItems: some View {
         Picker("Thread", selection: Binding { thread.id } set: { store.show($0, inPaneOf: thread.id) }) {

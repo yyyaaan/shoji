@@ -2,8 +2,7 @@ import AppKit
 import Carbon.HIToolbox
 import SwiftUI
 
-/// ⌃Tab works like ⌘Tab, for threads: hold ⌃ and press Tab to step through the threads you used last,
-/// release ⌃ to open the one picked; Esc cancels. An event monitor, so these keys never reach the terminal.
+/// ⌃Tab like ⌘Tab; an event monitor, so it sees ⌃'s release and the keys never reach the terminal.
 @MainActor
 enum RecentSwitchKeys {
     private static var monitor: Any?
@@ -22,7 +21,6 @@ enum RecentSwitchKeys {
             if !flags.contains(.control) { store.finishRecentSwitch() }
             return false
         }
-        // Not while a sheet or alert is up.
         guard event.window?.sheetParent == nil else { return false }
         if event.keyCode == UInt16(kVK_Tab), flags.subtracting(.shift) == .control {
             store.stepRecent(by: flags.contains(.shift) ? -1 : 1)
@@ -51,7 +49,6 @@ struct RecentSwitchPanel: View {
     @Environment(\.zoom) private var zoom
 
     var body: some View {
-        // Scrolls only when the list doesn't fit.
         ViewThatFits(in: .vertical) {
             list
             ScrollViewReader { proxy in

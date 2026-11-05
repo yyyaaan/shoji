@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Hachi's static portrait, decoration on needs-you agent cards only. Spec: docs/design/hachi/README.md.
+/// Spec: docs/design/hachi/README.md.
 struct HachiPortrait: View {
     let size: CGFloat
 

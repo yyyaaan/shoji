@@ -29,7 +29,7 @@ Shoji is deliberately not an editor, a diff viewer or an agent client. It never 
 
 - **Every thread is your shell.** ⌘N opens one next to the card you're on, and the stones under the lantern open one in any folder of, say, `~/code`. `cd` anywhere, run `claude`, `codex` or `pnpm dev`, quit back to the prompt; the card follows along, named after what an agent is working on. Reopen Shoji and your threads, layout and Claude or Codex conversations come back.
 - **Know who needs you.** Every status has its own shape and label. A card that needs you turns orange and brings out Hachi, who also peeks out by the window buttons: one click opens it. Out of sight, a macOS notification says which thread wants you, and the Dock badge keeps the count. A finish you didn't see gets a soft ivory glow, like an unread mark.
-- **Your shelf, your groups.** Drag cards into place and drop plain bars between them; groups mean whatever you want. Make a card mini, just its status and name down the side, for threads you keep around but rarely visit.
+- **Your shelf, your groups.** Drag cards into place and drop plain bars between them; groups mean whatever you want. Make a card mini, just its status and name down the side, for threads you keep around but rarely visit; hover one for its name and folder.
 - **The Hub.** ⇧⌘H, or the lantern at the top right, swaps the panes for a card per thread, in your shelf's order: what it's waiting on or just did, its folder and git branch, its last lines, and one click into it. Esc goes back.
 - **Panes that stay out of the way.** Split any pane in any direction (⌘D, ⇧⌘D, its header's menu, or drop a card on its edge) and drag the gaps to resize. Click a card to go to its thread; ⌥-click brings it to your pane, and dropping a card, or picking it from the chevron beside a pane's name, puts it exactly there. Other panes never change behind your back, so a dev server's log stays put. Files dropped on a terminal paste their paths, so a screenshot reaches Claude Code.
 - **Beside your editor.** Put Shoji in Split View next to a full-screen Zed or Chrome and drag the divider narrow: it turns compact, one column of one or two terminals, each picking its thread from a dropdown. Widen it and your full layout is back.
@@ -54,8 +54,7 @@ Shoji is deliberately not an editor, a diff viewer or an agent client. It never 
 ```sh
 brew install xcodegen
 git clone https://github.com/yyyaaan/shoji.git && cd shoji
-scripts/package.sh                         # universal Release build and DMG
-ditto build/Build/Products/Release/Shoji.app /Applications/Shoji.app
+scripts/package.sh --install   # Release build into /Applications (without --install: build/Shoji-<version>.dmg)
 open /Applications/Shoji.app
 ```
 
@@ -101,10 +100,10 @@ flowchart LR
 ```
 
 - Each thread is your login shell with `SHOJI_THREAD_ID` and `SHOJI_SOCKET` in its environment. For zsh, Shoji points `ZDOTDIR` at a tiny loader that restores yours, so your dotfiles load unchanged, then adds prompt hooks that report the folder and each command.
-- Typing `claude` or `codex` in a thread runs it with Shoji's hooks for that run only (`--settings` for Claude, a `-c` override for Codex), so `~/.claude` and `~/.codex` are never touched. They call the bundled `shoji-hook`, which forwards the event to Shoji in about 10 ms and exits silently when Shoji isn't running, so it never slows the CLI.
+- Typing `claude` or `codex` in a thread runs it with Shoji's hooks for that run only (`--settings` for Claude, a `-c` override for Codex), so `~/.claude` and `~/.codex` are never touched. They call the bundled `shoji-hook`, which forwards the event to Shoji and exits at once, silently when Shoji isn't running, so it never slows the CLI.
 - Every status change, from a hook or from the terminal, goes through one path into `ThreadStore`.
 - No tmux, no multiplexer: threads persist through each CLI's own resume. On relaunch an agent thread runs `claude --resume <id>` or `codex resume <id>` at its first prompt; any other last command waits at the prompt for you to press Return.
-- Shoji never types into a terminal on its own; anything it sends will come from an explicit click, showing exactly what it sends.
+- Shoji never types into a terminal on its own.
 
 ## Development
 
@@ -114,14 +113,14 @@ xcodebuild -scheme Shoji -derivedDataPath build -destination 'platform=macOS' -s
 open build/Build/Products/Debug/Shoji.app
 ```
 
-`project.yml` is the source of truth; the Xcode project is generated and not committed. `-skipPackagePluginValidation` is needed because SwiftTerm runs a build-tool plugin; in Xcode, choose **Trust & Enable** once instead. Tests use Swift Testing, and CI runs them on every pull request and posts the results as a comment (`scripts/test-report.py`).
+The Xcode project is generated from `project.yml` and not committed. `-skipPackagePluginValidation` is needed because SwiftTerm runs a build-tool plugin; in Xcode, choose **Trust & Enable** once instead. CI runs the tests on every pull request and posts the results as a comment.
 
 [AGENTS.md](AGENTS.md) is the contributor guide for people and coding agents alike: layout, conventions and the invariants that keep Shoji safe around your CLIs. [PLAN.md](PLAN.md) holds the current state, gotchas and decisions.
 
 ## Roadmap
 
-- **Now (v0.6):** the Hub, mini cards, and a corner of zen controls: the Hub, a new thread in any folder, the quick terminal
-- **Next:** "Allow once" from the Hub, and a signed, notarized build
+- **Now (v0.7):** the Hub's groups as columns like the shelf, a mini card hover with name and folder
+- **Next:** whatever the next wish is
 
 The live list is in [PLAN.md](PLAN.md#tasks).
 

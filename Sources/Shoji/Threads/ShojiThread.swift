@@ -1,8 +1,6 @@
 import Foundation
 
-/// A shell Shoji hosts and keeps across relaunches. What runs inside (claude, `pnpm dev`, nothing) changes
-/// as the user works; see `ThreadActivity`. Persisted in `threads.json`.
-/// Not named `Thread` to avoid shadowing `Foundation.Thread`.
+/// A hosted shell, persisted in `threads.json`. Not `Thread`, which would shadow Foundation's.
 struct ShojiThread: Identifiable, Codable, Hashable, Sendable {
     let id: UUID
     /// Given by the user; without one the thread goes by its folder's name (`ThreadStore.name(of:)`).

@@ -3,7 +3,6 @@ import Foundation
 
 /// The panes as a split tree; `panes` (reading order) is what `ThreadStore`'s opening rules use.
 struct PaneLayout: Equatable, Sendable {
-    /// Fixed layouts (Panes menu, ⌥⌘1–4).
     enum Preset: String, Codable, CaseIterable, Sendable {
         /// `threePanes` is one tall pane on the left with two stacked on the right.
         case single, twoColumns, threePanes, grid

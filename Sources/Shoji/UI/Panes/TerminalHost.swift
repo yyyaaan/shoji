@@ -1,8 +1,7 @@
 import AppKit
 import SwiftUI
 
-/// Shows a terminal that `TerminalSessions` owns. The view is re-parented, never recreated,
-/// so processes and scrollback survive layout changes.
+/// Hosts a terminal `TerminalSessions` owns; its view is re-parented, never recreated.
 struct TerminalHost: NSViewRepresentable {
     let terminal: any TerminalBackend
     var wantsFocus = false
