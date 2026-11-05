@@ -55,6 +55,7 @@ Shoji is deliberately not an editor, a diff viewer or an agent client. It never 
 brew install xcodegen
 git clone https://github.com/yyyaaan/shoji.git && cd shoji
 scripts/package.sh                         # universal Release build and DMG
+scripts/package.sh --install               # build into /Applications and clear build apps and DMGs
 ditto build/Build/Products/Release/Shoji.app /Applications/Shoji.app
 open /Applications/Shoji.app
 ```

@@ -5,8 +5,8 @@ The current state of Shoji: what's next, what to watch out for, and why things a
 ## Status
 
 - **Released:** v0.6.0: the Hub (⇧⌘H, the lantern), mini cards, the stones (a new thread in a folder) and the bamboo (⌘K). 78 tests.
-- **In progress (`hub-columns`, v0.7.0):** Hub groups as columns, the mini card peek and ⌘ badge, two fewer agent lines in Hub excerpts. 79 tests.
-- **Next up:** the user checks it in the Debug build; then optional local signing together, before merging.
+- **In progress (`hub-columns`, v0.7.0):** Hub groups as columns, the mini card peek and ⌘ badge, two fewer agent lines in Hub excerpts, local signing and `package.sh --install`. 79 tests.
+- **Next up:** the user installs with `--install`, re-grants privacy once, then merges.
 - **Blockers:** none.
 
 _Agents: update Status and Tasks at the end of every session; record decisions and gotchas as they stand now, not how they got there._
@@ -38,7 +38,6 @@ No tasks pending; new wishes go here.
 ### Later
 - [ ] "Allow once" from the Hub (see Open questions)
 - [ ] Hub: a running command's listening ports (libproc on the shell's children) with Open in Browser
-- [ ] Optional local signing: `package.sh` signs with a self-signed "Shoji Local" certificate when it's in the keychain (made once by the user in Keychain Access), ad-hoc otherwise, so privacy grants survive updates
 
 ### Parked
 Only when the user asks.
@@ -164,7 +163,8 @@ Shell reports from the zsh integration: `cwd;<path>` each prompt, `cmd;<line>` b
 - **Icon Composer:** XcodeGen adds `AppIcon.icon` as one `wrapper.icon` file, compiled with `ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon`. Check renders with `ictool <file>.icon --export-image --platform macOS --rendition Default|Dark|ClearLight|TintedDark …`.
 - **Visual checks without the live app:** `ImageRenderer` in a throwaway test renders SwiftUI views (glass flat, terminals absent, `ScrollView` contents blank, so not the shelf or Hub). A new test file needs `xcodegen generate` before it runs.
 - **AX `set value` on a SwiftUI text field reaches its binding only when editing ends;** move focus before pressing a button.
-- **Ad-hoc signing:** a downloaded DMG is quarantined (Privacy & Security › Open Anyway, or `xattr -dr com.apple.quarantine`), and macOS privacy grants reset with every update. App Sandbox stays off (Shoji spawns shells).
+- **Signing:** `package.sh` signs with the self-signed "Shoji Local" certificate (Keychain Access › Certificate Assistant, Code Signing) when it's in the keychain, so local builds keep one designated requirement and privacy grants survive updates; `find-identity` without `-v`, since it's untrusted. CI and anyone without it get ad-hoc: a downloaded DMG is quarantined (Privacy & Security › Open Anyway, or `xattr -dr com.apple.quarantine`) and privacy grants reset with every update. App Sandbox stays off (Shoji spawns shells).
+- **`package.sh --install`** removes the build's Release and Debug apps and every DMG afterwards (Spotlight indexes `build/`); the Debug app stays while it's running.
 - **CI:** the test report comment is found by its `<!-- shoji-test-report -->` first line; fork PRs only get the run summary. Runs on the `xcode-27` label (preview) until a GA label exists. Tags pushed with `GITHUB_TOKEN` trigger no workflows, so `release.yml` tags and releases in one run.
 - **Reference app:** TermQ (open source, SwiftTerm, runs Claude Code) is a good source of fixes; it uses tmux, which Shoji does not.
 

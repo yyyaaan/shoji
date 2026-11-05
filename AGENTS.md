@@ -21,7 +21,7 @@ project.yml                 XcodeGen spec (source of truth for targets and setti
 scripts/
   shoji-hook                hook client bundled into the app: env + JSON -> Shoji socket
   shoji.zsh, zshenv         zsh integration bundled into the app (folder, commands, claude/codex hooks, resume)
-  package.sh                Release build -> build/Shoji-<version>.dmg (used by release.yml)
+  package.sh                Release build -> build/Shoji-<version>.dmg (used by release.yml), or --install
   test-report.py            .xcresult -> Markdown test report (used by ci.yml)
 Sources/Shoji/
   Info.plist                merged with the generated keys; only what has no INFOPLIST_KEY_ setting (the card drag type)
@@ -51,7 +51,8 @@ xcodegen generate        # after any project.yml change and on a fresh clone (.x
 xcodebuild -scheme Shoji -derivedDataPath build -destination 'platform=macOS' -skipPackagePluginValidation build
 xcodebuild -scheme Shoji -derivedDataPath build -destination 'platform=macOS' -skipPackagePluginValidation test
 open build/Build/Products/Debug/Shoji.app
-scripts/package.sh [version]     # universal Release app + DMG, ad-hoc signed
+scripts/package.sh [version]     # universal Release app + DMG; signed with "Shoji Local" if in the keychain, else ad-hoc
+scripts/package.sh --install     # the same app into /Applications, then removes build apps and DMGs (Spotlight)
 # Releasing: bump MARKETING_VERSION in project.yml in a PR; merging it publishes vX.Y.Z (release.yml)
 ```
 
