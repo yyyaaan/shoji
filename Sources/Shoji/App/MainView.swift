@@ -72,6 +72,12 @@ struct MainView: View {
         .frame(minWidth: 480, minHeight: 480)
         .background(Backdrop())
         .overlay(alignment: .top) { zoomBadge }
+        .overlayPreferenceValue(MiniPeek.Key.self) { peek in
+            if let peek {
+                MiniPeek.Label(peek: peek)
+                    .environment(\.zoom, zoom)
+            }
+        }
         .overlay {
             if let popup = sessions?.popup {
                 QuickTerminal(popup: popup) { sessions?.closePopup() }

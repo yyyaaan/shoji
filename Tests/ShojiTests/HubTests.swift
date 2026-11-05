@@ -49,9 +49,18 @@ struct HubTests {
         #expect(store.activity(for: ids[0]).detail == nil)
     }
 
+    @Test func groupsAreColumnsAndSpareColumnsShortenTheTallest() {
+        #expect(HubView.columns(for: [8], fitting: 4) == [4])
+        #expect(HubView.columns(for: [5, 1], fitting: 4) == [3, 1])
+        #expect(HubView.columns(for: [4], fitting: 3) == [2])
+        #expect(HubView.columns(for: [3, 2, 1, 1, 1], fitting: 4) == [1, 1, 1, 1, 1])
+        #expect(HubView.columns(for: [1], fitting: 4) == [1])
+        #expect(HubView.columns(for: [], fitting: 4).isEmpty)
+    }
+
     @Test func excerptSkipsAnAgentsInputBoxAndBlankRows() {
-        let claude = ["● Update App.tsx", "", "● Bash pnpm test", "✻ Working… (12s)", "", "╭──────────╮", "│ > fix it │", "╰──────────╯", "  ? for shortcuts", "", ""]
-        #expect(Excerpt.lines(claude, count: 4) == ["● Update App.tsx", "● Bash pnpm test", "✻ Working… (12s)"])
+        let claude = ["● Update App.tsx", "", "● Bash pnpm test", "  ⎿ 12 passed", "✻ Working… (12s)", "", "  ⏵⏵ accept edits on", "╭──────────╮", "│ > fix it │", "╰──────────╯", "  ? for shortcuts", "", ""]
+        #expect(Excerpt.lines(claude, count: 4) == ["● Update App.tsx", "● Bash pnpm test", "  ⎿ 12 passed"])
         let shell = ["yan@box ~ % ls", "a  b  c", "yan@box ~ % ", "", "", ""]
         #expect(Excerpt.lines(shell, count: 2) == ["a  b  c", "yan@box ~ % "])
         #expect(Excerpt.lines([], count: 4).isEmpty)

@@ -1,29 +1,54 @@
 import SwiftUI
 
-/// Every thread as a card, in shelf order with bars between groups, drawn over the panes.
+/// Every thread as a card, drawn over the panes. Groups run left to right like the shelf, each in one or more
+/// columns read top to bottom, with a bar between groups.
 struct HubView: View {
     @Environment(ThreadStore.self) private var store
     @Environment(TerminalSessions.self) private var sessions: TerminalSessions?
     @Environment(\.zoom) private var zoom
+    @State private var width: CGFloat = 0
 
     var body: some View {
         let groups = store.shelf
         let numbers = store.showsCardNumbers ? Dictionary(uniqueKeysWithValues: store.shelfOrder.prefix(9).enumerated().map { ($1.id, $0 + 1) }) : [:]
-        ScrollView {
+        let spacing = 10 * zoom
+        let barGap = 14 * zoom
+        let room = max(width - 36, 0)
+        let fit = max(1, Int((room + spacing) / (320 * zoom + spacing)))
+        let spans = Self.columns(for: groups.map(\.count), fitting: fit)
+        let total = max(spans.reduce(0, +), 1)
+        let bars = CGFloat(max(groups.count - 1, 0)) * (2 * barGap + 1)
+        let gaps = CGFloat(total - groups.count) * spacing
+        // Filling the width, but never wider than a card would be with every column in use.
+        let columnWidth = max(320 * zoom, min((room - bars - gaps) / CGFloat(total), (room - CGFloat(fit - 1) * spacing) / CGFloat(fit)))
+        ScrollView(total > fit ? [.vertical, .horizontal] : .vertical) {
             GlassEffectContainer {
-                VStack(spacing: 14 * zoom) {
+                HStack(alignment: .top, spacing: barGap) {
                     ForEach(Array(groups.enumerated()), id: \.element.first?.id) { index, threads in
                         if index > 0 {
                             Rectangle()
                                 .fill(.white.opacity(0.16))
-                                .frame(height: 1)
+                                .frame(width: 1)
+                                .frame(maxHeight: .infinity)
                                 .accessibilityHidden(true)
                         }
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 320 * zoom), spacing: 10 * zoom)], spacing: 10 * zoom) {
-                            ForEach(threads) { HubCard(thread: $0, number: numbers[$0.id]) }
+                        let span = spans[index]
+                        let rows = (threads.count + span - 1) / span
+                        HStack(alignment: .top, spacing: spacing) {
+                            ForEach(0..<span, id: \.self) { column in
+                                VStack(spacing: spacing) {
+                                    ForEach(threads[(column * rows)..<min((column + 1) * rows, threads.count)]) {
+                                        HubCard(thread: $0, number: numbers[$0.id])
+                                    }
+                                }
+                                .frame(width: columnWidth)
+                            }
                         }
                     }
                 }
+                // Bars as tall as the tallest column.
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 18)
                 .padding(.top, 8 * zoom)
                 .padding(.bottom, 16)
@@ -31,6 +56,7 @@ struct HubView: View {
                 .animation(.easeOut(duration: 0.15), value: store.showsCardNumbers)
             }
         }
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
         .scrollIndicators(.automatic)
         .background {
             // Esc as a key equivalent, since nothing here holds focus; off while ⌘K's shell needs it.
@@ -40,6 +66,23 @@ struct HubView: View {
                 .opacity(0)
                 .accessibilityHidden(true)
         }
+    }
+}
+
+extension HubView {
+    /// Columns per group: one each, then spare columns go to the tallest group, as many as it takes to lose a row.
+    static func columns(for counts: [Int], fitting fit: Int) -> [Int] {
+        var spans = counts.map { _ in 1 }
+        var spare = fit - counts.count
+        while spare > 0 {
+            let rows = counts.indices.map { (counts[$0] + spans[$0] - 1) / spans[$0] }
+            guard let tallest = rows.indices.max(by: { rows[$0] < rows[$1] }), rows[tallest] > 1 else { break }
+            let needed = (counts[tallest] + rows[tallest] - 2) / (rows[tallest] - 1)
+            guard needed - spans[tallest] <= spare else { break }
+            spare -= needed - spans[tallest]
+            spans[tallest] = needed
+        }
+        return spans
     }
 }
 

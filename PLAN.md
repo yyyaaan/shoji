@@ -4,8 +4,9 @@ The current state of Shoji: what's next, what to watch out for, and why things a
 
 ## Status
 
-- **Released:** v0.5.0. **In review (`hub`, v0.6.0):** the Hub (⇧⌘H, the lantern), mini cards, the stones (a new thread in a folder) and the bamboo (⌘K), with design's polish on the Hub, mini cards, pane headers, drop previews and ⌘K. 78 tests.
-- **Next up:** the user merges the PR (publishing v0.6.0) and installs it, then the checks in Now. The Hub design reference is current; design handoff completed.
+- **Released:** v0.6.0: the Hub (⇧⌘H, the lantern), mini cards, the stones (a new thread in a folder) and the bamboo (⌘K). 78 tests.
+- **In progress (`hub-columns`, v0.7.0):** Hub groups as columns, the mini card peek and ⌘ badge, two fewer agent lines in Hub excerpts. 79 tests.
+- **Next up:** the user checks it in the Debug build; then optional local signing together, before merging.
 - **Blockers:** none.
 
 _Agents: update Status and Tasks at the end of every session; record decisions and gotchas as they stand now, not how they got there._
@@ -15,10 +16,13 @@ _Agents: update Status and Tasks at the end of every session; record decisions a
 Priorities follow the user's wishes. Keep items one line, small enough for one PR.
 
 ### Now (the user's checks)
+- [ ] Hub columns: each group a column (or several, read top to bottom) left to right, bars full height between them; sideways scroll only with more groups than fit; ⌘ numbers and VoiceOver follow shelf order; screens still update as you scroll
+- [ ] Mini cards: hovering about ⅓ s shows the name and folder under the card, gone on leaving, no extra click needed; ⌘ shows the full card's badge
+- [ ] Hub excerpts on Claude Code and Codex: the spinner and hint lines above the input box are gone, the reply shows
 - [ ] Stones (under the lantern): the folders in home until you Choose Folder to List… (remembered); picking one opens a new thread there, after your card. Bamboo (under the stones) toggles ⌘K. The Hub shows the bonsai and "All quiet" only when no pill does
 - [ ] Hub: ⇧⌘H and the lantern; no pane shows through and typing reaches no terminal; Esc returns to your pane; a card click, ⌘1–9, ⌘J, Hachi or a notification opens the thread; Esc in ⌘K over the Hub reaches the shell
 - [ ] Hub cards on real threads: the last lines skip Claude Code's and Codex's input box and footer (else tune `Excerpt`), the git branch shows, a working agent names its last tool
-- [ ] Mini cards: card menu › Mini Card; the name reads top to bottom in the subtitle's style; dragging, drops, ⌘ numbers (in the left margin) and the needs-you glow still work
+- [ ] Mini cards: card menu › Mini Card; the name reads top to bottom in the subtitle's style; dragging, drops, ⌘ numbers and the needs-you glow still work
 - [ ] From design's review, natively: Interface Size 85–130% at window widths near 740 and 1360, compact and ⌘K at 480 pt; VoiceOver, Full Keyboard Access (pane header controls show while focused), Increase Contrast, Reduce Transparency, Reduce Motion; a card dragged to a pane edge previews only a split that would happen
 - [ ] The terminal checklist below
 - [ ] Room light: no seam at the terminal's margin; all panes solid with Reduce Transparency
@@ -29,12 +33,12 @@ Priorities follow the user's wishes. Keep items one line, small enough for one P
 - [ ] Not yet seen: a screenshot dragged from Finder onto Claude Code, Open in VS Code / Zed, Codex resuming after quit and reopen, the go-to glow, ⌘Q's busy list, the About panel
 
 ### Next
-No design tasks pending. `hub.html` matches the current controls, quiet state, excerpts and original shortcut badges; 24 browser layout/state checks passed.
+No tasks pending; new wishes go here.
 
 ### Later
 - [ ] "Allow once" from the Hub (see Open questions)
 - [ ] Hub: a running command's listening ports (libproc on the shell's children) with Open in Browser
-- [ ] Developer ID signing and notarization (needs a paid Apple Developer account)
+- [ ] Optional local signing: `package.sh` signs with a self-signed "Shoji Local" certificate when it's in the keychain (made once by the user in Keychain Access), ad-hoc otherwise, so privacy grants survive updates
 
 ### Parked
 Only when the user asks.
@@ -57,7 +61,7 @@ A calm command center for the terminals the user already runs all day. Claude Co
 - Glass cards in the user's order, split into groups by plain bars (no titles, no fixed meaning); scrolls sideways when full. Drag a card onto another to place it before or after (by half); the card menu also has Move Left / Right and Add / Remove Bar Before.
 - Card: status icon, a tag for what runs (CLAUDE / CODEX / the command's name), name, subtitle, elapsed time; the full folder as a tooltip.
 - **Name:** your rename, else a running agent's topic (its terminal title, unless that only names the agent or repeats its command line), else the folder's name, numbered ("shoji 2") only when two threads would read the same, the newer one getting the number. **Subtitle:** the folder; a plain command's command line; an agent's question while it needs you.
-- **Mini card** (card menu › Mini Card, full form): 44 pt wide, the status icon over the name in the subtitle's style, reading top to bottom; the glow, count badge (9+ above nine) and drops still work, the ⌘ number sits in the left margin, and the tooltip has the rest.
+- **Mini card** (card menu › Mini Card, full form): 44 pt wide, the status icon over the name in the subtitle's style, reading top to bottom; the glow, count badge (9+ above nine), drops and the ⌘ badge work as on a full card. Hovering a moment shows the full name and the subtitle under the card.
 - Needs-you card: orange border and glow, count badge, Hachi. A turn that finishes unseen keeps its tick with ivory chrome and a soft halo; Threads › Show Hachi When an Agent Finishes also brings Hachi, the corner and ⌘J.
 
 ### Panes
@@ -68,7 +72,7 @@ A calm command center for the terminals the user already runs all day. Claude Co
 - Files or text dropped on a pane paste into its terminal (files as escaped paths, like Terminal).
 
 ### Getting around
-- Hold ⌘ on its own for a moment and the first nine cards show their ⌘1–9 number; any key or leaving Shoji hides them. Full cards show it as a badge over their top-leading corner, mini cards as a numeral in their left margin.
+- Hold ⌘ on its own for a moment and the first nine cards show their ⌘1–9 number as a badge over their top-leading corner; any key or leaving Shoji hides them.
 - **Stones** (under the lantern): the folders inside one you choose, home until you do (Choose Folder to List… in the same menu, remembered; hidden folders and app bundles left out). Picking one opens a new thread there, after your card.
 - ⌃Tab / ⌃⇧Tab: recent threads like ⌘Tab; a tap returns to the previous one, holding ⌃ shows the list, Esc cancels.
 - ⌘K or the bamboo: a quick terminal over the window, a little above centre, in the focused thread's folder. ⌘K, ⌘W, a click outside or `exit` closes it; a command still running then becomes a thread beside the focused card. When narrow, its hint takes a second line.
@@ -80,7 +84,7 @@ A calm command center for the terminals the user already runs all day. Claude Co
 ### Hub
 - ⇧⌘H or the lantern at the top right (brighter while the Hub shows), full form only (narrowing the window leaves it). It covers the panes, which stay hosted underneath with no terminal holding the keyboard; Esc, a card click or any go-to returns to Threads. ⌘W is off there, since the focused thread is out of sight.
 - Top row: Hachi, the thread count, and pills for needs you (a click is ⌘J), finished unseen, working, running and failed; when they don't fit, the pills wrap onto rows below and the corner column stays put. With no pill to show, a bonsai and "All quiet".
-- Small cards (from 320 pt, about four across) in shelf order, bars as section breaks, all one height. Each card: status, name and status pill (none while idle); tag, folder and git branch, elapsed time; one line from hooks or the shell (the question, the agent's last tool, the command, the failure; none while idle, where the screen gets its room); the last 2 lines of its screen (4 when idle), skipping an agent's input box and footer; a last row with Open Maximized, Restart once the shell has ended and Hachi when it wants you, then Finder, VS Code and Zed at the end. A click on the card opens the thread; right-click is the card menu.
+- Small cards (from 320 pt), all one height, in shelf order: groups run left to right like the shelf, each a column read top to bottom, with a full-height bar between groups. Spare columns go to the tallest group, as many as it takes to lose a row; with more groups than fit, the Hub also scrolls sideways. Each card: status, name and status pill (none while idle); tag, folder and git branch, elapsed time; one line from hooks or the shell (the question, the agent's last tool, the command, the failure; none while idle, where the screen gets its room); the last 2 lines of its screen (4 when idle), skipping an agent's input box, footer and the two lines above the box; a last row with Open Maximized, Restart once the shell has ended and Hachi when it wants you, then Finder, VS Code and Zed at the end. A click on the card opens the thread; right-click is the card menu.
 - Visual reference: `docs/design/hub.html`.
 
 ## Architecture
@@ -147,6 +151,8 @@ Shell reports from the zsh integration: `cwd;<path>` each prompt, `cmd;<line>` b
 - **A translucent terminal stacks with whatever is behind it.** SwiftTerm paints its own background at `backgroundOpacity`, so `PaneView` fills only the margin around it (an even-odd `Margin`). Never set the terminal's background to 0 and let SwiftUI draw it: the IME overlay and whole-screen reverse video use that colour.
 - **The Hub hides the panes, it doesn't remove them.** `PaneGrid` stays at opacity 0 underneath so terminals keep their host and size, and `MainView` takes first responder from the terminal. `focusRequest` and `showsHub` clear each other: asking for a pane's focus leaves the Hub, closing a thread from it doesn't. Esc is a key equivalent there, off while ⌘K is open.
 - **The Hub's lines come from the live screen:** `terminalContentSnapshot(region: .history(maximumScrollbackRows: -1))`, whatever the user scrolled to (`visibleRowsText` and `getLine(row:)` follow the scroll). Display only; `Excerpt` cuts at the first box-drawing rule in the last 12 non-blank rows (an agent's input box).
+- **The mini card peek is an overlay, not a popover:** a transient popover swallows the click that closes it, so the card would need two clicks. `ThreadCard` raises a `MiniPeek` anchor preference and `MainView` draws it, not hit-testable.
+- **The Hub's columns aren't lazy** (bars need the tallest column's height), so `HubCard` takes screen snapshots only while `onScrollVisibilityChange` says it's in view.
 - **Inside a `GlassEffectContainer`, overlays added after `.glassEffect` draw under the glass.** Put borders and badges first.
 - **Hidden title bar:** content ignores the top safe area; the leading 78 pt stays clear for the window buttons; the window drags by its background.
 - **⌃Tab is a local key monitor** (`RecentSwitchKeys`), since the switcher needs ⌃'s release and the keys must not reach the terminal; it stands down while a sheet or alert is up. The ⌘ card numbers (`CardNumberKeys`) watch the same events but never consume them; ⌘Tab's Tab never reaches the app, so the numbers can show under the app switcher until Shoji goes inactive.
@@ -156,7 +162,7 @@ Shell reports from the zsh integration: `cwd;<path>` each prompt, `cmd;<line>` b
 - **One Debug Shoji at a time:** a second instance takes over `hook.sock`, and both write `threads.json`.
 - **A blank icon in ⌘Tab or the Dock is a stale icon cache:** `touch` the app bundle and `lsregister -f` it, then relaunch.
 - **Icon Composer:** XcodeGen adds `AppIcon.icon` as one `wrapper.icon` file, compiled with `ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon`. Check renders with `ictool <file>.icon --export-image --platform macOS --rendition Default|Dark|ClearLight|TintedDark …`.
-- **Visual checks without the live app:** `ImageRenderer` in a throwaway test renders SwiftUI views (glass flat, terminals absent).
+- **Visual checks without the live app:** `ImageRenderer` in a throwaway test renders SwiftUI views (glass flat, terminals absent, `ScrollView` contents blank, so not the shelf or Hub). A new test file needs `xcodegen generate` before it runs.
 - **AX `set value` on a SwiftUI text field reaches its binding only when editing ends;** move focus before pressing a button.
 - **Ad-hoc signing:** a downloaded DMG is quarantined (Privacy & Security › Open Anyway, or `xattr -dr com.apple.quarantine`), and macOS privacy grants reset with every update. App Sandbox stays off (Shoji spawns shells).
 - **CI:** the test report comment is found by its `<!-- shoji-test-report -->` first line; fork PRs only get the run summary. Runs on the `xcode-27` label (preview) until a GA label exists. Tags pushed with `GITHUB_TOKEN` trigger no workflows, so `release.yml` tags and releases in one run.
@@ -176,10 +182,8 @@ Run by hand with Claude Code in Shoji after every SwiftTerm bump (AGENTS invaria
 
 ## Open questions
 
-
 - **Allow once:** for any prompt, or only commands approved before? Proposal: only when the prompt is visible on the card, sending exactly the shown keystroke.
 - **Performance:** how many live terminal views before it matters? Keep only SwiftTerm's headless `Terminal` for hidden threads?
-- **Stable local signing identity:** a self-signed certificate (a CI secret) would keep privacy grants across updates without a paid account. Now, or wait for Developer ID?
 
 ## Decisions
 
@@ -190,15 +194,16 @@ Run by hand with Claude Code in Shoji after every SwiftTerm bump (AGENTS invaria
 - **An unseen finish wants you** like a question does; ivory, not orange, so the two stay apart.
 - **One window, two forms, by width,** because Split View sets the width; the green button stays macOS's.
 - **Room light:** 80% opaque, never blurred; at 90% the backdrop barely moved the colour. More transparency or blur would cost contrast and show colours that mean status.
-- **The Hub follows the shelf:** shelf order with bars as breaks, not attention order or an Agents / Tasks split, so cards stay put and match ⌘1–9; needs-you cards stand out anyway.
+- **The Hub follows the shelf:** shelf order, groups as columns left to right, not attention order or an Agents / Tasks split, so cards stay put and match ⌘1–9; needs-you cards stand out anyway.
 - **You stop processes yourself:** no Stop or command Restart buttons; ⌃C in the terminal and Close Thread (which asks) are the ways. Restart is only for a shell that has ended.
 - **Git branch from `.git/HEAD`** (worktrees too), never a `git` process.
 - **Hub screen lines once a second, only while the Hub shows and only for cards in view:** a snapshot costs about 1 ms for a pane-sized screen (Debug build).
 - **Options are one-click menu items;** there's no Settings window. A wish that would need one gets a menu item or isn't built.
 - **Quiet chrome:** glass on surfaces, never on small controls (the zen icons and a Hub card's buttons are bare); pane controls appear on hover. Lantern, stones and bamboo are the only custom control glyphs; the rest are SF Symbols. The bonsai is decoration, shown only where no status is.
-- **⌘ numbers overhang a full card's top-leading corner,** which the user kept over a centred marker; a mini card's sit in its margin.
+- **⌘ numbers overhang a card's top-leading corner,** which the user kept over a centred marker; mini cards use the same badge, which can touch the previous card's count badge while ⌘ is held.
 - **Native notifications** over own popups: they follow Focus and screen sharing and keep a history.
 - **⌘K is a popup terminal**, not a command field: completion, aliases and interactive commands come free. ⌘/ shows shortcuts, as a sheet so Esc never reaches a terminal.
 - **`schemaVersion` only for shapes another Shoji can't read;** optional additions stay on version 1 (AGENTS invariant 9).
+- **Self-signed is enough:** Shoji is for the user's own Mac, so no Developer ID or notarization.
 - **Releases follow the version:** bumping `MARKETING_VERSION` in a PR is the decision; merging publishes `vX.Y.Z` with its DMG.
 - **Names and ids:** the app is Shoji, *Hachi no Shoji* (ハチの障子) where there's room for the story. `fi.yan.shoji`, Debug `fi.yan.shoji.debug` (Shoji Debug), so the two never share notifications or settings. The `.xcodeproj` and `Package.resolved` aren't committed; `project.yml` is the source.
