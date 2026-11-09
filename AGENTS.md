@@ -67,7 +67,7 @@ scripts/package.sh --install     # the same app into /Applications, then removes
 4. **No tmux or any multiplexer.** Persistence is relaunching with the CLI's own resume (`claude --resume <id>`, `codex resume <id>`).
 5. **One status path.** Every status change is a `StatusEvent` (from the socket, or terminal callbacks: title, bell, exit, the zsh integration's `OSC 1337 ; ShojiEvent=…` reports) applied by `ThreadStore` on the main actor. UI never derives status from terminal output; the Hub's screen lines are shown, never read.
 6. **Never type into a terminal on the user's behalf** except through an explicit user action (e.g. Hub "Allow once"), sending exactly the keystroke the UI shows, and log it. Relaunching isn't typing: the zsh integration runs the resume at a restored shell's first prompt and leaves any other last command at the prompt for Return.
-7. **Hooks must never slow or break the CLIs.** `shoji-hook` exits 0 within ~100 ms, silently when Shoji isn't running.
+7. **Hooks must never slow or break the CLIs.** `shoji-hook` exits 0 within milliseconds, silently when Shoji isn't running (a frozen Shoji costs at most `nc -w 1`'s second).
 8. **Don't touch the user's global CLI config** (`~/.claude`, `~/.codex`) without an explicit opt-in. Inject per launch (env vars, a settings file, a config override), and verify current CLI flags before relying on them.
 9. **`threads.json` is versioned.** Bump `schemaVersion` and add a migration only when another Shoji couldn't read the new shape; optional additions and ignored removals stay on the current version. Never silently drop a user's threads.
 

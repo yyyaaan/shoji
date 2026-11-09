@@ -32,7 +32,7 @@ Shoji is deliberately not an editor, a diff viewer or an agent client. It never 
 - **Your shelf, your groups.** Drag cards into place and drop plain bars between them; groups mean whatever you want. Make a card mini, just its status and name down the side, for threads you keep around but rarely visit; hover one for its name and folder.
 - **The Hub.** ⇧⌘H, or the lantern at the top right, swaps the panes for a card per thread, in your shelf's order: what it's waiting on or just did, its folder and git branch, its last lines, and one click into it. Esc goes back.
 - **Panes that stay out of the way.** Split any pane in any direction (⌘D, ⇧⌘D, its header's menu, or drop a card on its edge) and drag the gaps to resize. Click a card to go to its thread; ⌥-click brings it to your pane, and dropping a card, or picking it from the chevron beside a pane's name, puts it exactly there. Other panes never change behind your back, so a dev server's log stays put. Files dropped on a terminal paste their paths, so a screenshot reaches Claude Code.
-- **Beside your editor.** Put Shoji in Split View next to a full-screen Zed or Chrome and drag the divider narrow: it turns compact, one column of one or two terminals, each picking its thread from a dropdown. Widen it and your full layout is back.
+- **Beside your editor.** Put Shoji in Split View next to a full-screen Zed or Chrome and drag the divider narrow: it turns compact, one column of one or two terminals, each picking its thread from a dropdown. It starts from the right-hand side of your layout; widen it and your full layout is back.
 - **Keyboard first.** ⌘K (or the bamboo at the top right) pops up a quick terminal in your thread's folder; ⌃Tab flips back to the thread you were just in, like ⌘Tab; ⌘J finds the next agent waiting on you. Hold ⌘ to see each card's number for ⌘1–9, and ⌘/ for every shortcut.
 - **Sizes your way.** ⌘+ and ⌘− size the terminal text, View › Interface Size the chrome, and ⌥⌘+ / ⌥⌘− keep one pane bigger or smaller than the rest.
 - **Real terminals, native chrome.** SwiftTerm with Metal, your login shell's environment, 10,000 lines of scrollback. Liquid Glass on the chrome; terminals sit on a dark background that lets a little of the window's light through, never blurred.
@@ -71,6 +71,7 @@ Every version merged to `main` publishes a DMG on [Releases](https://github.com/
 | New thread (next to the current card) | ⌘N |
 | Quick terminal in this folder (closing keeps a running command as a thread) | ⌘K |
 | Close thread (asks while something runs) | ⌘W |
+| Reopen the last closed pane or thread | ⇧⌘T |
 | Jump to card 1–9 (hold ⌘ to see the numbers) | ⌘1 … ⌘9 |
 | Hub (Esc goes back) | ⇧⌘H |
 | Show a card in your pane (swaps if it's on screen) | ⌥-click the card |
@@ -119,7 +120,7 @@ The Xcode project is generated from `project.yml` and not committed. `-skipPacka
 
 ## Roadmap
 
-- **Now (v0.7):** the Hub's groups as columns like the shelf, a mini card hover with name and folder
+- **Now (v0.8):** reopen what you closed (⇧⌘T), the compact form starting from the right, quieter mini cards
 - **Next:** whatever the next wish is
 
 The live list is in [PLAN.md](PLAN.md#tasks).

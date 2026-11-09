@@ -52,6 +52,14 @@ struct PaneLayout: Equatable, Sendable {
         maximizedThreadId.map { [$0] } ?? panes
     }
 
+    /// What the compact form starts with: the bottom two of the right-hand column, else the last two panes.
+    var rightEdge: [UUID] {
+        if let maximizedThreadId { return [maximizedThreadId] }
+        var ids = Array((root?.rightColumn ?? []).suffix(2))
+        for id in panes.reversed() where ids.count < 2 && !ids.contains(id) { ids.insert(id, at: 0) }
+        return ids
+    }
+
     /// In place of `replaced` (the last pane when nil), or as the only pane.
     mutating func show(_ id: UUID, replacing replaced: UUID?) {
         maximizedThreadId = nil
@@ -180,6 +188,23 @@ indirect enum PaneNode: Codable, Equatable, Sendable {
             guard let second = second.removing(id) else { return first }
             return .split(axis: axis, ratio: ratio, first: first, second: second)
         }
+    }
+
+    /// Top to bottom.
+    var rightColumn: [UUID] {
+        switch self {
+        case .pane(let id): [id]
+        case .split(.columns, _, _, let second): second.rightColumn
+        case .split(.rows, _, let first, let second): first.rightColumn + second.rightColumn
+        }
+    }
+
+    /// The pane next to `id` and the side of it `id` is on, to split it back in there.
+    func placement(of id: UUID) -> (anchor: UUID, side: PaneLayout.Side)? {
+        guard case .split(let axis, _, let first, let second) = self else { return nil }
+        if first == .pane(id: id), let anchor = second.panes.first { return (anchor, axis == .columns ? .left : .up) }
+        if second == .pane(id: id), let anchor = first.panes.last { return (anchor, axis == .columns ? .right : .down) }
+        return first.placement(of: id) ?? second.placement(of: id)
     }
 
     /// What takes `id`'s space when its pane goes.

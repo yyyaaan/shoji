@@ -99,15 +99,19 @@ struct ThreadCard: View {
     private var content: some View {
         if isMini {
             VStack(spacing: 3 * zoom) {
-                StatusIcon(status: activity.status, size: 18 * zoom)
+                // Idle says nothing on a mini card; the name takes the icon's room.
+                let isIdle = activity.status == .idle
+                if !isIdle {
+                    StatusIcon(status: activity.status, size: 18 * zoom)
+                }
                 // Reads top to bottom, like a book's spine.
                 Text(name)
                     .font(.system(size: 11 * zoom, weight: .medium, design: .monospaced))
                     .foregroundStyle(needsYou ? Palette.needsYouText : .white.opacity(0.75))
                     .lineLimit(1)
-                    .frame(width: 63 * zoom, height: 14 * zoom, alignment: .leading)
+                    .frame(width: (isIdle ? 84 : 63) * zoom, height: 14 * zoom, alignment: .leading)
                     .rotationEffect(.degrees(90))
-                    .frame(width: 14 * zoom, height: 63 * zoom)
+                    .frame(width: 14 * zoom, height: (isIdle ? 84 : 63) * zoom)
             }
             .padding(.top, 6 * zoom)
             .frame(maxWidth: .infinity)

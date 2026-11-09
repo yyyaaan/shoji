@@ -48,6 +48,10 @@ struct PaneLayoutTests {
         var layout = PaneLayout(.grid, Array(ids.prefix(4)))
         layout.toggleMaximize(ids[1])
         #expect(layout.root?.sibling(of: ids[1]) == .pane(id: ids[0]))
+        #expect(layout.root?.placement(of: ids[1])?.anchor == ids[0])
+        #expect(layout.root?.placement(of: ids[1])?.side == .right)
+        #expect(layout.root?.placement(of: ids[2])?.anchor == ids[3])
+        #expect(layout.root?.placement(of: ids[2])?.side == .left)
 
         layout.removePane(ids[1])
         #expect(layout.root == .split(
@@ -59,6 +63,20 @@ struct PaneLayoutTests {
 
         for id in [ids[0], ids[2], ids[3]] { layout.removePane(id) }
         #expect(layout.root == nil)
+    }
+
+    @Test func theRightEdgeIsTheBottomOfTheRightColumnThenTheLastPanes() {
+        #expect(PaneLayout(.grid, Array(ids.prefix(4))).rightEdge == [ids[1], ids[3]])
+        #expect(PaneLayout(.threePanes, Array(ids.prefix(3))).rightEdge == [ids[1], ids[2]])
+        #expect(PaneLayout(.twoColumns, Array(ids.prefix(2))).rightEdge == [ids[0], ids[1]])
+        #expect(PaneLayout(.single, [ids[0]]).rightEdge == [ids[0]])
+        #expect(PaneLayout().rightEdge == [])
+
+        var layout = PaneLayout(.threePanes, Array(ids.prefix(3)))
+        layout.split(ids[2], side: .down, with: ids[3])
+        #expect(layout.rightEdge == [ids[2], ids[3]])
+        layout.toggleMaximize(ids[0])
+        #expect(layout.rightEdge == [ids[0]])
     }
 
     @Test func ratiosFollowTheirSplit() {

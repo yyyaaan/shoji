@@ -10,18 +10,14 @@ struct ShelfView: View {
     var body: some View {
         let groups = store.shelf
         let numbers = store.showsCardNumbers ? Dictionary(uniqueKeysWithValues: store.shelfOrder.prefix(9).enumerated().map { ($1.id, $0 + 1) }) : [:]
+        let groupStarts = Set(groups.dropFirst().compactMap(\.first?.id))
         ScrollViewReader { proxy in
             ScrollView(.horizontal) {
                 GlassEffectContainer {
-                    HStack(spacing: 18 * zoom) {
-                        ForEach(Array(groups.enumerated()), id: \.element.first?.id) { index, threads in
-                            if index > 0 {
-                                Rectangle()
-                                    .fill(.white.opacity(0.16))
-                                    .frame(width: 1, height: 104 * zoom)
-                                    .accessibilityHidden(true)
-                            }
-                            group(threads, numbers: numbers)
+                    // One flat row, bars drawn beside their card, so reordering never rebuilds a card.
+                    HStack(spacing: 10 * zoom) {
+                        ForEach(groups.flatMap { $0 }) { thread in
+                            card(thread, numbers: numbers, barBefore: groupStarts.contains(thread.id))
                         }
                     }
                     .padding(.horizontal, 18)
@@ -40,42 +36,48 @@ struct ShelfView: View {
         }
     }
 
-    private func group(_ threads: [ShojiThread], numbers: [UUID: Int]) -> some View {
-        HStack(spacing: 10 * zoom) {
-            ForEach(threads) { thread in
-                // A tap gesture rather than a Button: on macOS a Button swallows the drag.
-                ThreadCard(
-                    thread: thread,
-                    name: store.name(of: thread),
-                    activity: store.activity(for: thread.id),
-                    isFocused: store.focusedThreadId == thread.id,
-                    isOnScreen: store.layout.visibleThreadIds.contains(thread.id),
-                    wantsYou: store.wantsYou(thread.id),
-                    number: numbers[thread.id]
-                )
-                .contentShape(.rect)
-                .onTapGesture {
-                    if NSEvent.modifierFlags.contains(.option) { store.bringHere(thread.id) } else { store.open(thread.id) }
-                }
-                .accessibilityAddTraits(.isButton)
-                .accessibilityAction { store.open(thread.id) }
-                .onDrag { CardDrag.item(for: thread.id) }
-                .onDrop(of: [.shojiThread], delegate: CardDrop(target: thread.id, width: (thread.isMini == true ? ThreadCard.miniWidth : ThreadCard.width) * zoom, spot: $dropSpot, store: store))
-                .overlay(alignment: dropSpot?.after == true ? .trailing : .leading) {
-                    if dropSpot?.id == thread.id {
-                        // Sits in the gap beside the card, outside its glass.
-                        Capsule()
-                            .fill(Palette.working)
-                            .frame(width: 3, height: 80 * zoom)
-                            .offset(x: (dropSpot?.after == true ? 6.5 : -6.5) * zoom)
-                            .allowsHitTesting(false)
-                    }
-                }
-                .id(thread.id)
-                .contextMenu { CardMenu(thread: thread) }
+    /// A bar before the card stands 18 pt from it and from the card on its left.
+    private func card(_ thread: ShojiThread, numbers: [UUID: Int], barBefore: Bool) -> some View {
+        // A tap gesture rather than a Button: on macOS a Button swallows the drag.
+        ThreadCard(
+            thread: thread,
+            name: store.name(of: thread),
+            activity: store.activity(for: thread.id),
+            isFocused: store.focusedThreadId == thread.id,
+            isOnScreen: store.layout.visibleThreadIds.contains(thread.id),
+            wantsYou: store.wantsYou(thread.id),
+            number: numbers[thread.id]
+        )
+        .contentShape(.rect)
+        .onTapGesture {
+            if NSEvent.modifierFlags.contains(.option) { store.bringHere(thread.id) } else { store.open(thread.id) }
+        }
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction { store.open(thread.id) }
+        .onDrag { CardDrag.item(for: thread.id) }
+        .onDrop(of: [.shojiThread], delegate: CardDrop(target: thread.id, width: (thread.isMini == true ? ThreadCard.miniWidth : ThreadCard.width) * zoom, spot: $dropSpot, store: store))
+        .overlay(alignment: dropSpot?.after == true ? .trailing : .leading) {
+            if dropSpot?.id == thread.id {
+                // Sits in the gap beside the card, outside its glass.
+                Capsule()
+                    .fill(Palette.working)
+                    .frame(width: 3, height: 80 * zoom)
+                    .offset(x: (dropSpot?.after == true ? 6.5 : -6.5) * zoom)
+                    .allowsHitTesting(false)
             }
         }
-        .accessibilityElement(children: .contain)
+        .id(thread.id)
+        .contextMenu { CardMenu(thread: thread) }
+        .padding(.leading, barBefore ? 26 * zoom + 1 : 0)
+        .background(alignment: .leading) {
+            if barBefore {
+                Rectangle()
+                    .fill(.white.opacity(0.16))
+                    .frame(width: 1, height: 104 * zoom)
+                    .offset(x: 8 * zoom)
+                    .accessibilityHidden(true)
+            }
+        }
     }
 }
 

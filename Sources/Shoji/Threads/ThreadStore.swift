@@ -12,15 +12,18 @@ final class ThreadStore {
     private(set) var fullLayout: PaneLayout {
         didSet { scheduleSave() }
     }
-    /// One column of at most two rows.
-    private(set) var compactLayout: PaneLayout {
-        didSet { scheduleSave() }
-    }
+    /// One column of at most two rows. Not saved: each time the window narrows, it starts from the full form's right edge.
+    private(set) var compactLayout = PaneLayout()
     /// The narrow form (Split View beside an editor), which keeps its own panes.
     var isCompact = false {
         didSet {
             guard isCompact != oldValue else { return }
-            if isCompact { showsHub = false }
+            if isCompact {
+                showsHub = false
+                let ids = fullLayout.rightEdge
+                compactLayout.root = ids.count < 2 ? ids.first.map { .pane(id: $0) } : .split(axis: .rows, ratio: 0.5, first: .pane(id: ids[0]), second: .pane(id: ids[1]))
+                compactLayout.maximizedThreadId = nil
+            }
             if layout.root == nil, let id = focusedThreadId ?? (recentThreadIds + shelfOrder.map(\.id)).first {
                 layout.show(id, replacing: nil)
             }
@@ -79,14 +82,12 @@ final class ThreadStore {
     @ObservationIgnored private let fileURL: URL?
     @ObservationIgnored private var saveTask: Task<Void, Never>?
 
-    init(threads: [ShojiThread], layout: PaneLayout = PaneLayout(), compactLayout: PaneLayout = PaneLayout(), now: Date = .now, fileURL: URL? = nil) {
+    init(threads: [ShojiThread], layout: PaneLayout = PaneLayout(), now: Date = .now, fileURL: URL? = nil) {
         let ids = Set(threads.map(\.id))
-        var (layout, compactLayout) = (layout, compactLayout)
+        var layout = layout
         for id in layout.panes where !ids.contains(id) { layout.removePane(id) }
-        for id in compactLayout.panes where !ids.contains(id) { compactLayout.removePane(id) }
         self.threads = threads
         fullLayout = layout
-        self.compactLayout = compactLayout
         self.fileURL = fileURL
         activities = Dictionary(uniqueKeysWithValues: threads.map { ($0.id, ThreadActivity(launchedAt: now)) })
     }
@@ -277,6 +278,12 @@ final class ThreadStore {
     /// `TerminalSessions.sync` then stops its process. The last pane shows your most recent other thread.
     func close(_ id: UUID) {
         if closeRequest == id { closeRequest = nil }
+        guard let thread = thread(id) else { return }
+        let (fullBefore, compactBefore) = (fullLayout, compactLayout)
+        let group = shelfIds.first { $0.contains(id) } ?? []
+        let index = group.firstIndex(of: id) ?? 0
+        let order = shelfOrder.map(\.id)
+        let shelfIndex = order.firstIndex(of: id) ?? 0
         let taker = layout.root?.sibling(of: id)?.panes.first
         fullLayout.removePane(id)
         compactLayout.removePane(id)
@@ -290,6 +297,14 @@ final class ThreadStore {
             focusedThreadId = nil
             if !showsHub { focusRequest = taker ?? layout.visibleThreadIds.first }
         }
+        remember(.thread(
+            thread,
+            previous: index > 0 ? group[index - 1] : nil,
+            next: index + 1 < group.count ? group[index + 1] : nil,
+            shelfPrevious: shelfIndex > 0 ? order[shelfIndex - 1] : nil,
+            full: Layouts(before: fullBefore, after: fullLayout),
+            compact: isCompact ? Layouts(before: compactBefore, after: compactLayout) : nil
+        ))
     }
 
     // MARK: Shelf
@@ -464,7 +479,9 @@ final class ThreadStore {
     /// The thread keeps running on the shelf; the last pane stays.
     func closePane(_ id: UUID) {
         guard layout.panes.count > 1, let taker = layout.root?.sibling(of: id)?.panes.first else { return }
+        let before = layout
         layout.removePane(id)
+        remember(.pane(id, isCompact: isCompact, layouts: Layouts(before: before, after: layout)))
         if focusedThreadId == id {
             focusedThreadId = nil
             focusRequest = taker
@@ -495,6 +512,85 @@ final class ThreadStore {
     func toggleMaximize(_ id: UUID) {
         layout.toggleMaximize(id)
         focusRequest = id
+    }
+
+    // MARK: Reopening
+
+    /// A form's panes just before and just after a close.
+    struct Layouts: Equatable {
+        var before: PaneLayout
+        var after: PaneLayout
+    }
+
+    enum Closed: Equatable {
+        case pane(UUID, isCompact: Bool, layouts: Layouts)
+        /// `previous` and `next` are its neighbours in its group; a group of its own follows `shelfPrevious`'s.
+        /// `compact` when closed in the compact form.
+        case thread(ShojiThread, previous: UUID?, next: UUID?, shelfPrevious: UUID?, full: Layouts, compact: Layouts?)
+    }
+
+    /// What ⇧⌘T puts back, newest last; this session only.
+    private(set) var closed: [Closed] = []
+
+    private func remember(_ item: Closed) {
+        closed = Array((closed + [item]).suffix(20))
+    }
+
+    var canReopenClosed: Bool {
+        closed.contains(where: canReopen)
+    }
+
+    /// A closed pane only while its thread is still around and off screen.
+    private func canReopen(_ item: Closed) -> Bool {
+        guard case .pane(let id, _, _) = item else { return true }
+        return thread(id) != nil && !layout.panes.contains(id)
+    }
+
+    /// Undoes the latest close that still can be: the thread comes back where it was and relaunches like after a
+    /// quit (its agent resumed, a command left at the prompt), and a pane goes back to its spot in the split.
+    func reopenClosed(at now: Date = .now) {
+        while let item = closed.popLast() {
+            guard canReopen(item) else { continue }
+            switch item {
+            case .pane(let id, let wasCompact, let layouts):
+                putBack(id, layouts, exactly: wasCompact == isCompact)
+            case .thread(let thread, let previous, let next, let shelfPrevious, let full, let compact):
+                reinsert(thread, previous: previous, next: next, shelfPrevious: shelfPrevious, now: now)
+                if isCompact, fullLayout == full.after { fullLayout = full.before }
+                if let layouts = isCompact ? compact : full, layouts.before.panes.contains(thread.id) {
+                    putBack(thread.id, layouts, exactly: true)
+                }
+            }
+            return
+        }
+    }
+
+    /// The panes as they were if nothing changed since; else split beside its old neighbour, else opened.
+    private func putBack(_ id: UUID, _ layouts: Layouts, exactly: Bool) {
+        if exactly, layout == layouts.after {
+            layout = layouts.before
+            focusRequest = id
+        } else if let spot = layouts.before.root?.placement(of: id), split(spot.anchor, side: spot.side, showing: id) {
+            return
+        } else {
+            open(id)
+        }
+    }
+
+    private func reinsert(_ thread: ShojiThread, previous: UUID?, next: UUID?, shelfPrevious: UUID?, now: Date) {
+        var groups = shelfIds
+        if let previous, let at = position(of: previous, in: groups) {
+            groups[at.group].insert(thread.id, at: at.index + 1)
+        } else if let next, let at = position(of: next, in: groups) {
+            groups[at.group].insert(thread.id, at: at.index)
+        } else if let shelfPrevious, let at = position(of: shelfPrevious, in: groups) {
+            groups.insert([thread.id], at: at.group + 1)
+        } else {
+            groups.insert([thread.id], at: 0)
+        }
+        activities[thread.id] = ThreadActivity(launchedAt: now)
+        threads.append(thread)
+        arrange(groups)
     }
 
     // MARK: Keyboard navigation
@@ -579,7 +675,7 @@ final class ThreadStore {
         saveTask = nil
         guard let fileURL else { return }
         do {
-            try ThreadFile(threads: threads, layout: fullLayout, compactLayout: compactLayout.root == nil ? nil : compactLayout).write(to: fileURL)
+            try ThreadFile(threads: threads, layout: fullLayout).write(to: fileURL)
         } catch {
             Logger(subsystem: "fi.yan.shoji", category: "threads").error("Couldn't save \(fileURL.path, privacy: .public): \(error)")
         }
