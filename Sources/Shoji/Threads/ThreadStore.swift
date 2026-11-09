@@ -14,7 +14,7 @@ final class ThreadStore {
     }
     /// One column of at most two rows. Not saved: each time the window narrows, it starts from the full form's right edge.
     private(set) var compactLayout = PaneLayout()
-    /// The narrow form (Split View beside an editor), which keeps its own panes.
+    /// The narrow form (Split View beside an editor), with its own panes.
     var isCompact = false {
         didSet {
             guard isCompact != oldValue else { return }
