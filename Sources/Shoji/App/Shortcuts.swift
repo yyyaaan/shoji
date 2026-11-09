@@ -23,6 +23,7 @@ struct Shortcut: Identifiable {
 extension Shortcut {
     static let newThread = Shortcut(title: "New Thread", key: "n")
     static let closeThread = Shortcut(title: "Close Thread", key: "w")
+    static let reopenClosed = Shortcut(title: "Reopen Closed Pane or Thread", key: "t", modifiers: [.command, .shift], hint: "the latest first")
     static let jumpToThread = Shortcut(title: "Jump to Thread 1–9", key: "1", keyLabel: "1–9", hint: "hold ⌘ to see them")
     static let nextNeedingYou = Shortcut(title: "Next Thread That Needs You", key: "j")
     static let openInVSCode = Shortcut(title: "Open in VS Code", key: "e", modifiers: [.command, .option, .shift])
@@ -66,7 +67,7 @@ struct ShortcutSection: Identifiable {
 
     static let columns: [[ShortcutSection]] = [
         [
-            ShortcutSection(title: "Threads", symbol: "rectangle.stack", shortcuts: [.newThread, .jumpToThread, .showInYourPane, .recentThread, .recentThreadReversed, .nextNeedingYou, .quickTerminal, .openInVSCode, .openInZed, .closeThread]),
+            ShortcutSection(title: "Threads", symbol: "rectangle.stack", shortcuts: [.newThread, .jumpToThread, .showInYourPane, .recentThread, .recentThreadReversed, .nextNeedingYou, .quickTerminal, .openInVSCode, .openInZed, .closeThread, .reopenClosed]),
             ShortcutSection(title: "Panes", symbol: "rectangle.split.2x1", shortcuts: [.nextPane, .previousPane, .splitRight, .splitDown, .toggleMaximize]),
         ],
         [
@@ -105,6 +106,8 @@ struct ShojiCommands: Commands {
                 if sessions.popup != nil { sessions.closePopup() } else { store.focusedThreadId.map(store.requestClose) }
             }
             .disabled((store.focusedThreadId == nil || store.showsHub) && sessions.popup == nil)
+            button(.reopenClosed) { store.reopenClosed() }
+                .disabled(!store.canReopenClosed)
         }
 
         CommandMenu("Threads") {

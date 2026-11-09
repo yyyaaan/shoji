@@ -4,9 +4,9 @@ The current state of Shoji: what's next, what to watch out for, and why things a
 
 ## Status
 
-- **Released:** v0.6.0: the Hub (⇧⌘H, the lantern), mini cards, the stones (a new thread in a folder) and the bamboo (⌘K).
-- **In progress (`hub-columns`, v0.7.0):** Hub groups as columns, the mini card peek and ⌘ badge, Hub excerpts without an agent's spinner and hints, local signing and `package.sh --install`.
-- **Next up:** the user installs with `--install`, re-grants privacy once, then merges.
+- **Released:** v0.7.0: Hub groups as columns, the mini card peek and ⌘ badge, trimmer Hub excerpts, local signing and `package.sh --install`.
+- **In progress (`visual-and-functional-tuning`, v0.8.0):** Reopen Closed (⇧⌘T), the compact form starting from the right edge, mini cards without the idle Torii, cards that keep their state when reordered.
+- **Next up:** the user's checks under Now, then merge.
 - **Blockers:** none.
 
 ## Tasks
@@ -14,15 +14,17 @@ The current state of Shoji: what's next, what to watch out for, and why things a
 Priorities follow the user's wishes. Keep items one line, small enough for one PR.
 
 ### Now (the user's checks)
+- [ ] ⇧⌘T (Threads section of the ⌘/ sheet, and under ⌘W in File): a closed pane returns to its spot, a closed thread to its card place (bars too) and pane; its agent resumes, a plain command waits at the prompt; several closes come back newest first; greyed out when nothing can come back
+- [ ] Reordering (drag, Move Left / Right, Add / Remove Bar Before), on the shelf and in the Hub: cards slide and keep their state (no flicker, Hub screens stay), a group's first card included; bars sit 18 pt from the cards either side
 - [ ] Hub columns: each group a column (or several, read top to bottom) left to right, bars full height between them; sideways scroll only with more groups than fit; ⌘ numbers and VoiceOver follow shelf order; screens still update as you scroll
-- [ ] Mini cards: card menu › Mini Card; the name reads top to bottom in the subtitle's style; hovering about ⅓ s shows the name and folder under the card, gone on leaving, no extra click needed; ⌘ shows the full card's badge; dragging, drops and the needs-you glow still work
+- [ ] Mini cards: card menu › Mini Card; the name reads top to bottom in the subtitle's style, starting at the top while idle (no icon) and below the icon otherwise; hovering about ⅓ s shows the name and folder under the card, gone on leaving, no extra click needed; ⌘ shows the full card's badge; dragging, drops and the needs-you glow still work
 - [ ] Stones (under the lantern): the folders in home until you Choose Folder to List… (remembered); picking one opens a new thread there, after your card. Bamboo (under the stones) toggles ⌘K. The Hub shows the bonsai and "All quiet" only when no pill does
 - [ ] Hub: ⇧⌘H and the lantern; no pane shows through and typing reaches no terminal; Esc returns to your pane; a card click, ⌘1–9, ⌘J, Hachi or a notification opens the thread; Esc in ⌘K over the Hub reaches the shell
 - [ ] Hub cards on real threads: the last lines skip Claude Code's and Codex's input box, footer and the spinner and hints above the box, and the reply shows (else tune `Excerpt`); the git branch shows; a working agent names its last tool
 - [ ] From design's review, natively: Interface Size 85–130% at window widths near 740 and 1360, compact and ⌘K at 480 pt; VoiceOver, Full Keyboard Access (pane header controls show while focused), Increase Contrast, Reduce Transparency, Reduce Motion; a card dragged to a pane edge previews only a split that would happen
 - [ ] The terminal checklist below
 - [ ] Room light: no seam at the terminal's margin; all panes solid with Reduce Transparency
-- [ ] Compact form: Split View beside a full-screen Zed or Chrome, narrow below 680 pt and back above 720 without flicker; the dropdown (shelf order, bars as separators, status) picks and swaps rows, New Thread; ⇧⌘D adds a row, ⌘D and ⌥⌘2–4 are off; the full layout comes back intact
+- [ ] Compact form: Split View beside a full-screen Zed or Chrome, narrow below 680 pt and back above 720 without flicker; it shows your full layout's right-hand column (the last two panes when that column has one), and narrowing again starts there anew; the dropdown (shelf order, bars as separators, status) picks and swaps rows, New Thread; ⇧⌘D adds a row when there's one, ⌘D and ⌥⌘2–4 are off; the full layout comes back intact
 - [ ] Full form: the hover chevron beside a pane's name opens the same dropdown; double-clicking the name still maximizes
 - [ ] Holding ⌘ shows 1–9 on the first nine cards after a moment; ⌘C, ⌘N and other quick shortcuts don't flash them
 - [ ] Notifications: none while Shoji is visible (Split View), one when it's on another Space; Dock badge at 10 or more
@@ -47,23 +49,23 @@ Only when the user asks.
 A calm command center for the terminals the user already runs all day. Claude Code and Codex stay plain CLIs on their subscriptions; Shoji organizes them, shows what each needs, and gets the user there in one step. Not an editor, diff viewer, file browser or agent client.
 
 ### The window
-- **One window, two forms, by width** (the Split View divider sets it): full above 720 pt, compact below 680, unchanged in between so a drag doesn't flicker; the window goes down to 480 pt (about 60 columns). Each form keeps its own panes; closing a thread removes it from both.
+- **One window, two forms, by width** (the Split View divider sets it): full above 720 pt, compact below 680, unchanged in between so a drag doesn't flicker; the window goes down to 480 pt (about 60 columns). Each form has its own panes; closing a thread removes it from both.
 - **Full form:** no title bar; the shelf shares the top row with the window buttons, Hachi's corner below them (empty until something needs you; a click opens it), and a column at the top right: the lantern (Hub), the stones (a new thread in a folder) and the bamboo (⌘K). Panes fill the rest.
-- **Compact form** (made for Split View beside a full-screen editor or browser): no shelf; a slim strip with Hachi beside the window buttons; one column of one or two rows. The first visit shows your thread; ⇧⌘D adds the second row; ⌘D and ⌥⌘2–4 are off.
+- **Compact form** (made for Split View beside a full-screen editor or browser): no shelf; a slim strip with Hachi beside the window buttons; one column of one or two rows. Each time the window narrows it starts from the full layout's right edge: the bottom two panes of its right-hand column, else its last two panes (not saved). ⇧⌘D adds a second row; ⌘D and ⌥⌘2–4 are off.
 - **Room light:** panes are `Palette.paneOpacity` (80%) opaque with no blur, so the backdrop tints them, cool on the left and warm on the right; text, caret, selections and coloured cells stay opaque. The quick terminal stays solid, and Reduce Transparency makes every pane solid.
 
 ### Shelf and cards
 - Glass cards in the user's order, split into groups by plain bars (no titles, no fixed meaning); scrolls sideways when full. Drag a card onto another to place it before or after (by half); the card menu also has Move Left / Right and Add / Remove Bar Before.
 - Card: status icon, a tag for what runs (CLAUDE / CODEX / the command's name), name, subtitle, elapsed time; the full folder as a tooltip.
 - **Name:** your rename, else a running agent's topic (its terminal title, unless that only names the agent or repeats its command line), else the folder's name, numbered ("shoji 2") only when two threads would read the same, the newer one getting the number. **Subtitle:** the folder; a plain command's command line; an agent's question while it needs you.
-- **Mini card** (card menu › Mini Card, full form): 44 pt wide, the status icon over the name in the subtitle's style, reading top to bottom; the glow, count badge (9+ above nine), drops and the ⌘ badge work as on a full card. Hovering a moment shows the full name and the subtitle under the card.
+- **Mini card** (card menu › Mini Card, full form): 44 pt wide, the status icon (none while idle) over the name in the subtitle's style, reading top to bottom; the glow, count badge (9+ above nine), drops and the ⌘ badge work as on a full card. Hovering a moment shows the full name and the subtitle under the card.
 - Needs-you card: orange border and glow, count badge, Hachi. A turn that finishes unseen keeps its tick with ivory chrome and a soft halo; Threads › Show Hachi When an Agent Finishes also brings Hachi, the corner and ⌘J.
 
 ### Panes
 - A split tree: split right, left, down or up from the header's Split menu, its right-click menu, ⌘D / ⇧⌘D, or a card dropped on a pane's edge (the half it takes is previewed, only where that split is allowed); the middle of a pane swaps. A new split shows your most recent thread that isn't on screen, else a new shell in that folder. Drag a gap to resize, double-click it to even. Splits that would leave a pane under 320×160 are refused. Panes › ⌥⌘1–4 snaps to one, two columns, three (one tall left) or a grid, keeping your pane and filling from recent threads.
 - **Going to a thread** (card click, ⌘1–9, ⌃Tab, ⌘J, Hachi, a notification): on screen, it just takes focus and glows ivory briefly; otherwise it opens in your pane (with none focused, the least recently used one that isn't waiting for you). Other panes never change behind your back. ⌥-click or Show in This Pane brings it to your pane; dropping a card, or picking it from a pane's dropdown, puts it in that pane, trading places if it's on screen.
 - **Pane header:** status, name, folder (giving way to the name when narrow); on hover, or while one has keyboard focus, a chevron (the thread dropdown: the shelf's cards with status, then New Thread), Split and Maximize, whose space is kept so the name never moves. Double-click maximizes; Restart once the shell has ended. In the compact form the name itself is the dropdown.
-- Close Pane keeps the thread on the shelf; ⌘W closes the thread (asking while something runs). The last pane stays and shows your next recent thread.
+- Close Pane keeps the thread on the shelf; ⌘W closes the thread (asking while something runs). The last pane stays and shows your next recent thread. ⇧⌘T reopens the latest close this session, newest first: a pane goes back to its spot (the same tree if nothing changed since, else split beside its old neighbour); a thread gets its card place and pane back and relaunches like after a quit, its agent resumed and a command left at the prompt. Its scrollback is gone.
 - Files or text dropped on a pane paste into its terminal (files as escaped paths, like Terminal).
 
 ### Getting around
@@ -107,15 +109,14 @@ Files live in `~/Library/Application Support/Shoji` (`Shoji-Debug` for Debug bui
     { "id": "6F1C…", "title": "auth-refactor", "folder": "~/code/app", "group": 0, "order": 0,
       "command": "claude", "resumeId": "abc123…", "resumeAgent": "claude", "textSteps": -1, "isMini": true }
   ],
-  "layout": { "root": { "pane": { "id": "6F1C…" } }, "mode": "single", "openThreadIds": ["6F1C…"] },
-  "compactLayout": { "root": { "pane": { "id": "6F1C…" } } }
+  "layout": { "root": { "pane": { "id": "6F1C…" } }, "mode": "single", "openThreadIds": ["6F1C…"] }
 }
 ```
 
 - `title`, `textSteps` and `isMini` are optional; `folder` follows the shell; `group` / `order` place the card. The array is in creation order, which decides who gets the number among same-named threads.
 - `command` is what ran at the last save and `resumeId` its agent session, `resumeAgent` naming the CLI: a relaunch runs `claude --resume <id>` or `codex resume <id>` at the first prompt, or leaves `command` at the prompt for Return.
-- `layout.root` is the split tree; `mode` and `openThreadIds` are written for older Shoji and read when `root` is missing. `compactLayout` is optional. Unknown keys are ignored.
-- Runtime only: status, activity, agent, terminal views, which form is showing, the Hub.
+- `layout.root` is the split tree; `mode` and `openThreadIds` are written for older Shoji and read when `root` is missing. Unknown keys are ignored (`compactLayout` from v0.5–0.7).
+- Runtime only: status, activity, agent, terminal views, which form is showing and the compact form's panes, the Hub, what ⇧⌘T can reopen.
 
 ### Status
 
@@ -147,7 +148,7 @@ Shell reports from the zsh integration: `cwd;<path>` each prompt, `cmd;<line>` b
 - **The Hub hides the panes, it doesn't remove them.** `PaneGrid` stays at opacity 0 underneath so terminals keep their host and size, and `MainView` takes first responder from the terminal. `focusRequest` and `showsHub` clear each other: asking for a pane's focus leaves the Hub, closing a thread from it doesn't. Esc is a key equivalent there, off while ⌘K is open.
 - **The Hub's lines come from the live screen:** `terminalContentSnapshot(region: .history(maximumScrollbackRows: -1))`, whatever the user scrolled to (`visibleRowsText` and `getLine(row:)` follow the scroll). Display only; `Excerpt` cuts at the first box-drawing rule in the last 12 non-blank rows (an agent's input box).
 - **The mini card peek is an overlay, not a popover:** a transient popover swallows the click that closes it, so the card would need two clicks. `ThreadCard` raises a `MiniPeek` anchor preference and `MainView` draws it, not hit-testable.
-- **The Hub's columns aren't lazy** (bars need the tallest column's height), so `HubCard` takes screen snapshots only while `onScrollVisibilityChange` says it's in view.
+- **Cards are one flat `ForEach` keyed by thread**, on the shelf (a bar drawn beside the card after it) and in the Hub (the `HubColumns` layout). Nesting them per group re-creates a card whenever its group's identity changes, losing its state and screen lines. `HubColumns` isn't lazy (bars need the tallest column), so `HubCard` snapshots only while `onScrollVisibilityChange` says it's in view.
 - **Inside a `GlassEffectContainer`, overlays added after `.glassEffect` draw under the glass.** Put borders and badges first.
 - **Hidden title bar:** content ignores the top safe area; the leading 78 pt stays clear for the window buttons; the window drags by its background.
 - **⌃Tab is a local key monitor** (`RecentSwitchKeys`), since the switcher needs ⌃'s release and the keys must not reach the terminal; it stands down while a sheet or alert is up. The ⌘ card numbers (`CardNumberKeys`) watch the same events but never consume them; ⌘Tab's Tab never reaches the app, so the numbers can show under the app switcher until Shoji goes inactive.
@@ -191,6 +192,8 @@ Run by hand with Claude Code in Shoji after every SwiftTerm bump (AGENTS invaria
 - **One window, two forms, by width,** because Split View sets the width; the green button stays macOS's.
 - **Room light:** 80% opaque, never blurred; 90% barely shows the backdrop. More transparency or blur would cost contrast and show colours that mean status.
 - **The Hub follows the shelf:** shelf order, groups as columns left to right, not attention order or an Agents / Tasks split, so cards stay put and match ⌘1–9; needs-you cards stand out anyway.
+- **Reopening relaunches, it doesn't revive:** a closed thread's process has ended, as you asked; keeping it alive in hiding would be a process you can't see. Session only, so nothing closed lingers in `threads.json`.
+- **The compact form starts from the right edge each time, unsaved** (the user's choice): rows picked while narrow are for the moment; the full layout is the one that lasts.
 - **You stop processes yourself:** no Stop or command Restart buttons; ⌃C in the terminal and Close Thread (which asks) are the ways. Restart is only for a shell that has ended.
 - **Git branch from `.git/HEAD`** (worktrees too), never a `git` process.
 - **Hub screen lines once a second, only while the Hub shows and only for cards in view:** a snapshot costs about 1 ms for a pane-sized screen (Debug build).

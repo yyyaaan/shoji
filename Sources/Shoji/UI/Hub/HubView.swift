@@ -25,31 +25,15 @@ struct HubView: View {
         let overflows = CGFloat(total) * columnWidth + gaps + bars > room + 0.5
         ScrollView(overflows ? [.vertical, .horizontal] : .vertical) {
             GlassEffectContainer {
-                HStack(alignment: .top, spacing: barGap) {
-                    ForEach(Array(groups.enumerated()), id: \.element.first?.id) { index, threads in
-                        if index > 0 {
-                            Rectangle()
-                                .fill(.white.opacity(0.16))
-                                .frame(width: 1)
-                                .frame(maxHeight: .infinity)
-                                .accessibilityHidden(true)
-                        }
-                        let span = spans[index]
-                        let rows = (threads.count + span - 1) / span
-                        HStack(alignment: .top, spacing: spacing) {
-                            ForEach(0..<span, id: \.self) { column in
-                                VStack(spacing: spacing) {
-                                    ForEach(threads[(column * rows)..<min((column + 1) * rows, threads.count)]) {
-                                        HubCard(thread: $0, number: numbers[$0.id])
-                                    }
-                                }
-                                .frame(width: columnWidth)
-                            }
-                        }
+                // One flat list of cards, so reordering never rebuilds a card (and its screen lines).
+                HubColumns(counts: groups.map(\.count), spans: spans, columnWidth: columnWidth, spacing: spacing, barGap: barGap) {
+                    ForEach(groups.flatMap { $0 }) { HubCard(thread: $0, number: numbers[$0.id]) }
+                    ForEach(1..<max(groups.count, 1), id: \.self) { _ in
+                        Rectangle()
+                            .fill(.white.opacity(0.16))
+                            .accessibilityHidden(true)
                     }
                 }
-                // Bars as tall as the tallest column.
-                .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 18)
                 .padding(.top, 8 * zoom)
@@ -85,6 +69,54 @@ extension HubView {
             spans[tallest] = needed
         }
         return spans
+    }
+}
+
+/// Groups left to right, each in its `spans` columns read top to bottom; then the bars, as tall as the tallest column.
+private struct HubColumns: Layout {
+    let counts: [Int]
+    let spans: [Int]
+    let columnWidth: CGFloat
+    let spacing: CGFloat
+    let barGap: CGFloat
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        arrange(subviews).size
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let (cards, bars, size) = arrange(subviews)
+        for (index, frame) in cards.enumerated() {
+            subviews[index].place(at: CGPoint(x: bounds.minX + frame.minX, y: bounds.minY + frame.minY), proposal: ProposedViewSize(frame.size))
+        }
+        for (index, x) in bars.enumerated() where subviews.indices.contains(cards.count + index) {
+            subviews[cards.count + index].place(at: CGPoint(x: bounds.minX + x, y: bounds.minY), proposal: ProposedViewSize(width: 1, height: size.height))
+        }
+    }
+
+    private func arrange(_ subviews: Subviews) -> (cards: [CGRect], bars: [CGFloat], size: CGSize) {
+        var cards: [CGRect] = []
+        var bars: [CGFloat] = []
+        var (x, height) = (CGFloat.zero, CGFloat.zero)
+        for (group, count) in counts.enumerated() {
+            if group > 0 {
+                bars.append(x + barGap)
+                x += 2 * barGap + 1
+            }
+            let span = spans[group]
+            let rows = (count + span - 1) / span
+            for column in 0..<span {
+                var y = CGFloat.zero
+                for _ in 0..<max(min(rows, count - column * rows), 0) where subviews.indices.contains(cards.count) {
+                    let cardHeight = subviews[cards.count].sizeThatFits(ProposedViewSize(width: columnWidth, height: nil)).height
+                    cards.append(CGRect(x: x, y: y, width: columnWidth, height: cardHeight))
+                    y += cardHeight + spacing
+                }
+                height = max(height, y - spacing)
+                x += columnWidth + (column < span - 1 ? spacing : 0)
+            }
+        }
+        return (cards, bars, CGSize(width: x, height: height))
     }
 }
 
