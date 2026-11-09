@@ -22,13 +22,13 @@ final class ThreadStore {
                 showsHub = false
                 let ids = fullLayout.rightEdge
                 compactLayout.root = ids.count < 2 ? ids.first.map { .pane(id: $0) } : .split(axis: .rows, ratio: 0.5, first: .pane(id: ids[0]), second: .pane(id: ids[1]))
-                compactLayout.maximizedThreadId = nil
+                compactLayout.maximizedPaneId = nil
             }
-            if layout.root == nil, let id = focusedThreadId ?? (recentThreadIds + shelfOrder.map(\.id)).first {
-                layout.show(id, replacing: nil)
+            if layout.root == nil {
+                layout.show(focusedThreadId ?? (recentThreadIds + shelfOrder.map(\.id)).first ?? UUID(), replacing: nil)
             }
-            let visible = layout.visibleThreadIds
-            focusRequest = focusedThreadId.flatMap { visible.contains($0) ? $0 : nil } ?? visible.first
+            let visible = layout.visiblePanes
+            focusRequest = focusedPaneId.flatMap { visible.contains($0) ? $0 : nil } ?? visible.first
         }
     }
     /// The panes of the form on screen.
@@ -36,10 +36,14 @@ final class ThreadStore {
         get { isCompact ? compactLayout : fullLayout }
         set { if isCompact { compactLayout = newValue } else { fullLayout = newValue } }
     }
-    private(set) var focusedThreadId: UUID?
+    /// A thread's pane or an empty one.
+    private(set) var focusedPaneId: UUID?
+    var focusedThreadId: UUID? {
+        focusedPaneId.flatMap { activities[$0] == nil ? nil : $0 }
+    }
     /// Most recently focused first.
     private(set) var recentThreadIds: [UUID] = []
-    /// A pane that should take keyboard focus once its terminal is on screen; asking for one leaves the Hub.
+    /// A pane that should take keyboard focus once it is on screen; asking for one leaves the Hub.
     private(set) var focusRequest: UUID? {
         didSet { if focusRequest != nil, showsHub { showsHub = false } }
     }
@@ -50,8 +54,8 @@ final class ThreadStore {
             if showsHub {
                 focusRequest = nil
             } else if focusRequest == nil {
-                let visible = layout.visibleThreadIds
-                focusRequest = focusedThreadId.flatMap { visible.contains($0) ? $0 : nil } ?? visible.first
+                let visible = layout.visiblePanes
+                focusRequest = focusedPaneId.flatMap { visible.contains($0) ? $0 : nil } ?? visible.first
             }
         }
     }
@@ -83,9 +87,8 @@ final class ThreadStore {
     @ObservationIgnored private var saveTask: Task<Void, Never>?
 
     init(threads: [ShojiThread], layout: PaneLayout = PaneLayout(), now: Date = .now, fileURL: URL? = nil) {
-        let ids = Set(threads.map(\.id))
         var layout = layout
-        for id in layout.panes where !ids.contains(id) { layout.removePane(id) }
+        if layout.root == nil { layout.root = .pane(id: UUID()) }
         self.threads = threads
         fullLayout = layout
         self.fileURL = fileURL
@@ -196,12 +199,12 @@ final class ThreadStore {
         return asking + waiting.filter { activity(for: $0.id).status != .needsYou }
     }
 
-    /// Called when a thread's terminal takes keyboard focus.
+    /// Called when a pane (a thread's terminal, or an empty pane) takes keyboard focus.
     func focus(_ id: UUID, at now: Date = .now) {
-        if focusedThreadId != id { focusedThreadId = id }
+        if focusedPaneId != id { focusedPaneId = id }
         if focusRequest == id { focusRequest = nil }
-        if recentThreadIds.first != id { recentThreadIds = [id] + recentThreadIds.filter { $0 != id } }
         guard var activity = activities[id] else { return }
+        if recentThreadIds.first != id { recentThreadIds = [id] + recentThreadIds.filter { $0 != id } }
         let current = activity
         activity.attention = 0
         if activity.status == .done { activity.transition(to: .idle, at: now) }
@@ -215,7 +218,8 @@ final class ThreadStore {
     /// After the focused card and opened like a click; with `target`, after that card and in its pane.
     @discardableResult
     func newThread(inPaneOf target: UUID? = nil, folder: String? = nil, at now: Date = .now) -> UUID {
-        let id = addThread(after: target ?? focusedThreadId, folder: folder, at: now)
+        let neighbour = [target, focusedThreadId, recentThreadIds.first].compactMap(\.self).first { thread($0) != nil }
+        let id = addThread(after: neighbour, folder: folder, at: now)
         if let target { show(id, inPaneOf: target) } else { open(id) }
         return id
     }
@@ -229,7 +233,7 @@ final class ThreadStore {
 
     /// A quick terminal closed while running something joins the shelf after the focused card, without a pane.
     func adopt(_ thread: ShojiThread, running command: String, at now: Date = .now) {
-        insert(thread, after: focusedThreadId, at: now)
+        insert(thread, after: focusedThreadId ?? recentThreadIds.first, at: now)
         apply(StatusEvent(threadId: thread.id, signal: .directory(thread.folder)), at: now)
         apply(StatusEvent(threadId: thread.id, signal: .commandStarted(command)), at: now)
     }
@@ -275,7 +279,7 @@ final class ThreadStore {
         }
     }
 
-    /// `TerminalSessions.sync` then stops its process. The last pane shows your most recent other thread.
+    /// `TerminalSessions.sync` then stops its process. Its pane on screen stays, empty; the other form's goes.
     func close(_ id: UUID) {
         if closeRequest == id { closeRequest = nil }
         guard let thread = thread(id) else { return }
@@ -284,18 +288,20 @@ final class ThreadStore {
         let index = group.firstIndex(of: id) ?? 0
         let order = shelfOrder.map(\.id)
         let shelfIndex = order.firstIndex(of: id) ?? 0
-        let taker = layout.root?.sibling(of: id)?.panes.first
-        fullLayout.removePane(id)
-        compactLayout.removePane(id)
+        let empty = UUID()
+        if isCompact {
+            compactLayout.clear(id, leaving: empty)
+            fullLayout.removePane(id)
+        } else {
+            fullLayout.clear(id, leaving: empty)
+            compactLayout.removePane(id)
+        }
         recentThreadIds.removeAll { $0 == id }
         threads.removeAll { $0.id == id }
         activities[id] = nil
-        if layout.root == nil, let next = (recentThreadIds + shelfOrder.map(\.id)).first {
-            layout.show(next, replacing: nil)
-        }
-        if focusedThreadId == id {
-            focusedThreadId = nil
-            if !showsHub { focusRequest = taker ?? layout.visibleThreadIds.first }
+        if focusedPaneId == id {
+            focusedPaneId = layout.panes.contains(empty) ? empty : nil
+            if !showsHub { focusRequest = focusedPaneId ?? layout.visiblePanes.first }
         }
         remember(.thread(
             thread,
@@ -410,7 +416,8 @@ final class ThreadStore {
 
     // MARK: Panes
 
-    /// In your pane, else the least recently used one not waiting for you. On screen: focus only; gone: ignored.
+    /// Into an empty pane (yours first), else your pane, else the least recently used one not waiting for you.
+    /// On screen: focus only; gone: ignored.
     func open(_ id: UUID) {
         guard thread(id) != nil else { return }
         if layout.panes.contains(id), id != focusedThreadId {
@@ -418,7 +425,9 @@ final class ThreadStore {
         }
         let panes = layout.panes
         let notWaiting = panes.filter { !wantsYou($0) }
-        let replaced = panes.first { $0 == focusedThreadId }
+        let empties = panes.filter { thread($0) == nil }
+        let replaced = empties.first { $0 == focusedPaneId } ?? empties.first
+            ?? panes.first { $0 == focusedPaneId }
             ?? (notWaiting.isEmpty ? panes : notWaiting).reversed().max { recency($0) < recency($1) }
         layout.show(id, replacing: replaced)
         focusRequest = id
@@ -426,8 +435,8 @@ final class ThreadStore {
 
     /// Into your pane, trading places when it's on screen elsewhere.
     func bringHere(_ id: UUID) {
-        guard let focusedThreadId, focusedThreadId != id, layout.panes.contains(focusedThreadId) else { return open(id) }
-        show(id, inPaneOf: focusedThreadId)
+        guard let focusedPaneId, focusedPaneId != id, layout.panes.contains(focusedPaneId) else { return open(id) }
+        show(id, inPaneOf: focusedPaneId)
     }
 
     /// Drag and drop onto a pane: the thread takes that pane.
@@ -445,7 +454,7 @@ final class ThreadStore {
     func arrange(_ preset: PaneLayout.Preset) {
         guard !isCompact || preset == .single else { return }
         var ids = layout.panes
-        if let focused = focusedThreadId, let index = ids.firstIndex(of: focused), index >= preset.capacity {
+        if let focused = focusedPaneId, let index = ids.firstIndex(of: focused), index >= preset.capacity {
             ids.swapAt(index, preset.capacity - 1)
         }
         ids = Array(ids.prefix(preset.capacity))
@@ -453,13 +462,13 @@ final class ThreadStore {
             ids.append(id)
         }
         layout.root = preset.tree(ids)
-        layout.maximizedThreadId = nil
+        layout.maximizedPaneId = nil
     }
 
     /// The new pane shows your most recent hidden thread, else a new shell. False when the pane is gone or too small.
     @discardableResult
     func split(_ target: UUID? = nil, side: PaneLayout.Side) -> Bool {
-        guard let target = target ?? focusedThreadId, canSplit(target, side: side) else { return false }
+        guard let target = target ?? focusedPaneId, canSplit(target, side: side) else { return false }
         let id = (recentThreadIds + shelfOrder.map(\.id)).first { !layout.panes.contains($0) }
             ?? addThread(after: target)
         layout.split(target, side: side, with: id)
@@ -481,9 +490,11 @@ final class ThreadStore {
         guard layout.panes.count > 1, let taker = layout.root?.sibling(of: id)?.panes.first else { return }
         let before = layout
         layout.removePane(id)
-        remember(.pane(id, isCompact: isCompact, layouts: Layouts(before: before, after: layout)))
-        if focusedThreadId == id {
-            focusedThreadId = nil
+        if thread(id) != nil {
+            remember(.pane(id, isCompact: isCompact, layouts: Layouts(before: before, after: layout)))
+        }
+        if focusedPaneId == id {
+            focusedPaneId = nil
             focusRequest = taker
         }
     }
@@ -565,11 +576,15 @@ final class ThreadStore {
         }
     }
 
-    /// The panes as they were if nothing changed since; else split beside its old neighbour, else opened.
+    /// The panes as they were if nothing changed since; else into the pane its close left empty, else split beside its
+    /// old neighbour, else opened.
     private func putBack(_ id: UUID, _ layouts: Layouts, exactly: Bool) {
+        let left = layouts.after.panes.first { !layouts.before.panes.contains($0) && layout.panes.contains($0) && thread($0) == nil }
         if exactly, layout == layouts.after {
             layout = layouts.before
             focusRequest = id
+        } else if let left {
+            show(id, inPaneOf: left)
         } else if let spot = layouts.before.root?.placement(of: id), split(spot.anchor, side: spot.side, showing: id) {
             return
         } else {
@@ -613,9 +628,9 @@ final class ThreadStore {
     }
 
     func focusPane(offset: Int) {
-        let visible = layout.visibleThreadIds
+        let visible = layout.visiblePanes
         guard !visible.isEmpty else { return }
-        let current = visible.firstIndex { $0 == focusedThreadId } ?? (offset > 0 ? -1 : 0)
+        let current = visible.firstIndex { $0 == focusedPaneId } ?? (offset > 0 ? -1 : 0)
         focusRequest = visible[(current + offset + visible.count) % visible.count]
     }
 

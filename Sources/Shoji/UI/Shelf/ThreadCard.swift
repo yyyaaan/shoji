@@ -261,7 +261,7 @@ struct MiniPeek: Equatable {
         ForEach([store.threads, minis], id: \.first?.isMini) { threads in
             HStack(spacing: 10) {
                 ForEach(threads) { thread in
-                    ThreadCard(thread: thread, name: store.name(of: thread), activity: store.activity(for: thread.id), isFocused: thread.id == Mock.threads[1].id, isOnScreen: store.layout.visibleThreadIds.contains(thread.id), wantsYou: store.wantsYou(thread.id))
+                    ThreadCard(thread: thread, name: store.name(of: thread), activity: store.activity(for: thread.id), isFocused: thread.id == Mock.threads[1].id, isOnScreen: store.layout.visiblePanes.contains(thread.id), wantsYou: store.wantsYou(thread.id))
                 }
             }
         }

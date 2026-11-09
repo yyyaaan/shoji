@@ -2,6 +2,7 @@ import CoreGraphics
 import Foundation
 
 /// The panes as a split tree; `panes` (reading order) is what `ThreadStore`'s opening rules use.
+/// A pane is named by the thread it shows; an id that is no thread's is an empty pane (`EmptyPane`).
 struct PaneLayout: Equatable, Sendable {
     enum Preset: String, Codable, CaseIterable, Sendable {
         /// `threePanes` is one tall pane on the left with two stacked on the right.
@@ -41,20 +42,20 @@ struct PaneLayout: Equatable, Sendable {
     }
 
     var root: PaneNode?
-    var maximizedThreadId: UUID?
+    var maximizedPaneId: UUID?
 
-    /// The threads in the panes, maximized or not.
+    /// In reading order, maximized or not.
     var panes: [UUID] {
         root?.panes ?? []
     }
 
-    var visibleThreadIds: [UUID] {
-        maximizedThreadId.map { [$0] } ?? panes
+    var visiblePanes: [UUID] {
+        maximizedPaneId.map { [$0] } ?? panes
     }
 
     /// What the compact form starts with: the bottom two of the right-hand column, else the last two panes.
     var rightEdge: [UUID] {
-        if let maximizedThreadId { return [maximizedThreadId] }
+        if let maximizedPaneId { return [maximizedPaneId] }
         var ids = Array((root?.rightColumn ?? []).suffix(2))
         for id in panes.reversed() where ids.count < 2 && !ids.contains(id) { ids.insert(id, at: 0) }
         return ids
@@ -62,7 +63,7 @@ struct PaneLayout: Equatable, Sendable {
 
     /// In place of `replaced` (the last pane when nil), or as the only pane.
     mutating func show(_ id: UUID, replacing replaced: UUID?) {
-        maximizedThreadId = nil
+        maximizedPaneId = nil
         guard !panes.contains(id) else { return }
         guard let target = replaced.flatMap({ panes.contains($0) ? $0 : nil }) ?? panes.last else {
             root = .pane(id: id)
@@ -73,7 +74,7 @@ struct PaneLayout: Equatable, Sendable {
 
     /// Drag and drop: puts a thread in `target`'s pane; one already on screen trades places with it.
     mutating func put(_ id: UUID, inPaneOf target: UUID) {
-        maximizedThreadId = nil
+        maximizedPaneId = nil
         guard id != target, panes.contains(target) else { return }
         if panes.contains(id) {
             root = root?.mapPanes { .pane(id: $0 == id ? target : $0 == target ? id : $0) }
@@ -84,7 +85,7 @@ struct PaneLayout: Equatable, Sendable {
 
     /// `id` leaves its old pane if it had one.
     mutating func split(_ target: UUID, side: Side, with id: UUID) {
-        maximizedThreadId = nil
+        maximizedPaneId = nil
         guard id != target, panes.contains(target) else { return }
         root = root?.removing(id)
         let axis: PaneNode.Axis = side == .left || side == .right ? .columns : .rows
@@ -95,9 +96,15 @@ struct PaneLayout: Equatable, Sendable {
         }
     }
 
+    /// The pane stays, empty, as `empty`.
+    mutating func clear(_ id: UUID, leaving empty: UUID) {
+        replace(id, with: empty)
+        if maximizedPaneId == id { maximizedPaneId = empty }
+    }
+
     mutating func removePane(_ id: UUID) {
         root = root?.removing(id)
-        if maximizedThreadId == id { maximizedThreadId = nil }
+        if maximizedPaneId == id { maximizedPaneId = nil }
     }
 
     mutating func setRatio(_ ratio: Double, at path: [Int]) {
@@ -105,7 +112,7 @@ struct PaneLayout: Equatable, Sendable {
     }
 
     mutating func toggleMaximize(_ id: UUID) {
-        maximizedThreadId = maximizedThreadId == id ? nil : id
+        maximizedPaneId = maximizedPaneId == id ? nil : id
     }
 
     private mutating func replace(_ target: UUID, with id: UUID) {
@@ -121,7 +128,8 @@ extension PaneLayout {
 
 extension PaneLayout: Codable {
     private enum CodingKeys: String, CodingKey {
-        case root, maximizedThreadId
+        case root
+        case maximizedPaneId = "maximizedThreadId"
         // v0.3: a fixed layout and its pane order; pins are ignored.
         case mode, openThreadIds, columnSplit, rowSplit
     }
@@ -140,20 +148,20 @@ extension PaneLayout: Codable {
             )
         }
         let panes = self.panes
-        maximizedThreadId = try container.decodeIfPresent(UUID.self, forKey: .maximizedThreadId).flatMap { panes.contains($0) ? $0 : nil }
+        maximizedPaneId = try container.decodeIfPresent(UUID.self, forKey: .maximizedPaneId).flatMap { panes.contains($0) ? $0 : nil }
     }
 
     /// Also writes the nearest fixed layout, so v0.3 still opens the file.
     func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encodeIfPresent(root, forKey: .root)
-        try container.encodeIfPresent(maximizedThreadId, forKey: .maximizedThreadId)
+        try container.encodeIfPresent(maximizedPaneId, forKey: .maximizedPaneId)
         try container.encode(Preset.allCases.first { $0.capacity >= panes.count } ?? .grid, forKey: .mode)
         try container.encode(panes, forKey: .openThreadIds)
     }
 }
 
-/// One pane showing a thread, or a split: `first` left of or above `second`, `ratio` being first's share.
+/// One pane (a thread's, or empty), or a split: `first` left of or above `second`, `ratio` being first's share.
 indirect enum PaneNode: Codable, Equatable, Sendable {
     enum Axis: String, Codable, Sendable {
         case columns, rows

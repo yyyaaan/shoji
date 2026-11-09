@@ -179,7 +179,7 @@ struct HubCard: View {
         HStack(spacing: 4 * zoom) {
             Button("Open Maximized", systemImage: "arrow.up.left.and.arrow.down.right") {
                 store.open(thread.id)
-                if store.layout.maximizedThreadId != thread.id { store.toggleMaximize(thread.id) }
+                if store.layout.maximizedPaneId != thread.id { store.toggleMaximize(thread.id) }
             }
             .labelStyle(.iconOnly)
             .help("Open Maximized")

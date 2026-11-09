@@ -23,7 +23,7 @@ struct PaneView: View {
     }
 
     private var isFocused: Bool { store.focusedThreadId == thread.id }
-    private var isMaximized: Bool { store.layout.maximizedThreadId == thread.id }
+    private var isMaximized: Bool { store.layout.maximizedPaneId == thread.id }
     private var opacity: Double { reduceTransparency ? 1 : Palette.paneOpacity }
     /// On hover, or while one has keyboard focus (Full Keyboard Access).
     private var showsControls: Bool { isHovering || focusedControl != nil }

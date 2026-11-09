@@ -1,30 +1,28 @@
 import SwiftUI
 
-/// One `PaneView` per thread, placed by frame so a layout change never re-hosts a terminal.
+/// One `PaneView` per thread (or `EmptyPane`), placed by frame so a layout change never re-hosts a terminal.
 struct PaneGrid: View {
     @Environment(ThreadStore.self) private var store
 
     var body: some View {
-        let threads = store.layout.visibleThreadIds.compactMap(store.thread)
-
-        if threads.isEmpty {
-            ContentUnavailableView("No open threads", systemImage: "rectangle.split.2x1", description: Text("Pick a card on the shelf."))
-        } else {
-            GeometryReader { proxy in
-                let area = CGRect(origin: .zero, size: proxy.size)
-                let tiles = PaneTiles(store.layout.maximizedThreadId.map { .pane(id: $0) } ?? store.layout.root, in: area)
-                ZStack(alignment: .topLeading) {
-                    ForEach(threads) { thread in
-                        if let rect = tiles.panes[thread.id] {
+        GeometryReader { proxy in
+            let area = CGRect(origin: .zero, size: proxy.size)
+            let tiles = PaneTiles(store.layout.maximizedPaneId.map { .pane(id: $0) } ?? store.layout.root, in: area)
+            ZStack(alignment: .topLeading) {
+                ForEach(store.layout.visiblePanes, id: \.self) { id in
+                    if let rect = tiles.panes[id] {
+                        if let thread = store.thread(id) {
                             place(PaneView(thread: thread), in: rect)
+                        } else {
+                            place(EmptyPane(id: id), in: rect)
                         }
                     }
-                    ForEach(tiles.handles) { handle in
-                        place(SplitHandle(axis: handle.axis, fraction: ratio(at: handle.path), length: handle.length), in: handle.rect)
-                    }
                 }
-                .onChange(of: proxy.size, initial: true) { _, size in store.paneAreaSize = size }
+                ForEach(tiles.handles) { handle in
+                    place(SplitHandle(axis: handle.axis, fraction: ratio(at: handle.path), length: handle.length), in: handle.rect)
+                }
             }
+            .onChange(of: proxy.size, initial: true) { _, size in store.paneAreaSize = size }
         }
     }
 

@@ -91,12 +91,9 @@ struct ThreadLaunchTests {
         #expect(lines == ["-c", codexHooks, "resume", "abc", "--settings", #"{"hooks":{}}"#, "-r"])
     }
 
-    @Test func missingFolderStartsAtHome() {
+    @Test func environmentCarriesThreadIdentityAndDropsHostNoise() {
         #expect(ShojiThread(folder: "/no/such/folder").launch(in: context).directory == NSHomeDirectory())
         #expect(ShojiThread(folder: "~").launch(in: context).directory == NSHomeDirectory())
-    }
-
-    @Test func environmentCarriesThreadIdentityAndDropsHostNoise() {
         let thread = ShojiThread()
         let launch = thread.launch(in: context)
         #expect(launch.environment["SHOJI_THREAD_ID"] == thread.id.uuidString)
