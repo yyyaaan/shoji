@@ -23,7 +23,9 @@ struct ActivityTests {
         #expect(store.thread(first.id)?.command == "claude")
 
         store.send(.working(sessionId: "s1"), to: first.id, at: start + 2)
+        store.send(.working(sessionId: "s1"), to: first.id, at: start + 2.5)
         #expect(store.activity(for: first.id).status == .working)
+        #expect(store.activity(for: first.id).since == start + 2)
         #expect(store.thread(first.id)?.resumeId == "s1")
 
         store.send(.needsYou(message: "Allow Bash"), to: first.id, at: start + 3)
@@ -40,6 +42,12 @@ struct ActivityTests {
         #expect(store.activity(for: first.id).agent == nil)
         #expect(store.thread(first.id)?.resumeId == nil)
         #expect(store.thread(first.id)?.command == nil)
+
+        // Started through an alias, the hooks still mark the agent.
+        store.send(.commandStarted("cc"), to: second.id)
+        #expect(store.activity(for: second.id).agent == nil)
+        store.send(.working(sessionId: nil), to: second.id)
+        #expect(store.activity(for: second.id).agent == .claude)
     }
 
     @Test func codexTurnLifecycleInsideTheShell() {
@@ -64,14 +72,6 @@ struct ActivityTests {
         #expect(store.thread(first.id)?.resumeId == "c1" && store.thread(first.id)?.resumeAgent == .codex)
     }
 
-    @Test func hooksMarkAnAgentEvenWhenStartedThroughAnAlias() {
-        let store = makeStore()
-        store.send(.commandStarted("cc"), to: first.id)
-        #expect(store.activity(for: first.id).agent == nil)
-        store.send(.working(sessionId: nil), to: first.id)
-        #expect(store.activity(for: first.id).agent == .claude)
-    }
-
     @Test func commandsRunAndFinish() {
         let store = makeStore()
         store.send(.commandStarted("pnpm dev"), to: first.id, at: start + 1)
@@ -87,6 +87,9 @@ struct ActivityTests {
 
         store.focus(first.id)
         #expect(store.activity(for: first.id).status == .idle)
+
+        store.send(.finished, to: UUID())
+        #expect(store.activities.count == 2)
     }
 
     @Test func quittingWouldStopOnlyBusyThreads() {
@@ -124,14 +127,13 @@ struct ActivityTests {
 
         store.send(.launched, to: first.id, at: start + 9)
         #expect(store.activity(for: first.id) == ThreadActivity(launchedAt: start + 9))
-    }
 
-    @Test func launchHandsOverThePrefilledCommandButKeepsTheSession() {
+        // A relaunch hands the saved command to the prompt but keeps the session.
         let saved = ShojiThread(resumeId: "s1", command: "claude")
-        let store = ThreadStore(threads: [saved])
-        store.send(.launched, to: saved.id)
-        #expect(store.thread(saved.id)?.command == nil)
-        #expect(store.thread(saved.id)?.resumeId == "s1")
+        let relaunched = ThreadStore(threads: [saved])
+        relaunched.send(.launched, to: saved.id)
+        #expect(relaunched.thread(saved.id)?.command == nil)
+        #expect(relaunched.thread(saved.id)?.resumeId == "s1")
     }
 
     @Test func focusClearsAttentionAndMarksDoneAsSeen() {
@@ -144,6 +146,15 @@ struct ActivityTests {
         #expect(store.focusedThreadId == first.id)
         #expect(store.activity(for: first.id).attention == 0)
         #expect(store.activity(for: first.id).status == .idle)
+
+        // With Shoji in the background even the focused pane is out of sight.
+        store.isAppActive = false
+        store.send(.working(sessionId: nil), to: first.id)
+        store.send(.finished, to: first.id)
+        #expect(store.wantsYou(first.id))
+        store.isAppActive = true
+        #expect(!store.wantsYou(first.id))
+        #expect(store.activity(for: first.id).status == .idle)
     }
 
     @Test func bellOnlyEscalatesWorkingAgents() {
@@ -155,25 +166,6 @@ struct ActivityTests {
         store.send(.working(sessionId: nil), to: first.id)
         store.send(.bell, to: first.id)
         #expect(store.activity(for: first.id).status == .needsYou)
-    }
-
-    @Test func repeatedStatusKeepsItsStartTime() {
-        let store = makeStore()
-        store.send(.working(sessionId: nil), to: first.id, at: start + 1)
-        store.send(.working(sessionId: nil), to: first.id, at: start + 60)
-        #expect(store.activity(for: first.id).since == start + 1)
-    }
-
-    @Test func titlesDropSpinnerGlyphs() {
-        let store = makeStore()
-        store.send(.title("✳ Fix login flow"), to: first.id)
-        #expect(store.activity(for: first.id).terminalTitle == "Fix login flow")
-    }
-
-    @Test func unknownThreadsAreIgnored() {
-        let store = makeStore()
-        store.send(.finished, to: UUID())
-        #expect(store.activities.count == 2)
     }
 
     @Test func aTurnFinishedOutOfSightWantsYouUntilSeen() {
@@ -213,18 +205,5 @@ struct ActivityTests {
         #expect(store.wantsYou(first.id))
         store.send(.working(sessionId: nil), to: first.id)
         #expect(!store.wantsYou(first.id))
-    }
-
-    @Test func withShojiInTheBackgroundEvenTheFocusedPaneIsOutOfSight() {
-        let store = makeStore()
-        store.focus(first.id)
-        store.isAppActive = false
-        store.send(.working(sessionId: nil), to: first.id)
-        store.send(.finished, to: first.id)
-        #expect(store.wantsYou(first.id))
-
-        store.isAppActive = true
-        #expect(!store.wantsYou(first.id))
-        #expect(store.activity(for: first.id).status == .idle)
     }
 }

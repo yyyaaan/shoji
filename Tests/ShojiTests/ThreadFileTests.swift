@@ -34,23 +34,18 @@ struct ThreadFileTests {
         #expect(saved.layout == store.layout)
     }
 
-    @Test func missingFileLoadsAsNothing() {
+    @Test func missingUnreadableOrNewerFilesLoadAsNothingAndAreKeptAside() throws {
         #expect(ThreadFile.load(from: url) == nil)
-    }
-
-    @Test func unreadableFileIsKeptAsideNotOverwritten() throws {
         try Data("{ not json".utf8).write(to: url)
         #expect(ThreadFile.load(from: url) == nil)
         #expect(!FileManager.default.fileExists(atPath: url.path))
         let kept = try FileManager.default.contentsOfDirectory(atPath: folder.path)
         #expect(kept.count == 1)
         #expect(kept.first?.hasPrefix("threads.unreadable-") == true)
-    }
 
-    @Test func newerSchemaIsKeptAside() throws {
         try Data(#"{"schemaVersion": 99, "threads": [], "layout": {}}"#.utf8).write(to: url)
         #expect(ThreadFile.load(from: url) == nil)
-        #expect(try FileManager.default.contentsOfDirectory(atPath: folder.path).count == 1)
+        #expect(try FileManager.default.contentsOfDirectory(atPath: folder.path).count == 2)
     }
 
     /// v0.2 files have thread numbers and no resume agents; up to v0.3 a layout is a fixed one with pins (now

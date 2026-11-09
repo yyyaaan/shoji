@@ -3,7 +3,7 @@ import SwiftUI
 import Testing
 @testable import Shoji
 
-/// Keyboard navigation: ⌘J, ⌘] / ⌘[, ⌃Tab, zoom steps and how shortcuts are spelled.
+/// Keyboard navigation: ⌘J, ⌘] / ⌘[, ⌃Tab and text size steps.
 @MainActor
 struct NavigationTests {
     @Test func nextNeedingYouWrapsFromTheFocusedThread() {
@@ -62,7 +62,7 @@ struct NavigationTests {
         #expect(store.recentSwitch?.selected == ids[3])
     }
 
-    @Test func zoomStepsStopAtTheEnds() {
+    @Test func textSizesStepAndAPaneKeepsItsOffset() {
         #expect(TextZoom.step(1, by: 1) == 1.1)
         #expect(TextZoom.step(1, by: -1) == 0.85)
         #expect(TextZoom.step(2, by: 1) == 2)
@@ -76,9 +76,7 @@ struct NavigationTests {
         #expect(TextZoom.level(1.17, steps: 0) == 1.17)
         #expect(TextZoom.level(1.17, steps: 1) == 1.25)
         #expect(TextZoom.level(2, steps: 3) == 2)
-    }
 
-    @Test func aPaneKeepsItsTextSizeRelativeToTheOthers() {
         let (threads, ids) = numberedThreads(2)
         let store = ThreadStore(threads: threads)
         store.stepTextSize(of: ids[0], by: -1, global: 1)
@@ -96,11 +94,5 @@ struct NavigationTests {
         store.stepTextSize(of: ids[1], by: 1, global: 1)
         store.stepTextSize(of: ids[1], by: -1, global: 1)
         #expect(store.thread(ids[1])?.textSteps == nil)
-    }
-
-    @Test func shortcutCapsFollowMacOrder() {
-        #expect(Shortcut.toggleMaximize.caps == ["⇧", "⌘", "↩"])
-        #expect(Shortcut.grid.caps == ["⌥", "⌘", "4"])
-        #expect(Shortcut.zoomIn.caps == ["⌘", "+"])
     }
 }

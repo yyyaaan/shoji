@@ -102,8 +102,8 @@ struct ShojiCommands: Commands {
 
         // Off in the Hub, where the focused pane is out of sight. On an empty pane it closes the pane, the last one excepted.
         CommandGroup(replacing: .saveItem) {
-            let emptyPane = store.focusedThreadId == nil ? store.focusedPaneId : nil
-            Button(emptyPane == nil ? Shortcut.closeThread.title : "Close Pane") {
+            let emptyPane = store.focusedThreadId == nil ? store.focusedPaneId.flatMap { store.layout.panes.contains($0) ? $0 : nil } : nil
+            Button(emptyPane == nil || sessions.popup != nil ? Shortcut.closeThread.title : "Close Pane") {
                 if sessions.popup != nil {
                     sessions.closePopup()
                 } else if let emptyPane {

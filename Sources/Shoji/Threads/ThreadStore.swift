@@ -43,7 +43,7 @@ final class ThreadStore {
     }
     /// Most recently focused first.
     private(set) var recentThreadIds: [UUID] = []
-    /// A pane that should take keyboard focus once its terminal is on screen; asking for one leaves the Hub.
+    /// A pane that should take keyboard focus once it is on screen; asking for one leaves the Hub.
     private(set) var focusRequest: UUID? {
         didSet { if focusRequest != nil, showsHub { showsHub = false } }
     }
@@ -233,7 +233,7 @@ final class ThreadStore {
 
     /// A quick terminal closed while running something joins the shelf after the focused card, without a pane.
     func adopt(_ thread: ShojiThread, running command: String, at now: Date = .now) {
-        insert(thread, after: focusedThreadId, at: now)
+        insert(thread, after: focusedThreadId ?? recentThreadIds.first, at: now)
         apply(StatusEvent(threadId: thread.id, signal: .directory(thread.folder)), at: now)
         apply(StatusEvent(threadId: thread.id, signal: .commandStarted(command)), at: now)
     }

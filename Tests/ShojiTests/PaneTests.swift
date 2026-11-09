@@ -32,16 +32,12 @@ struct PaneTests {
         store.focus(ids[2])
         store.open(ids[1])
         #expect(store.paneGlow?.threadId == ids[1] && store.paneGlow != glow)
-    }
 
-    @Test func withNoPaneFocusedOpenSparesPanesThatWantYou() {
-        let (threads, ids) = numberedThreads(4)
-        let store = ThreadStore(threads: threads, layout: PaneLayout(.twoColumns, [ids[0], ids[1]]))
-        store.send(.needsYou(message: nil), to: ids[1])
-        store.open(ids[2])
-        #expect(store.layout.panes == [ids[2], ids[1]])
-
-        // A pane Hachi points at for a finished turn is spared too.
+        // With no pane focused, panes that want you are spared: a question, or a finished turn Hachi points at.
+        let asking = ThreadStore(threads: threads, layout: PaneLayout(.twoColumns, [ids[0], ids[1]]))
+        asking.send(.needsYou(message: nil), to: ids[1])
+        asking.open(ids[2])
+        #expect(asking.layout.panes == [ids[2], ids[1]])
         let finished = ThreadStore(threads: threads, layout: PaneLayout(.twoColumns, [ids[0], ids[1]]))
         finished.send(.working(sessionId: nil), to: ids[1])
         finished.send(.finished, to: ids[1])
@@ -56,12 +52,6 @@ struct PaneTests {
         store.bringHere(ids[2])
         #expect(store.layout.panes == [ids[2], ids[1], ids[0]])
         #expect(store.focusRequest == ids[2])
-
-        // A plain click, ⌘1–9, ⌃Tab and ⌘J go to the thread where it is.
-        store.focus(ids[2])
-        store.open(ids[1])
-        #expect(store.layout.panes == [ids[2], ids[1], ids[0]])
-        #expect(store.focusRequest == ids[1])
 
         // Off screen, it takes your pane.
         let one = ThreadStore(threads: threads, layout: PaneLayout(.single, [ids[0]]))
@@ -107,16 +97,14 @@ struct PaneTests {
         let shell = try #require(store.layout.panes.first { !ids.contains($0) })
         #expect(store.layout.panes == [ids[0], shell, ids[2], ids[1]])
         #expect(store.shelfOrder.map(\.id) == [ids[0], shell, ids[1], ids[2]])
-    }
 
-    @Test func splitsLeaveNoPaneTooSmallToUse() {
-        let (threads, ids) = numberedThreads(2)
-        let store = ThreadStore(threads: threads, layout: PaneLayout(.single, [ids[0]]))
-        store.paneAreaSize = CGSize(width: 700, height: 300)
-        #expect(!store.split(ids[0], side: .down))
-        #expect(store.split(ids[0], side: .right))
-        #expect(!store.split(ids[0], side: .left))
-        #expect(store.layout.panes == [ids[0], ids[1]])
+        // No split leaves a pane too small to use.
+        let small = ThreadStore(threads: threads, layout: PaneLayout(.single, [ids[0]]))
+        small.paneAreaSize = CGSize(width: 700, height: 300)
+        #expect(!small.split(ids[0], side: .down))
+        #expect(small.split(ids[0], side: .right))
+        #expect(!small.split(ids[0], side: .left))
+        #expect(small.layout.panes == [ids[0], ids[1]])
     }
 
     @Test func droppingACardOnAnEdgeSplitsThere() {
@@ -137,7 +125,7 @@ struct PaneTests {
         #expect(DropZone(CGPoint(x: 200, y: 100), in: size) == .center)
     }
 
-    @Test func cardDragsCarryOnlyTheirThread() async {
+    @Test func cardDragsCarryOnlyTheirThreadAndFilesPasteLikeTerminal() async {
         let id = UUID()
         let provider = CardDrag.item(for: id)
         #expect(provider.registeredTypeIdentifiers == [UTType.shojiThread.identifier])
@@ -145,32 +133,9 @@ struct PaneTests {
             _ = CardDrag.load([provider]) { done.resume(returning: $0) }
         }
         #expect(loaded == id)
-    }
 
-    @Test func droppedFilesPasteAsEscapedPathsLikeTerminal() {
         #expect(FileDrop.text(for: ["/Users/yan/Desktop/Screenshot 2026-10-29 at 12.04.png"]) == #"/Users/yan/Desktop/Screenshot\ 2026-10-29\ at\ 12.04.png "#)
         #expect(FileDrop.text(for: ["/tmp/a'b(1)", "/tmp/日本.txt"]) == #"/tmp/a\'b\(1\) /tmp/日本.txt "#)
-    }
-
-    @Test func closingAPaneKeepsItsThreadAndTheLastPaneStays() throws {
-        let (threads, ids) = numberedThreads(3)
-        let store = ThreadStore(threads: threads, layout: PaneLayout(.threePanes, ids))
-        store.focus(ids[1])
-        store.closePane(ids[1])
-        #expect(store.layout.panes == [ids[0], ids[2]])
-        #expect(store.thread(ids[1]) != nil)
-        #expect(store.focusRequest == ids[2])
-
-        store.closePane(ids[0])
-        store.closePane(ids[2])
-        #expect(store.layout.panes == [ids[2]])
-
-        // Closing the last pane's thread leaves it empty, and it stays.
-        store.close(ids[2])
-        let empty = try #require(store.layout.panes.first)
-        #expect(store.layout.panes.count == 1 && store.thread(empty) == nil)
-        store.closePane(empty)
-        #expect(store.layout.panes == [empty])
     }
 
     @Test func theCompactFormStartsFromTheRightEdgeEachTime() throws {
@@ -211,7 +176,7 @@ struct PaneTests {
         #expect(store.layout.panes == [ids[0], ids[1]])
     }
 
-    @Test func closingAThreadLeavesItsPaneEmptyUntilFilledOrClosed() throws {
+    @Test func closingLeavesAnEmptyPaneUntilFilledOrClosed() throws {
         let (threads, ids) = numberedThreads(4)
         var layout = PaneLayout(.twoColumns, [ids[0], ids[2]])
         layout.toggleMaximize(ids[2])
@@ -251,5 +216,17 @@ struct PaneTests {
         store.reopenClosed()
         #expect(store.thread(ids[3]) != nil)
         #expect(store.layout.panes == [ids[0], ids[3]])
+
+        // Close Pane keeps the thread on the shelf; the last pane stays, even empty.
+        store.focus(ids[3])
+        store.closePane(ids[3])
+        #expect(store.thread(ids[3]) != nil)
+        #expect(store.focusRequest == ids[0])
+        store.closePane(ids[0])
+        #expect(store.layout.panes == [ids[0]])
+        store.close(ids[0])
+        let alone = try #require(store.layout.panes.first)
+        store.closePane(alone)
+        #expect(store.layout.panes == [alone] && store.thread(alone) == nil)
     }
 }

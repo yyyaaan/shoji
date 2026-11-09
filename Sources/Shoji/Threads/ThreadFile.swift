@@ -8,7 +8,7 @@ struct ThreadFile: Codable, Equatable {
 
     var schemaVersion = currentVersion
     var threads: [ShojiThread]
-    /// The full form's panes; the compact form starts from them each time (`compactLayout`, v0.5–0.7, is ignored).
+    /// The full form's panes; the compact form starts from them each time.
     var layout: PaneLayout
 
     enum LoadError: Error {

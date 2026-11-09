@@ -161,7 +161,7 @@ extension PaneLayout: Codable {
     }
 }
 
-/// One pane showing a thread, or a split: `first` left of or above `second`, `ratio` being first's share.
+/// One pane (a thread's, or empty), or a split: `first` left of or above `second`, `ratio` being first's share.
 indirect enum PaneNode: Codable, Equatable, Sendable {
     enum Axis: String, Codable, Sendable {
         case columns, rows

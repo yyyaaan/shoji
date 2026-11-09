@@ -68,8 +68,10 @@ struct EmptyPane: View {
             pick(current)
             return .handled
         }
+        // Already focused (back from the Hub), onChange(of: isFocused) won't fire; and a new view takes focus a turn later.
         .onChange(of: store.focusRequest, initial: true) { _, request in
-            if request == id { isFocused = true }
+            guard request == id else { return }
+            if isFocused { store.focus(id) } else { Task { isFocused = true } }
         }
         .onChange(of: isFocused) { _, focused in
             if focused { store.focus(id) }
@@ -84,7 +86,7 @@ struct EmptyPane: View {
 
     private func picker(_ groups: [[ShojiThread]], highlighted: Choice?) -> some View {
         VStack(alignment: .leading, spacing: 2 * zoom) {
-            Text(groups.isEmpty ? "Every thread is on screen" : "Show a thread here")
+            Text(store.threads.isEmpty ? "No threads yet" : groups.isEmpty ? "Every thread is on screen" : "Show a thread here")
                 .font(.system(size: 12 * zoom, weight: .medium))
                 .foregroundStyle(.white.opacity(0.55))
                 .padding(.horizontal, 10 * zoom)

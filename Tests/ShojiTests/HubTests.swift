@@ -21,21 +21,18 @@ struct HubTests {
         #expect(!store.showsHub)
         #expect(store.focusRequest == ids[2])
 
+        // Closing a card stays in the Hub; back in Threads, the empty pane it left has the keyboard.
+        store.focus(ids[2])
         store.showsHub = true
-        store.isCompact = true
-        #expect(!store.showsHub)
-    }
-
-    @Test func closingFromTheHubStaysThere() {
-        let (threads, ids) = numberedThreads(3)
-        let store = ThreadStore(threads: threads, layout: PaneLayout(.twoColumns, [ids[0], ids[1]]))
-        store.focus(ids[1])
-        store.showsHub = true
-        store.close(ids[1])
+        store.close(ids[2])
         #expect(store.showsHub)
         store.showsHub = false
         #expect(store.focusRequest == store.layout.panes[1])
         #expect(store.thread(store.layout.panes[1]) == nil)
+
+        store.showsHub = true
+        store.isCompact = true
+        #expect(!store.showsHub)
     }
 
     @Test func aToolStepShowsWhileWorkingOnly() {

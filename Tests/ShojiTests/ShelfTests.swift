@@ -13,11 +13,6 @@ struct ShelfTests {
         ThreadStore(threads: [first, second])
     }
 
-    @Test func shelfOrderFollowsGroupsThenOrder() {
-        let store = ThreadStore(threads: [third, second, first])
-        #expect(store.shelfOrder.map(\.id) == [first.id, second.id, third.id])
-    }
-
     @Test func newThreadOpensNextToTheFocusedCardInItsFolder() {
         let store = makeStore()
         store.focus(first.id)
@@ -81,24 +76,16 @@ struct ShelfTests {
 
         store.send(.title("✳ Fix login flow"), to: b)
         #expect(names() == ["~", "Fix login flow"])
-        store.rename(b, to: "auth")
+        store.rename(b, to: "  auth  ")
         #expect(names() == ["~", "auth"])
-        store.rename(b, to: "")
+        store.rename(b, to: "   ")
+        #expect(store.thread(b)?.title == nil)
 
         // Gone with the agent; the next one starts without it.
         store.send(.commandFinished(code: 0), to: b)
         #expect(names() == ["~", "~ 2"])
         store.send(.commandStarted("claude"), to: b)
         #expect(names() == ["~", "~ 2"])
-    }
-
-    @Test func renameTrimsAndEmptyFallsBackToTheFolder() {
-        let store = makeStore()
-        store.rename(second.id, to: "  web  ")
-        #expect(store.thread(second.id).map(store.name) == "web")
-        store.rename(second.id, to: "   ")
-        #expect(store.thread(second.id)?.title == nil)
-        #expect(store.thread(second.id).map(store.name) == "web")
     }
 
     @Test func closeAsksOnlyWhenSomethingWouldBeLost() {
@@ -124,7 +111,8 @@ struct ShelfTests {
     }
 
     @Test func movingAcrossBarsJoinsTheNeighbouringGroup() {
-        let store = ThreadStore(threads: [first, second, third])
+        let store = ThreadStore(threads: [third, second, first])
+        #expect(store.shelfOrder.map(\.id) == [first.id, second.id, third.id])
         let titles = { store.shelf.map { $0.map(store.name) } }
         #expect(titles() == [["first", "web"], ["third"]])
         #expect(!store.canMove(first.id, by: -1))
