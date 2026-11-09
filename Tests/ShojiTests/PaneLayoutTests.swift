@@ -59,7 +59,7 @@ struct PaneLayoutTests {
             first: .pane(id: ids[0]),
             second: .split(axis: .columns, ratio: 0.5, first: .pane(id: ids[2]), second: .pane(id: ids[3]))
         ))
-        #expect(layout.maximizedThreadId == nil)
+        #expect(layout.maximizedPaneId == nil)
 
         for id in [ids[0], ids[2], ids[3]] { layout.removePane(id) }
         #expect(layout.root == nil)

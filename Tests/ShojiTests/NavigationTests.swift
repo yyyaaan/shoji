@@ -14,7 +14,7 @@ struct NavigationTests {
         store.focus(ids[1])
         #expect(store.openNextNeedingYou())
         #expect(store.focusRequest == ids[0])
-        #expect(store.layout.visibleThreadIds.contains(ids[0]))
+        #expect(store.layout.visiblePanes.contains(ids[0]))
     }
 
     @Test func paneFocusCyclesThroughVisiblePanes() {

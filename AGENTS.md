@@ -36,7 +36,7 @@ Sources/Shoji/
                             CornerControls (lantern: Hub; stones: new thread in a folder; bamboo: ⌘K), Artwork.xcassets (Hachi, Torii, zen icons)
   UI/Shelf/                 card shelf, bars, mini cards, card menu (shared with the Hub), ⌘ card numbers
   UI/Hub/                   HubView (group columns, header), HubCard (card, screen excerpt)
-  UI/Panes/                 PaneGrid (panes and split handles by frame), PaneView (header, thread dropdown, Split menu, drops), TerminalHost, QuickTerminal
+  UI/Panes/                 PaneGrid (panes and split handles by frame), PaneView (header, thread dropdown, Split menu, drops), EmptyPane (a closed thread's picker), TerminalHost, QuickTerminal
   UI/Hachi/                 HachiPortrait, HachiCorner, AppIcon.icon (spec in docs/design/hachi/README.md)
 Tests/ShojiTests/           Swift Testing
 docs/design/                accepted design references (the Hub mockup, artwork sources and their tools)

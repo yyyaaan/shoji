@@ -74,13 +74,12 @@ struct ThreadFileTests {
         #expect(empty.root == nil)
     }
 
-    @Test func layoutDropsThreadsThatNoLongerExist() {
+    @Test func panesWithoutAThreadComeBackEmpty() {
         let thread = ShojiThread(folder: "/tmp")
         let gone = UUID()
         var layout = PaneLayout(.twoColumns, [gone, thread.id])
-        layout.maximizedThreadId = gone
-        let store = ThreadStore(threads: [thread], layout: layout)
-        #expect(store.layout.panes == [thread.id])
-        #expect(store.layout.maximizedThreadId == nil)
+        layout.maximizedPaneId = gone
+        #expect(ThreadStore(threads: [thread], layout: layout).layout == layout)
+        #expect(ThreadStore(threads: [thread]).layout.panes.count == 1)
     }
 }

@@ -22,7 +22,7 @@ struct Shortcut: Identifiable {
 
 extension Shortcut {
     static let newThread = Shortcut(title: "New Thread", key: "n")
-    static let closeThread = Shortcut(title: "Close Thread", key: "w")
+    static let closeThread = Shortcut(title: "Close Thread", key: "w", hint: "twice to close its pane too")
     static let reopenClosed = Shortcut(title: "Reopen Closed Pane or Thread", key: "t", modifiers: [.command, .shift], hint: "the latest first")
     static let jumpToThread = Shortcut(title: "Jump to Thread 1–9", key: "1", keyLabel: "1–9", hint: "hold ⌘ to see them")
     static let nextNeedingYou = Shortcut(title: "Next Thread That Needs You", key: "j")
@@ -100,12 +100,20 @@ struct ShojiCommands: Commands {
             button(.quickTerminal) { sessions.togglePopup() }
         }
 
-        // Off in the Hub, where the focused thread is out of sight.
+        // Off in the Hub, where the focused pane is out of sight. On an empty pane it closes the pane, the last one excepted.
         CommandGroup(replacing: .saveItem) {
-            button(.closeThread) {
-                if sessions.popup != nil { sessions.closePopup() } else { store.focusedThreadId.map(store.requestClose) }
+            let emptyPane = store.focusedThreadId == nil ? store.focusedPaneId : nil
+            Button(emptyPane == nil ? Shortcut.closeThread.title : "Close Pane") {
+                if sessions.popup != nil {
+                    sessions.closePopup()
+                } else if let emptyPane {
+                    store.closePane(emptyPane)
+                } else {
+                    store.focusedThreadId.map(store.requestClose)
+                }
             }
-            .disabled((store.focusedThreadId == nil || store.showsHub) && sessions.popup == nil)
+            .keyboardShortcut(Shortcut.closeThread.key, modifiers: Shortcut.closeThread.modifiers)
+            .disabled((store.focusedPaneId == nil || store.showsHub || (emptyPane != nil && store.layout.panes.count < 2)) && sessions.popup == nil)
             button(.reopenClosed) { store.reopenClosed() }
                 .disabled(!store.canReopenClosed)
         }
@@ -158,11 +166,11 @@ struct ShojiCommands: Commands {
                 button(.splitRight) { if !store.split(side: .right) { NSSound.beep() } }
                     .disabled(store.isCompact)
                 button(.splitDown) { if !store.split(side: .down) { NSSound.beep() } }
-                Button("Close Pane") { store.focusedThreadId.map(store.closePane) }
+                Button("Close Pane") { store.focusedPaneId.map(store.closePane) }
                     .disabled(store.layout.panes.count < 2)
-                button(.toggleMaximize) { store.focusedThreadId.map(store.toggleMaximize) }
+                button(.toggleMaximize) { store.focusedPaneId.map(store.toggleMaximize) }
             }
-            .disabled(store.focusedThreadId == nil)
+            .disabled(store.focusedPaneId == nil)
             Divider()
             button(.singlePane) { store.arrange(.single) }
             Group {

@@ -152,7 +152,7 @@ struct PaneTests {
         #expect(FileDrop.text(for: ["/tmp/a'b(1)", "/tmp/日本.txt"]) == #"/tmp/a\'b\(1\) /tmp/日本.txt "#)
     }
 
-    @Test func closingAPaneKeepsItsThreadAndTheLastPaneStays() {
+    @Test func closingAPaneKeepsItsThreadAndTheLastPaneStays() throws {
         let (threads, ids) = numberedThreads(3)
         let store = ThreadStore(threads: threads, layout: PaneLayout(.threePanes, ids))
         store.focus(ids[1])
@@ -165,9 +165,12 @@ struct PaneTests {
         store.closePane(ids[2])
         #expect(store.layout.panes == [ids[2]])
 
-        // Closing the last pane's thread shows your most recent other thread there.
+        // Closing the last pane's thread leaves it empty, and it stays.
         store.close(ids[2])
-        #expect(store.layout.panes == [ids[1]])
+        let empty = try #require(store.layout.panes.first)
+        #expect(store.layout.panes.count == 1 && store.thread(empty) == nil)
+        store.closePane(empty)
+        #expect(store.layout.panes == [empty])
     }
 
     @Test func theCompactFormStartsFromTheRightEdgeEachTime() throws {
@@ -197,20 +200,56 @@ struct PaneTests {
         store.isCompact = true
         #expect(store.layout.panes == [ids[1], ids[2]])
 
-        // Closing a thread takes it out of both forms; one row can split down again.
+        // Closing a thread leaves its row empty and takes it out of the full form; closing the row lets one split down again.
         store.close(ids[2])
+        let empty = try #require(store.layout.panes.last)
+        #expect(store.layout.panes == [ids[1], empty] && store.thread(empty) == nil)
+        store.closePane(empty)
         #expect(store.layout.panes == [ids[1]])
         #expect(store.split(ids[1], side: .down))
         store.isCompact = false
         #expect(store.layout.panes == [ids[0], ids[1]])
     }
 
-    @Test func closingTheFocusedThreadFocusesAnotherPane() {
-        let (threads, ids) = numberedThreads(3)
-        let store = ThreadStore(threads: threads, layout: PaneLayout(.twoColumns, [ids[0], ids[2]]))
+    @Test func closingAThreadLeavesItsPaneEmptyUntilFilledOrClosed() throws {
+        let (threads, ids) = numberedThreads(4)
+        var layout = PaneLayout(.twoColumns, [ids[0], ids[2]])
+        layout.toggleMaximize(ids[2])
+        let store = ThreadStore(threads: threads, layout: layout)
+        store.focus(ids[0])
         store.focus(ids[2])
+
+        // ⌘W: the pane stays, empty, maximized as it was, and keeps the keyboard.
         store.close(ids[2])
-        #expect(store.focusedThreadId == nil)
-        #expect(store.focusRequest == ids[0])
+        let empty = try #require(store.layout.panes.last)
+        #expect(store.layout.panes == [ids[0], empty] && store.thread(empty) == nil)
+        #expect(store.layout.maximizedPaneId == empty)
+        #expect(store.focusedPaneId == empty && store.focusedThreadId == nil)
+        #expect(store.focusRequest == empty)
+
+        // A go-to fills it; a new thread there sits after your last card.
+        store.focus(empty)
+        store.openThread(at: 1)
+        #expect(store.layout.panes == [ids[0], ids[1]])
+        store.close(ids[1])
+        let next = try #require(store.layout.panes.last)
+        let shell = store.newThread(inPaneOf: next)
+        #expect(store.layout.panes == [ids[0], shell])
+        #expect(store.shelfOrder.map(\.id) == [ids[0], shell, ids[3]])
+
+        // Unfocused, an empty pane is still the first a go-to fills.
+        store.close(shell)
+        store.focus(ids[0])
+        store.open(ids[3])
+        #expect(store.layout.panes == [ids[0], ids[3]])
+
+        // ⌘W again closes it, and that isn't something ⇧⌘T brings back.
+        store.close(ids[3])
+        let last = try #require(store.layout.panes.last)
+        store.closePane(last)
+        #expect(store.layout.panes == [ids[0]])
+        store.reopenClosed()
+        #expect(store.thread(ids[3]) != nil)
+        #expect(store.layout.panes == [ids[0], ids[3]])
     }
 }

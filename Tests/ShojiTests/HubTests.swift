@@ -34,7 +34,8 @@ struct HubTests {
         store.close(ids[1])
         #expect(store.showsHub)
         store.showsHub = false
-        #expect(store.focusRequest == store.layout.visibleThreadIds.first)
+        #expect(store.focusRequest == store.layout.panes[1])
+        #expect(store.thread(store.layout.panes[1]) == nil)
     }
 
     @Test func aToolStepShowsWhileWorkingOnly() {

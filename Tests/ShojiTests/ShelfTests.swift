@@ -24,7 +24,7 @@ struct ShelfTests {
         let id = store.newThread()
         #expect(store.shelfOrder.map(\.id) == [first.id, id, second.id])
         #expect(store.thread(id)?.folder == "/tmp")
-        #expect(store.layout.visibleThreadIds.contains(id))
+        #expect(store.layout.visiblePanes.contains(id))
         #expect(store.focusRequest == id)
 
         let empty = ThreadStore(threads: [])

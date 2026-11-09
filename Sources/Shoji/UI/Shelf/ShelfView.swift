@@ -44,7 +44,7 @@ struct ShelfView: View {
             name: store.name(of: thread),
             activity: store.activity(for: thread.id),
             isFocused: store.focusedThreadId == thread.id,
-            isOnScreen: store.layout.visibleThreadIds.contains(thread.id),
+            isOnScreen: store.layout.visiblePanes.contains(thread.id),
             wantsYou: store.wantsYou(thread.id),
             number: numbers[thread.id]
         )
@@ -89,7 +89,7 @@ struct CardMenu: View {
 
     var body: some View {
         Button("Show in This Pane") { store.bringHere(thread.id) }
-            .disabled(store.focusedThreadId == nil || store.focusedThreadId == thread.id)
+            .disabled(store.focusedPaneId == nil || store.focusedPaneId == thread.id)
         ForEach(Editor.installed) { editor in
             Button("Open in \(editor.name)") { editor.open(thread.folder) }
         }

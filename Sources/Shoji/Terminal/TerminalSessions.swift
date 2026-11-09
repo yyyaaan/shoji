@@ -113,7 +113,7 @@ final class TerminalSessions {
             popup.backend.terminate()
         }
         // Never pulls a hidden thread back on screen, or leaves the Hub.
-        if !store.showsHub, let id = store.focusedThreadId, store.layout.visibleThreadIds.contains(id) { store.open(id) }
+        if !store.showsHub, let id = store.focusedPaneId, store.layout.visiblePanes.contains(id) { store.focusPane(offset: 0) }
     }
 
     private func handlePopup(_ event: TerminalEvent) {
