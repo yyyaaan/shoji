@@ -15,11 +15,13 @@ enum TerminalEvent: Equatable, Sendable {
     case commandStarted(String)
     case commandFinished(Int32)
     case directory(String)
+    /// A hook's JSON input from an agent in a container (`ContainerHooks`).
+    case hook(Agent, Data)
     case exited(code: Int32?)
 }
 
 extension TerminalEvent {
-    /// Reads a report from Shoji's zsh integration (`scripts/shoji.zsh`), which arrives as the payload
+    /// Reads a report from Shoji's zsh integration (`scripts/shoji.zsh`) or a container's hook, which arrives as the payload
     /// of an iTerm2-style `OSC 1337 ; ShojiEvent=<kind>;<value>` sequence.
     init?(shojiReport content: String) {
         guard content.hasPrefix("ShojiEvent=") else { return nil }
@@ -33,6 +35,12 @@ extension TerminalEvent {
             self = .commandFinished(code)
         case "cwd" where !value.isEmpty:
             self = .directory(value)
+        case "hook":
+            let fields = value.split(separator: ";", maxSplits: 1)
+            guard fields.count == 2, let agent = Agent(rawValue: String(fields[0])),
+                  let payload = Data(base64Encoded: String(fields[1]))
+            else { return nil }
+            self = .hook(agent, payload)
         default:
             return nil
         }

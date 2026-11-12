@@ -145,6 +145,12 @@ struct ShojiCommands: Commands {
                 }
             }
             Divider()
+            ForEach([("Copy Claude Code Hooks for Containers", ContainerHooks.claudeSettings), ("Copy Codex Hooks for Containers", ContainerHooks.codexConfig)], id: \.0) { title, text in
+                Button(title) {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(text, forType: .string)
+                }
+            }
             Toggle("Show Hachi When an Agent Finishes", isOn: Bindable(store).hachiOnFinish)
             if let notifier {
                 if notifier.isDenied {
@@ -221,7 +227,8 @@ struct ShojiCommands: Commands {
             attributes: [.font: NSFont.systemFont(ofSize: 11), .foregroundColor: NSColor.labelColor, .paragraphStyle: centered]
         )
         credits.append(NSAttributedString(string: notices, attributes: [.font: NSFont.systemFont(ofSize: 10), .foregroundColor: NSColor.secondaryLabelColor]))
-        NSApp.orderFrontStandardAboutPanel(options: [.credits: credits])
+        // An empty build number drops the "(1)" after the version; releases never bump it.
+        NSApp.orderFrontStandardAboutPanel(options: [.credits: credits, .version: ""])
     }
 
     private func button(_ shortcut: Shortcut, action: @escaping () -> Void) -> some View {

@@ -124,7 +124,7 @@ final class TerminalSessions {
         case .exited:
             popup?.running = nil
             closePopup()
-        case .focused, .input, .bell, .title: break
+        case .focused, .input, .bell, .title, .hook: break
         }
     }
 
@@ -141,6 +141,12 @@ final class TerminalSessions {
         case .commandFinished(let code): signal = .commandFinished(code: code)
         case .directory(let path): signal = .directory(path)
         case .exited(let code): signal = .exited(code: code)
+        case .hook(let agent, let payload):
+            guard var hook = StatusEvent.Signal(hookPayload: payload) else { return }
+            // Its session lives in the container; resuming it on the Mac would start the wrong one.
+            if case .working(_, let step) = hook { hook = .working(sessionId: nil, step: step) }
+            store.apply(StatusEvent(threadId: id, signal: hook, agent: agent))
+            return
         }
         store.apply(StatusEvent(threadId: id, signal: signal))
     }

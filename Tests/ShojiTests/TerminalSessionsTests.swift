@@ -121,4 +121,37 @@ struct TerminalSessionsTests {
         made.last?.onEvent?(.exited(code: 0))
         #expect(sessions.popup == nil)
     }
+
+    @Test func agentsInAContainerReportThroughTheirTerminal() throws {
+        let store = ThreadStore(threads: [task])
+        var made: [FakeBackend] = []
+        let sessions = TerminalSessions(store: store, context: context) {
+            let backend = FakeBackend()
+            made.append(backend)
+            return backend
+        }
+        sessions.sync()
+        let terminal = try #require(made.first)
+        func hook(_ agent: String, _ json: String) throws -> TerminalEvent {
+            try #require(TerminalEvent(shojiReport: "ShojiEvent=hook;\(agent);" + Data(json.utf8).base64EncodedString()))
+        }
+
+        terminal.onEvent?(.commandStarted("docker exec -it app bash"))
+        terminal.onEvent?(try hook("codex", #"{"hook_event_name":"UserPromptSubmit","session_id":"s1"}"#))
+        var activity = store.activity(for: task.id)
+        #expect(activity.status == .working && activity.agent == .codex)
+        // The session is in the container; a relaunch must not resume it on the Mac.
+        #expect(store.thread(task.id)?.resumeId == nil)
+        terminal.onEvent?(try hook("codex", #"{"hook_event_name":"PermissionRequest","tool_name":"Bash","tool_input":{"command":"rm -rf dist"}}"#))
+        activity = store.activity(for: task.id)
+        #expect(activity.status == .needsYou && activity.detail == "Allow Bash: rm -rf dist")
+        terminal.onEvent?(try hook("codex", #"{"hook_event_name":"Stop"}"#))
+        #expect(store.activity(for: task.id).status == .done)
+
+        #expect(TerminalEvent(shojiReport: "ShojiEvent=hook;opencode;e30=") == nil)
+        #expect(TerminalEvent(shojiReport: "ShojiEvent=hook;claude;not base64!") == nil)
+        let settings = try JSONSerialization.jsonObject(with: Data(ContainerHooks.claudeSettings.utf8)) as? [String: [String: Any]]
+        #expect(settings?["hooks"]?.keys.sorted() == ClaudeHooks.events.sorted())
+        #expect(ContainerHooks.claudeSettings.contains("ShojiEvent=hook;claude;") && ContainerHooks.codexConfig.contains("ShojiEvent=hook;codex;"))
+    }
 }

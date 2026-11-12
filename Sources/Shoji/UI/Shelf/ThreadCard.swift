@@ -22,6 +22,7 @@ struct ThreadCard: View {
 
     private var isMini: Bool { thread.isMini == true }
     private var needsYou: Bool { activity.status == .needsYou }
+    private var isBusy: Bool { [.working, .running].contains(activity.status) }
     /// Ivory chrome and halo whatever the Hachi setting (docs/design/completion).
     private var finishedUnseen: Bool { activity.status == .done && activity.isUnseen }
 
@@ -75,24 +76,25 @@ struct ThreadCard: View {
         .glassEffect(.regular.tint(tint).interactive(), in: .rect(cornerRadius: 18 * zoom))
         // The halo comes from the card's shape behind the glass, so no text or glyph gets its own shadow.
         .background {
-            if finishedUnseen {
+            if let halo {
                 RoundedRectangle(cornerRadius: 18 * zoom)
-                    .fill(Palette.done.opacity(0.07))
+                    .fill(halo)
                     .blur(radius: 8 * zoom)
                     .allowsHitTesting(false)
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel([name, tag?.capitalized, activity.status.label, finishedUnseen ? "not seen yet" : nil, subtitle, isOnScreen ? "in a pane" : nil].compactMap(\.self).joined(separator: ", "))
-        .help(isMini ? "" : thread.displayFolder)
+        .accessibilityLabel([name, tag?.capitalized, activity.status.label, finishedUnseen ? "not seen yet" : nil, subtitle, subtitle == thread.displayFolder ? nil : thread.displayFolder, isOnScreen ? "in a pane" : nil].compactMap(\.self).joined(separator: ", "))
         .onHover { isHovering = $0 }
-        .task(id: isHovering && isMini) {
+        .task(id: isHovering) {
             showsPeek = false
-            guard isHovering, isMini, (try? await Task.sleep(for: .milliseconds(300))) != nil else { return }
+            guard isHovering, (try? await Task.sleep(for: .milliseconds(300))) != nil else { return }
             showsPeek = true
         }
         // Drawn by MainView below the shelf: a popover would swallow the click that closes it.
-        .anchorPreference(key: MiniPeek.Key.self, value: .bounds) { showsPeek ? MiniPeek(anchor: $0, name: name, subtitle: subtitle, needsYou: needsYou) : nil }
+        .anchorPreference(key: CardPeek.Key.self, value: .bounds) {
+            showsPeek ? CardPeek(anchor: $0, name: name, subtitle: subtitle, folder: subtitle == thread.displayFolder ? nil : thread.displayFolder, needsYou: needsYou) : nil
+        }
     }
 
     @ViewBuilder
@@ -105,10 +107,9 @@ struct ThreadCard: View {
                     StatusIcon(status: activity.status, size: 18 * zoom)
                 }
                 // Reads top to bottom, like a book's spine.
-                Text(name)
+                Marquee(text: name, isOn: isBusy)
                     .font(.system(size: 11 * zoom, weight: .medium, design: .monospaced))
                     .foregroundStyle(needsYou ? Palette.needsYouText : .white.opacity(0.75))
-                    .lineLimit(1)
                     .frame(width: (isIdle ? 84 : 63) * zoom, height: 14 * zoom, alignment: .leading)
                     .rotationEffect(.degrees(90))
                     .frame(width: 14 * zoom, height: (isIdle ? 84 : 63) * zoom)
@@ -132,15 +133,19 @@ struct ThreadCard: View {
                 Text(name)
                     .font(.system(size: 15 * zoom, weight: .semibold))
                     .lineLimit(1)
-                Text(subtitle)
+                Marquee(text: subtitle, isOn: isBusy, truncation: .middle)
                     .font(.system(size: 11 * zoom, weight: .medium, design: .monospaced))
                     .foregroundStyle(needsYou ? Palette.needsYouText : .white.opacity(0.75))
-                    .lineLimit(1)
-                    .truncationMode(.middle)
             }
             .padding(.horizontal, 14 * zoom)
             .padding(.vertical, 12 * zoom)
         }
+    }
+
+    /// A mini card has no room for Hachi, so it glows where he would be: the corner's dog points here.
+    private var halo: Color? {
+        if isMini, wantsYou { return (needsYou ? Palette.needsYou : Palette.done).opacity(0.45) }
+        return finishedUnseen ? Palette.done.opacity(0.07) : nil
     }
 
     private var tint: Color {
@@ -205,22 +210,78 @@ struct ThreadCard: View {
     }
 }
 
-/// A hovered mini card's name and subtitle, shown under it as a full card shows them.
-struct MiniPeek: Equatable {
+/// One line that, while its thread is busy and it doesn't fit, now and then slides to its end and back.
+private struct Marquee: View {
+    let text: String
+    let isOn: Bool
+    var truncation: Text.TruncationMode = .tail
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var available: CGFloat = 0
+    @State private var full: CGFloat = 0
+    @State private var offset: CGFloat = 0
+    @State private var isRolling = false
+
+    var body: some View {
+        Text(text)
+            .lineLimit(1)
+            .truncationMode(truncation)
+            .opacity(isRolling ? 0 : 1)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { available = $0 }
+            .background(alignment: .leading) {
+                Text(text)
+                    .fixedSize()
+                    .hidden()
+                    .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { full = $0 }
+            }
+            .overlay(alignment: .leading) {
+                if isRolling {
+                    Text(text).fixedSize().offset(x: offset)
+                }
+            }
+            .clipped()
+            .task(id: isOn && !reduceMotion && full > available + 1) {
+                defer {
+                    isRolling = false
+                    offset = 0
+                }
+                guard isOn, !reduceMotion, full > available + 1 else { return }
+                // Staggered, so a shelf of busy cards doesn't roll in step.
+                var wait = Double.random(in: 8...30)
+                while (try? await Task.sleep(for: .seconds(wait))) != nil {
+                    let distance = full - available
+                    let duration = max(1.5, distance / 30)
+                    isRolling = true
+                    withAnimation(.linear(duration: duration)) { offset = -distance }
+                    guard (try? await Task.sleep(for: .seconds(duration + 1.5))) != nil else { return }
+                    withAnimation(.easeInOut(duration: 0.5)) { offset = 0 }
+                    guard (try? await Task.sleep(for: .seconds(0.5))) != nil else { return }
+                    isRolling = false
+                    wait = 30
+                }
+            }
+    }
+}
+
+/// A hovered card's whole name, subtitle and folder, shown under it.
+struct CardPeek: Equatable {
     let anchor: Anchor<CGRect>
     let name: String
     let subtitle: String
+    /// When the subtitle is something else (a command, a question).
+    let folder: String?
     let needsYou: Bool
 
     struct Key: PreferenceKey {
-        static let defaultValue: MiniPeek? = nil
-        static func reduce(value: inout MiniPeek?, nextValue: () -> MiniPeek?) {
+        static let defaultValue: CardPeek? = nil
+        static func reduce(value: inout CardPeek?, nextValue: () -> CardPeek?) {
             value = value ?? nextValue()
         }
     }
 
     struct Label: View {
-        let peek: MiniPeek
+        let peek: CardPeek
         @Environment(\.zoom) private var zoom
 
         var body: some View {
@@ -234,6 +295,12 @@ struct MiniPeek: Equatable {
                         .font(.system(size: 11 * zoom, weight: .medium, design: .monospaced))
                         .foregroundStyle(peek.needsYou ? Palette.needsYouText : .white.opacity(0.75))
                         .truncationMode(.middle)
+                    if let folder = peek.folder {
+                        Text(folder)
+                            .font(.system(size: 11 * zoom, weight: .medium, design: .monospaced))
+                            .foregroundStyle(.white.opacity(0.5))
+                            .truncationMode(.head)
+                    }
                 }
                 .lineLimit(1)
                 .padding(.horizontal, 14 * zoom)

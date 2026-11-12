@@ -108,6 +108,7 @@ final class ThreadStore {
               let current = activities[event.threadId]
         else { return }
         var activity = current
+        if let agent = event.agent { activity.agent = agent }
 
         switch event.signal {
         case .launched:

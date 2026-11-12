@@ -4,8 +4,8 @@ The current state of Shoji: what's next, what to watch out for, and why things a
 
 ## Status
 
-- **Released:** v0.8.0: Reopen Closed (⇧⌘T), the compact form starting from the right edge, mini cards without the idle Torii, cards that keep their state when reordered.
-- **In progress (`no-pane-close-on-cmd-w`, v0.8.1):** a closed thread leaves its pane empty, with a picker; ⌘W again closes the pane.
+- **Released:** v0.8.1: a closed thread leaves its pane empty, with a picker; ⌘W again closes the pane.
+- **In progress (`devcontainer-status`, v0.9.0):** agents in containers, a hover peek on every card, glowing mini cards, a marquee on busy cards.
 - **Next up:** the user's checks under Now, then merge.
 - **Blockers:** none.
 
@@ -14,7 +14,9 @@ The current state of Shoji: what's next, what to watch out for, and why things a
 Priorities follow the user's wishes. Keep items one line, small enough for one PR.
 
 ### Now (the user's checks)
-- [ ] Empty pane: ⌘W (or Close Thread on a card) leaves the pane with a centred picker (threads not on screen, shelf order, status and folder, bars as separators; New Thread; Close Pane at the bottom, not on the last pane). It has the keyboard at once: ↑ ↓ and Return pick, a click too; ⌘1–9, ⌘J, ⌃Tab, a card click or a card dropped on it fill it; ⇧⌘T puts the closed thread back in it; ⌘W closes it, off on the last pane. Also in compact rows, maximized, after ⌘K closes and after a relaunch
+- [ ] Containers: paste Threads › Copy Claude Code Hooks for Containers into a devcontainer project's `.claude/settings.local.json`, `devcontainer exec` (or `docker exec -it`) from a thread, run `claude`: working, needs you (Hachi, notification), done; then Codex the same way. A relaunch leaves `docker exec …` at the prompt, nothing resumed
+- [ ] Cards: the hover peek on full cards; mini cards glowing orange or ivory while Hachi wants them; on busy cards, cut-off text rolling now and then, out of step, and none with Reduce Motion
+- [ ] Empty pane (v0.8.1) in real use: compact rows, maximized, after ⌘K closes and after a relaunch
 - [ ] Hub cards on real threads: the last lines skip Claude Code's and Codex's input box, footer and spinner, and the reply shows (else tune `Excerpt`)
 - [ ] Accessibility sweep: Interface Size 85–130% at widths near 740 and 1360, compact and ⌘K at 480 pt; VoiceOver, Full Keyboard Access, Increase Contrast, Reduce Transparency, Reduce Motion
 - [ ] Not yet seen: a screenshot dragged from Finder onto Claude Code, Codex resuming after quit and reopen, ⌘Q's busy list
@@ -29,7 +31,7 @@ No tasks pending; new wishes go here.
 
 ### Parked
 Only when the user asks.
-- [ ] Devcontainers and SSH: status from agents that can't reach the host socket (a localhost TCP listener with a per-launch token via `host.docker.internal`, or a mounted socket)
+- [ ] Agents without a terminal: status over a network listener (a localhost TCP listener with a per-launch token, or a mounted socket). The container hooks likely work over SSH to Linux too; untested
 - [ ] opencode status and resume: no Claude-style hooks; likely a small JS plugin through `OPENCODE_CONFIG_DIR` forwarding to `shoji-hook`
 
 ## Product
@@ -44,9 +46,9 @@ A calm command center for the terminals the user already runs all day. Claude Co
 
 ### Shelf and cards
 - Glass cards in the user's order, split into groups by plain bars (no titles, no fixed meaning); scrolls sideways when full. Drag a card onto another to place it before or after (by half); the card menu also has Move Left / Right and Add / Remove Bar Before.
-- Card: status icon, a tag for what runs (CLAUDE / CODEX / the command's name), name, subtitle, elapsed time; the full folder as a tooltip.
+- Card: status icon, a tag for what runs (CLAUDE / CODEX / the command's name), name, subtitle, elapsed time. Hovering a moment shows the whole name and subtitle under it, plus the folder when the subtitle is something else. While working or running, a subtitle that doesn't fit (a mini card's name) slides to its end and back about every 30 s, cards out of step; never with Reduce Motion.
 - **Name:** your rename, else a running agent's topic (its terminal title, unless that only names the agent or repeats its command line), else the folder's name, numbered ("shoji 2") only when two threads would read the same, the newer one getting the number. **Subtitle:** the folder; a plain command's command line; an agent's question while it needs you.
-- **Mini card** (card menu › Mini Card, full form): 44 pt wide, the status icon (none while idle) over the name in the subtitle's style, reading top to bottom; the glow, count badge (9+ above nine), drops and the ⌘ badge work as on a full card. Hovering a moment shows the full name and the subtitle under the card.
+- **Mini card** (card menu › Mini Card, full form): 44 pt wide, the status icon (none while idle) over the name in the subtitle's style, reading top to bottom; count badge (9+ above nine), drops and the ⌘ badge work as on a full card. With no room for Hachi, it glows instead while he wants it: orange, or ivory for an unseen finish.
 - Needs-you card: orange border and glow, count badge, Hachi. A turn that finishes unseen keeps its tick with ivory chrome and a soft halo; Threads › Show Hachi When an Agent Finishes also brings Hachi, the corner and ⌘J.
 
 ### Panes
@@ -61,7 +63,7 @@ A calm command center for the terminals the user already runs all day. Claude Co
 - **Stones** (under the lantern): the folders inside one you choose, home until you do (Choose Folder to List… in the same menu, remembered; hidden folders and app bundles left out). Picking one opens a new thread there, after your card.
 - ⌃Tab / ⌃⇧Tab: recent threads like ⌘Tab; a tap returns to the previous one, holding ⌃ shows the list, Esc cancels.
 - ⌘K or the bamboo: a quick terminal over the window, a little above centre, in the focused thread's folder. ⌘K, ⌘W, a click outside or `exit` closes it; a command still running then becomes a thread beside the focused card. When narrow, its hint takes a second line.
-- Menus: **Threads** (cards ⌘1–9, ⌘J, ⌃Tab, Open in VS Code ⌥⇧⌘E / Zed ⇧⌘E, the two options), **Panes** (focus, split, close, maximize, layouts), **View** (Hub ⇧⌘H, Interface Size, text sizes). No submenus; titles come from the `Shortcut` catalog, which also feeds the ⌘/ sheet.
+- Menus: **Threads** (cards ⌘1–9, ⌘J, ⌃Tab, Open in VS Code ⌥⇧⌘E / Zed ⇧⌘E, the container hooks to copy, the two options), **Panes** (focus, split, close, maximize, layouts), **View** (Hub ⇧⌘H, Interface Size, text sizes). No submenus; titles come from the `Shortcut` catalog, which also feeds the ⌘/ sheet.
 - **Sizes:** ⌘+ / ⌘− / ⌘0 step the terminal text (50–200%); View › Interface Size scales the chrome (85–130%); ⌥⌘+ / ⌥⌘− / ⌥⌘0 keep one thread levels apart from the rest.
 - **Reaching you:** Hachi's corner and count, the Dock badge, and macOS notifications while Shoji's window is out of sight (another Space, minimized or covered). All count the same threads; Threads › Notify Me When Shoji Is Away turns notifications off.
 - ⌘Q asks only when something is busy (working, needs you, running a command, or the quick terminal running one), naming it.
@@ -117,7 +119,7 @@ Files live in `~/Library/Application Support/Shoji` (`Shoji-Debug` for Debug bui
 | Done | Claude or Codex `Stop`; Codex `Interrupt`. Unseen when it lands outside the focused pane or while Shoji is in the background |
 | Exited(code) | a command failed (clears on focus), or the shell ended (Restart) |
 
-Shell reports from the zsh integration: `cwd;<path>` each prompt, `cmd;<line>` before a command, `done;<code>` after it. Hook transport: `shoji-hook` opens one connection per event to `hook.sock`, the thread id on the first line, then the CLI's JSON.
+Shell reports from the zsh integration: `cwd;<path>` each prompt, `cmd;<line>` before a command, `done;<code>` after it. Hook transport: `shoji-hook` opens one connection per event to `hook.sock`, the thread id on the first line, then the CLI's JSON. In a container (`ContainerHooks`, copied from the Threads menu) the hook writes `hook;<agent>;<base64 JSON>` as a shell report to its agent's terminal instead; the thread is whichever terminal it lands in, the agent comes from the report, and the session id is dropped so nothing resumes on the Mac.
 
 ## Gotchas
 
@@ -135,7 +137,8 @@ Shell reports from the zsh integration: `cwd;<path>` each prompt, `cmd;<line>` b
 - **A translucent terminal stacks with whatever is behind it.** SwiftTerm paints its own background at `backgroundOpacity`, so `PaneView` fills only the margin around it (an even-odd `Margin`). Never set the terminal's background to 0 and let SwiftUI draw it: the IME overlay and whole-screen reverse video use that colour.
 - **The Hub hides the panes, it doesn't remove them.** `PaneGrid` stays at opacity 0 underneath so terminals keep their host and size, and `MainView` takes first responder from the terminal. `focusRequest` and `showsHub` clear each other: asking for a pane's focus leaves the Hub, closing a thread from it doesn't. Esc is a key equivalent there, off while ⌘K is open.
 - **The Hub's lines come from the live screen:** `terminalContentSnapshot(region: .history(maximumScrollbackRows: -1))`, whatever the user scrolled to (`visibleRowsText` and `getLine(row:)` follow the scroll). Display only; `Excerpt` cuts at the first box-drawing rule in the last 12 non-blank rows (an agent's input box).
-- **The mini card peek is an overlay, not a popover:** a transient popover swallows the click that closes it, so the card would need two clicks. `ThreadCard` raises a `MiniPeek` anchor preference and `MainView` draws it, not hit-testable.
+- **The card peek is an overlay, not a popover:** a transient popover swallows the click that closes it, so the card would need two clicks. `ThreadCard` raises a `CardPeek` anchor preference and `MainView` draws it, not hit-testable.
+- **Hooks run without a controlling terminal** (Claude Code detaches them), so `/dev/tty` fails. `ContainerHooks` walks `/proc` up from `$PPID` to the first process whose stdout is a `/dev/pts/*` and writes there; with no `/proc` (the Mac) it does nothing. Payloads over 128 KB of base64 (a long reply, a big tool result) are skipped. Anything printed in a thread can fake its status this way, as with the zsh reports: status only, never typing.
 - **Cards are one flat `ForEach` keyed by thread**, on the shelf (a bar drawn beside the card after it) and in the Hub (the `HubColumns` layout). Nesting them per group re-creates a card whenever its group's identity changes, losing its state and screen lines. `HubColumns` isn't lazy (bars need the tallest column), so `HubCard` snapshots only while `onScrollVisibilityChange` says it's in view.
 - **Inside a `GlassEffectContainer`, overlays added after `.glassEffect` draw under the glass.** Put borders and badges first.
 - **Hidden title bar:** content ignores the top safe area; the leading 78 pt stays clear for the window buttons; the window drags by its background.
@@ -172,6 +175,7 @@ Run by hand with Claude Code in Shoji after every SwiftTerm bump (AGENTS invaria
 ## Decisions
 
 - **Threads are shells.** No fixed command or kind: the card reflects what runs in the user's login shell; bars, not categories, group them.
+- **Containers report through the terminal, not the network** (the user's choice of three): no port, token or mount, and the event can only reach the thread whose terminal the agent draws in. The cost: large payloads are skipped, and output can fake a status.
 - **SwiftTerm** over libghostty: a Swift package, Metal, Kitty protocols, MIT. Its gaps are ours (themes, Claude Code setup rules); libghostty stays the fallback behind `TerminalBackend`.
 - **Status through each CLI's own hooks,** injected per launch (`--settings`, `-c hooks={…}`), never the user's config or Codex's `notify`.
 - **Other panes never change behind your back.** A click only ever fills an empty pane or replaces yours; splits, drops and the pane dropdown give exact control.
