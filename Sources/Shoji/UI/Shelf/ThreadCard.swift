@@ -22,6 +22,7 @@ struct ThreadCard: View {
 
     private var isMini: Bool { thread.isMini == true }
     private var needsYou: Bool { activity.status == .needsYou }
+    private var isBusy: Bool { [.working, .running].contains(activity.status) }
     /// Ivory chrome and halo whatever the Hachi setting (docs/design/completion).
     private var finishedUnseen: Bool { activity.status == .done && activity.isUnseen }
 
@@ -83,7 +84,7 @@ struct ThreadCard: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel([name, tag?.capitalized, activity.status.label, finishedUnseen ? "not seen yet" : nil, subtitle, isOnScreen ? "in a pane" : nil].compactMap(\.self).joined(separator: ", "))
+        .accessibilityLabel([name, tag?.capitalized, activity.status.label, finishedUnseen ? "not seen yet" : nil, subtitle, subtitle == thread.displayFolder ? nil : thread.displayFolder, isOnScreen ? "in a pane" : nil].compactMap(\.self).joined(separator: ", "))
         .onHover { isHovering = $0 }
         .task(id: isHovering) {
             showsPeek = false
@@ -106,10 +107,9 @@ struct ThreadCard: View {
                     StatusIcon(status: activity.status, size: 18 * zoom)
                 }
                 // Reads top to bottom, like a book's spine.
-                Text(name)
+                Marquee(text: name, isOn: isBusy)
                     .font(.system(size: 11 * zoom, weight: .medium, design: .monospaced))
                     .foregroundStyle(needsYou ? Palette.needsYouText : .white.opacity(0.75))
-                    .lineLimit(1)
                     .frame(width: (isIdle ? 84 : 63) * zoom, height: 14 * zoom, alignment: .leading)
                     .rotationEffect(.degrees(90))
                     .frame(width: 14 * zoom, height: (isIdle ? 84 : 63) * zoom)
@@ -133,11 +133,9 @@ struct ThreadCard: View {
                 Text(name)
                     .font(.system(size: 15 * zoom, weight: .semibold))
                     .lineLimit(1)
-                Text(subtitle)
+                Marquee(text: subtitle, isOn: isBusy, truncation: .middle)
                     .font(.system(size: 11 * zoom, weight: .medium, design: .monospaced))
                     .foregroundStyle(needsYou ? Palette.needsYouText : .white.opacity(0.75))
-                    .lineLimit(1)
-                    .truncationMode(.middle)
             }
             .padding(.horizontal, 14 * zoom)
             .padding(.vertical, 12 * zoom)
@@ -209,6 +207,60 @@ struct ThreadCard: View {
         case ..<(60 * 24): return "\(minutes / 60)h"
         default: return "\(minutes / (60 * 24))d"
         }
+    }
+}
+
+/// One line that, while its thread is busy and it doesn't fit, now and then slides to its end and back.
+private struct Marquee: View {
+    let text: String
+    let isOn: Bool
+    var truncation: Text.TruncationMode = .tail
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var available: CGFloat = 0
+    @State private var full: CGFloat = 0
+    @State private var offset: CGFloat = 0
+    @State private var isRolling = false
+
+    var body: some View {
+        Text(text)
+            .lineLimit(1)
+            .truncationMode(truncation)
+            .opacity(isRolling ? 0 : 1)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { available = $0 }
+            .background(alignment: .leading) {
+                Text(text)
+                    .fixedSize()
+                    .hidden()
+                    .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { full = $0 }
+            }
+            .overlay(alignment: .leading) {
+                if isRolling {
+                    Text(text).fixedSize().offset(x: offset)
+                }
+            }
+            .clipped()
+            .task(id: isOn && !reduceMotion && full > available + 1) {
+                defer {
+                    isRolling = false
+                    offset = 0
+                }
+                guard isOn, !reduceMotion, full > available + 1 else { return }
+                // Staggered, so a shelf of busy cards doesn't roll in step.
+                var wait = Double.random(in: 8...30)
+                while (try? await Task.sleep(for: .seconds(wait))) != nil {
+                    let distance = full - available
+                    let duration = max(1.5, distance / 30)
+                    isRolling = true
+                    withAnimation(.linear(duration: duration)) { offset = -distance }
+                    guard (try? await Task.sleep(for: .seconds(duration + 1.5))) != nil else { return }
+                    withAnimation(.easeInOut(duration: 0.5)) { offset = 0 }
+                    guard (try? await Task.sleep(for: .seconds(0.5))) != nil else { return }
+                    isRolling = false
+                    wait = 30
+                }
+            }
     }
 }
 

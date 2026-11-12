@@ -29,14 +29,14 @@ Shoji is deliberately not an editor, a diff viewer or an agent client. It never 
 
 - **Every thread is your shell.** ⌘N opens one next to the card you're on, and the stones under the lantern open one in any folder of, say, `~/code`. `cd` anywhere, run `claude`, `codex` or `pnpm dev`, quit back to the prompt; the card follows along, named after what an agent is working on. Reopen Shoji and your threads, layout and Claude or Codex conversations come back.
 - **Know who needs you.** Every status has its own shape and label. A card that needs you turns orange and brings out Hachi, who also peeks out by the window buttons: one click opens it. Out of sight, a macOS notification says which thread wants you, and the Dock badge keeps the count. A finish you didn't see gets a soft ivory glow, like an unread mark. A mini card has no room for Hachi, so it glows instead.
-- **Your shelf, your groups.** Drag cards into place and drop plain bars between them; groups mean whatever you want. Make a card mini, just its name down the side and a status when there is one, for threads you keep around but rarely visit. Hover any card for its whole name, what it's doing and its folder.
+- **Your shelf, your groups.** Drag cards into place and drop plain bars between them; groups mean whatever you want. Make a card mini, just its name down the side and a status when there is one, for threads you keep around but rarely visit. Hover any card for its whole name, what it's doing and its folder. On a busy card, text that doesn't fit rolls by now and then.
 - **The Hub.** ⇧⌘H, or the lantern at the top right, swaps the panes for a card per thread, in your shelf's order: what it's waiting on or just did, its folder and git branch, its last lines, and one click into it. Esc goes back.
 - **Panes that stay out of the way.** Split any pane in any direction (⌘D, ⇧⌘D, its header's menu, or drop a card on its edge) and drag the gaps to resize. Click a card to go to its thread; ⌥-click brings it to your pane, and dropping a card, or picking it from the chevron beside a pane's name, puts it exactly there. Other panes never change behind your back, so a dev server's log stays put. Closing a thread leaves its pane empty, with a short list to pick the next one from; ⌘W again closes the pane. Closed something by accident? ⇧⌘T brings it back, the agent resumed. Files dropped on a terminal paste their paths, so a screenshot reaches Claude Code.
 - **Beside your editor.** Put Shoji in Split View next to a full-screen Zed or Chrome and drag the divider narrow: it turns compact, one column of one or two terminals, each picking its thread from a dropdown. It starts from the right-hand side of your layout; widen it and your full layout is back.
 - **Keyboard first.** ⌘K (or the bamboo at the top right) pops up a quick terminal in your thread's folder; ⌃Tab flips back to the thread you were just in, like ⌘Tab; ⌘J finds the next agent waiting on you. Hold ⌘ to see each card's number for ⌘1–9, and ⌘/ for every shortcut.
 - **Sizes your way.** ⌘+ and ⌘− size the terminal text, View › Interface Size the chrome, and ⌥⌘+ / ⌥⌘− keep one pane bigger or smaller than the rest.
 - **Real terminals, native chrome.** SwiftTerm with Metal, your login shell's environment, 10,000 lines of scrollback. Liquid Glass on the chrome; terminals sit on a dark background that lets a little of the window's light through, never blurred.
-- **Agents in containers too.** Run `claude` or `codex` in a devcontainer (`devcontainer exec`, `docker exec`) from a thread and its card still shows working, needs you and done. Threads › Agents in Containers copies the hook settings to put in the container: Claude Code's for `.claude/settings.local.json` in the project (or `~/.claude/settings.json` in the container), Codex's as a line at the top of the container's `~/.codex/config.toml`. On the Mac the same settings do nothing.
+- **Agents in containers too.** Run `claude` or `codex` in a devcontainer (`devcontainer exec`, `docker exec`) from a thread and its card still shows working, needs you and done. The Threads menu copies the hooks to add in the container: Claude Code's into the project's `.claude/settings.local.json` (or the container's `~/.claude/settings.json`), merged with any hooks already there; Codex's as a line at the top of the container's `~/.codex/config.toml`, trusted once in `/hooks`. On the Mac they do nothing.
 - **Status from the CLI itself.** Claude Code and Codex report through their own hooks, added per launch, so `~/.claude` and `~/.codex` are never touched. Shoji never scrapes terminal output.
 
 > [!NOTE]
@@ -122,7 +122,7 @@ The Xcode project is generated from `project.yml` and not committed. `-skipPacka
 
 ## Roadmap
 
-- **Now (v0.9):** agents in containers, a hover peek on every card, mini cards that glow when Hachi wants you
+- **Now (v0.9):** agents in containers, a hover peek on every card, mini cards that glow when Hachi wants you, text that rolls on busy cards
 - **Next:** whatever the next wish is
 
 The live list is in [PLAN.md](PLAN.md#tasks).
