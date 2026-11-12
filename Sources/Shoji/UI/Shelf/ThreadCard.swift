@@ -75,24 +75,25 @@ struct ThreadCard: View {
         .glassEffect(.regular.tint(tint).interactive(), in: .rect(cornerRadius: 18 * zoom))
         // The halo comes from the card's shape behind the glass, so no text or glyph gets its own shadow.
         .background {
-            if finishedUnseen {
+            if let halo {
                 RoundedRectangle(cornerRadius: 18 * zoom)
-                    .fill(Palette.done.opacity(0.07))
+                    .fill(halo)
                     .blur(radius: 8 * zoom)
                     .allowsHitTesting(false)
             }
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel([name, tag?.capitalized, activity.status.label, finishedUnseen ? "not seen yet" : nil, subtitle, isOnScreen ? "in a pane" : nil].compactMap(\.self).joined(separator: ", "))
-        .help(isMini ? "" : thread.displayFolder)
         .onHover { isHovering = $0 }
-        .task(id: isHovering && isMini) {
+        .task(id: isHovering) {
             showsPeek = false
-            guard isHovering, isMini, (try? await Task.sleep(for: .milliseconds(300))) != nil else { return }
+            guard isHovering, (try? await Task.sleep(for: .milliseconds(300))) != nil else { return }
             showsPeek = true
         }
         // Drawn by MainView below the shelf: a popover would swallow the click that closes it.
-        .anchorPreference(key: MiniPeek.Key.self, value: .bounds) { showsPeek ? MiniPeek(anchor: $0, name: name, subtitle: subtitle, needsYou: needsYou) : nil }
+        .anchorPreference(key: CardPeek.Key.self, value: .bounds) {
+            showsPeek ? CardPeek(anchor: $0, name: name, subtitle: subtitle, folder: subtitle == thread.displayFolder ? nil : thread.displayFolder, needsYou: needsYou) : nil
+        }
     }
 
     @ViewBuilder
@@ -141,6 +142,12 @@ struct ThreadCard: View {
             .padding(.horizontal, 14 * zoom)
             .padding(.vertical, 12 * zoom)
         }
+    }
+
+    /// A mini card has no room for Hachi, so it glows where he would be: the corner's dog points here.
+    private var halo: Color? {
+        if isMini, wantsYou { return (needsYou ? Palette.needsYou : Palette.done).opacity(0.45) }
+        return finishedUnseen ? Palette.done.opacity(0.07) : nil
     }
 
     private var tint: Color {
@@ -205,22 +212,24 @@ struct ThreadCard: View {
     }
 }
 
-/// A hovered mini card's name and subtitle, shown under it as a full card shows them.
-struct MiniPeek: Equatable {
+/// A hovered card's whole name, subtitle and folder, shown under it.
+struct CardPeek: Equatable {
     let anchor: Anchor<CGRect>
     let name: String
     let subtitle: String
+    /// When the subtitle is something else (a command, a question).
+    let folder: String?
     let needsYou: Bool
 
     struct Key: PreferenceKey {
-        static let defaultValue: MiniPeek? = nil
-        static func reduce(value: inout MiniPeek?, nextValue: () -> MiniPeek?) {
+        static let defaultValue: CardPeek? = nil
+        static func reduce(value: inout CardPeek?, nextValue: () -> CardPeek?) {
             value = value ?? nextValue()
         }
     }
 
     struct Label: View {
-        let peek: MiniPeek
+        let peek: CardPeek
         @Environment(\.zoom) private var zoom
 
         var body: some View {
@@ -234,6 +243,12 @@ struct MiniPeek: Equatable {
                         .font(.system(size: 11 * zoom, weight: .medium, design: .monospaced))
                         .foregroundStyle(peek.needsYou ? Palette.needsYouText : .white.opacity(0.75))
                         .truncationMode(.middle)
+                    if let folder = peek.folder {
+                        Text(folder)
+                            .font(.system(size: 11 * zoom, weight: .medium, design: .monospaced))
+                            .foregroundStyle(.white.opacity(0.5))
+                            .truncationMode(.head)
+                    }
                 }
                 .lineLimit(1)
                 .padding(.horizontal, 14 * zoom)

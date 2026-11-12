@@ -31,7 +31,7 @@ Sources/Shoji/
   Threads/                  ShojiThread, ThreadActivity (runtime status), ThreadStore, PaneLayout (split tree, presets, PaneTiles),
                             ThreadFile, ThreadLaunch, GitBranch, Mock
   Terminal/                 TerminalBackend protocol, SwiftTerm implementation (only place importing SwiftTerm), TerminalSessions
-  Status/                   StatusEvent, HookServer (socket listener), ClaudeHooks, CodexHooks
+  Status/                   StatusEvent, HookServer (socket listener), ClaudeHooks, CodexHooks, ContainerHooks (agents in containers, via the terminal)
   UI/                       Theme (palette), StatusIcon, Backdrop, Zoom (text and interface sizes), ShortcutsSheet, RecentSwitch (⌃Tab),
                             CornerControls (lantern: Hub; stones: new thread in a folder; bamboo: ⌘K), Artwork.xcassets (Hachi, Torii, zen icons)
   UI/Shelf/                 card shelf, bars, mini cards, card menu (shared with the Hub), ⌘ card numbers
@@ -65,7 +65,7 @@ scripts/package.sh --install     # the same app into /Applications, then removes
 2. **Only `Terminal/` imports SwiftTerm.** Everything else talks to `TerminalBackend`, so the engine stays swappable (libghostty is the fallback).
 3. **Glass on chrome only.** Shelf, cards, Hub cards, pane headers, toasts and menus are glass. Terminal content sits on its own background: `Palette.paneOpacity` (80%) in panes with no blur, solid in the quick terminal, the Hub's screen lines and with Reduce Transparency.
 4. **No tmux or any multiplexer.** Persistence is relaunching with the CLI's own resume (`claude --resume <id>`, `codex resume <id>`).
-5. **One status path.** Every status change is a `StatusEvent` (from the socket, or terminal callbacks: title, bell, exit, the zsh integration's `OSC 1337 ; ShojiEvent=…` reports) applied by `ThreadStore` on the main actor. UI never derives status from terminal output; the Hub's screen lines are shown, never read.
+5. **One status path.** Every status change is a `StatusEvent` (from the socket, or terminal callbacks: title, bell, exit, the zsh integration's and container hooks' `OSC 1337 ; ShojiEvent=…` reports) applied by `ThreadStore` on the main actor. UI never derives status from terminal output; the Hub's screen lines are shown, never read.
 6. **Never type into a terminal on the user's behalf** except through an explicit user action (e.g. Hub "Allow once"), sending exactly the keystroke the UI shows, and log it. Relaunching isn't typing: the zsh integration runs the resume at a restored shell's first prompt and leaves any other last command at the prompt for Return.
 7. **Hooks must never slow or break the CLIs.** `shoji-hook` exits 0 within milliseconds, silently when Shoji isn't running (a frozen Shoji costs at most `nc -w 1`'s second).
 8. **Don't touch the user's global CLI config** (`~/.claude`, `~/.codex`) without an explicit opt-in. Inject per launch (env vars, a settings file, a config override), and verify current CLI flags before relying on them.

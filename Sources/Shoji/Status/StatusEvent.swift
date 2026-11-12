@@ -21,6 +21,8 @@ struct StatusEvent: Equatable, Sendable {
 
     let threadId: UUID
     let signal: Signal
+    /// Named by a container's hook, where the thread's command is `docker exec` rather than the agent.
+    var agent: Agent? = nil
 }
 
 extension StatusEvent {
@@ -28,10 +30,17 @@ extension StatusEvent {
     init?(hookMessage data: Data) {
         guard let newline = data.firstIndex(of: UInt8(ascii: "\n")),
               let threadId = UUID(uuidString: String(decoding: data[..<newline], as: UTF8.self)),
-              let payload = try? JSONDecoder().decode(HookPayload.self, from: data[data.index(after: newline)...]),
-              let signal = payload.signal
+              let signal = Signal(hookPayload: data[data.index(after: newline)...])
         else { return nil }
         self.init(threadId: threadId, signal: signal)
+    }
+}
+
+extension StatusEvent.Signal {
+    /// A Claude Code or Codex hook's JSON input.
+    init?(hookPayload data: Data) {
+        guard let signal = (try? JSONDecoder().decode(HookPayload.self, from: data))?.signal else { return nil }
+        self = signal
     }
 }
 

@@ -145,6 +145,14 @@ struct ShojiCommands: Commands {
                 }
             }
             Divider()
+            Menu("Agents in Containers") {
+                ForEach([("Copy Claude Code Hooks", ContainerHooks.claudeSettings), ("Copy Codex Hooks", ContainerHooks.codexConfig)], id: \.0) { title, text in
+                    Button(title) {
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(text, forType: .string)
+                    }
+                }
+            }
             Toggle("Show Hachi When an Agent Finishes", isOn: Bindable(store).hachiOnFinish)
             if let notifier {
                 if notifier.isDenied {
