@@ -27,7 +27,12 @@ struct ThreadFile: Codable, Equatable {
             guard version <= currentVersion else { throw LoadError.newerVersion(version) }
             return try JSONDecoder().decode(ThreadFile.self, from: data)
         } catch {
-            let backup = url.deletingPathExtension().appendingPathExtension("unreadable-\(Int(Date.now.timeIntervalSince1970)).json")
+            let stem = url.deletingPathExtension()
+            var backup = stem.appendingPathExtension("unreadable-\(Int(Date.now.timeIntervalSince1970)).json")
+            // Two in one second would collide, the move fail, and the next save overwrite the file.
+            if FileManager.default.fileExists(atPath: backup.path) {
+                backup = stem.appendingPathExtension("unreadable-\(UUID().uuidString).json")
+            }
             try? FileManager.default.moveItem(at: url, to: backup)
             Logger(subsystem: "fi.yan.shoji", category: "threads")
                 .error("Couldn't read \(url.path, privacy: .public), kept it as \(backup.lastPathComponent, privacy: .public): \(error)")

@@ -18,6 +18,7 @@ struct HookPipelineTests {
         withExtendedLifetime(server) {}
 
         #expect(result.status == 0)
+        #expect(result.duration < .milliseconds(500))
         let event = try #require(received.withLock { $0.first }.flatMap(StatusEvent.init(hookMessage:)))
         #expect(event == StatusEvent(threadId: threadId, signal: .finished))
     }

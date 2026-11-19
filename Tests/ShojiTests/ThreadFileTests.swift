@@ -47,6 +47,8 @@ struct ThreadFileTests {
 
         try Data(#"{"schemaVersion": 99, "threads": [], "layout": {}}"#.utf8).write(to: url)
         #expect(ThreadFile.load(from: url) == nil)
+        // The same second as the first: still moved, or the next save would overwrite it.
+        #expect(!FileManager.default.fileExists(atPath: url.path))
         #expect(try FileManager.default.contentsOfDirectory(atPath: folder.path).count == 2)
     }
 

@@ -26,3 +26,17 @@ extension Color {
         )
     }
 }
+
+/// A bare icon or label, no glass or bezel: pane headers and Hub cards.
+struct BareButtonStyle: ButtonStyle {
+    let zoom: Double
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 13 * zoom, weight: .medium))
+            .padding(.horizontal, 4 * zoom)
+            .frame(minWidth: 24 * zoom, minHeight: 24 * zoom)
+            .contentShape(.rect)
+            .opacity(configuration.isPressed ? 0.5 : 0.85)
+    }
+}

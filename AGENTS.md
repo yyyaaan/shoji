@@ -32,11 +32,13 @@ Sources/Shoji/
                             ThreadFile, ThreadLaunch, GitBranch, Mock
   Terminal/                 TerminalBackend protocol, SwiftTerm implementation (only place importing SwiftTerm), TerminalSessions
   Status/                   StatusEvent, HookServer (socket listener), ClaudeHooks, CodexHooks, ContainerHooks (agents in containers, via the terminal)
-  UI/                       Theme (palette), StatusIcon, Backdrop, Zoom (text and interface sizes), ShortcutsSheet, RecentSwitch (⌃Tab),
+  UI/                       Theme (palette, bare button style), StatusIcon, Backdrop, Zoom (text and interface sizes), ShortcutsSheet, RecentSwitch (⌃Tab),
                             CornerControls (lantern: Hub; stones: new thread in a folder; bamboo: ⌘K), Artwork.xcassets (Hachi, Torii, zen icons)
-  UI/Shelf/                 card shelf, bars, mini cards, card menu (shared with the Hub), ⌘ card numbers
-  UI/Hub/                   HubView (group columns, header), HubCard (card, screen excerpt)
-  UI/Panes/                 PaneGrid (panes and split handles by frame), PaneView (header, thread dropdown, Split menu, drops), EmptyPane (a closed thread's picker), TerminalHost, QuickTerminal
+  UI/Shelf/                 ShelfView (cards, bars, reordering), ThreadCard (full and mini, peek), CardMenu (shared with the Hub),
+                            CardDrag (a dragged card, also read by panes), CardNumberKeys (⌘ card numbers)
+  UI/Hub/                   HubView (group columns), HubHeader (count, pills), HubCard (card, screen excerpt)
+  UI/Panes/                 PaneGrid (panes and split handles by frame), PaneView (header, thread dropdown, Split menu), PaneDrop (cards, files and text dropped on a pane),
+                            EmptyPane (a closed thread's picker), TerminalHost, QuickTerminal
   UI/Hachi/                 HachiPortrait, HachiCorner, AppIcon.icon (spec in docs/design/hachi/README.md)
 Tests/ShojiTests/           Swift Testing
 docs/design/                accepted design references (the Hub mockup, artwork sources and their tools)
@@ -85,7 +87,7 @@ scripts/package.sh --install     # the same app into /Applications, then removes
 
 - Swift 6 strict concurrency, no default actor isolation; `ThreadStore` and `TerminalSessions` are `@MainActor @Observable`. The thread model is `ShojiThread` (`Thread` would shadow Foundation's).
 - Tests use Swift Testing; the test host runs the app headless (no shells, no socket; keep `ShojiApp.isHeadless` in sync). Suites follow features; `Support.swift` has `store.send(_:to:)` and `numberedThreads(_:)`. Extend a scenario before adding a near-duplicate test.
-- To check UI by hand, launch the built app and use `screencapture -l <windowid>`; press controls with System Events `AXPress`, never keystrokes (they go to the user's frontmost app).
+- To check UI by hand, launch the built app and use `screencapture -l <windowid>`; press controls with System Events `AXPress`, never keystrokes (they go to the user's frontmost app). Launch it apart from the user's threads, with an invented home (`docs/images/README.md`); `AXPress` needs Accessibility for `osascript`.
 - **Sizes:** chrome metrics multiply by `@Environment(\.zoom)` (View › Interface Size). Terminal text is separate: `TextZoom` (⌘+ / ⌘−) plus a thread's `textSteps`.
 - **Shortcuts** go in the `Shortcut` catalog (`App/Shortcuts.swift`), which feeds both the menus and the ⌘/ sheet. ⌘K is the quick terminal on purpose.
 - Child processes get `SHOJI_THREAD_ID` and `SHOJI_SOCKET`; the zsh integration also reads `SHOJI_ZSH`, `SHOJI_USER_ZDOTDIR`, `SHOJI_CLAUDE_SETTINGS`, `SHOJI_CODEX_HOOKS`, `SHOJI_RESUME` and `SHOJI_PREFILL`. Inherited `SHOJI_*` variables are stripped first.

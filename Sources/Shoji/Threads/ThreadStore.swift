@@ -171,6 +171,8 @@ final class ThreadStore {
         case .exited(let code):
             activity.isAlive = false
             activity.agent = nil
+            activity.detail = nil
+            activity.attention = 0
             if threads[index].command != nil { threads[index].command = nil }
             activity.transition(to: .exited(code: code), at: now)
         case .userInput, .bell:
@@ -650,6 +652,12 @@ final class ThreadStore {
         guard !visible.isEmpty else { return }
         let current = visible.firstIndex { $0 == focusedPaneId } ?? (offset > 0 ? -1 : 0)
         focusRequest = visible[(current + offset + visible.count) % visible.count]
+    }
+
+    /// Hands the keyboard back to your pane; never pulls a hidden one on screen or leaves the Hub.
+    func refocus() {
+        guard !showsHub, let focusedPaneId, layout.visiblePanes.contains(focusedPaneId) else { return }
+        focusRequest = focusedPaneId
     }
 
     // MARK: Recent threads

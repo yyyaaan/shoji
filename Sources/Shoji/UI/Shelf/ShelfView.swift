@@ -1,5 +1,4 @@
 import SwiftUI
-import UniformTypeIdentifiers
 
 /// Cards in the user's order, with a bar between groups.
 struct ShelfView: View {
@@ -81,118 +80,9 @@ struct ShelfView: View {
     }
 }
 
-/// A card's right-click menu, on the shelf and in the Hub.
-struct CardMenu: View {
-    @Environment(ThreadStore.self) private var store
-    @Environment(TerminalSessions.self) private var sessions: TerminalSessions?
-    let thread: ShojiThread
-
-    var body: some View {
-        Button("Show in This Pane") { store.bringHere(thread.id) }
-            .disabled(store.focusedPaneId == nil || store.focusedPaneId == thread.id)
-        ForEach(Editor.installed) { editor in
-            Button("Open in \(editor.name)") { editor.open(thread.folder) }
-        }
-        Button("Rename…") { store.renameRequest = thread.id }
-        Divider()
-        Button("Move Left") { store.move(thread.id, by: -1) }
-            .disabled(!store.canMove(thread.id, by: -1))
-        Button("Move Right") { store.move(thread.id, by: 1) }
-            .disabled(!store.canMove(thread.id, by: 1))
-        if store.hasBarBefore(thread.id) {
-            Button("Remove Bar Before") { store.toggleBarBefore(thread.id) }
-        } else if store.shelfOrder.first?.id != thread.id {
-            Button("Add Bar Before") { store.toggleBarBefore(thread.id) }
-        }
-        if !store.showsHub {
-            Toggle("Mini Card", isOn: Binding { thread.isMini == true } set: { _ in withAnimation(.snappy) { store.toggleMini(thread.id) } })
-        }
-        ForEach(CardMark.allCases, id: \.self) { mark in
-            Toggle(isOn: Binding { thread.mark == mark } set: { store.setMark(thread.id, to: $0 ? mark : nil) }) {
-                Label(mark.title, systemImage: mark.symbol)
-            }
-        }
-        Divider()
-        if !store.activity(for: thread.id).isAlive {
-            Button("Restart") { sessions?.restart(thread.id) }
-        }
-        Button("Close Thread", role: .destructive) { store.requestClose(thread.id) }
-    }
-}
-
-/// ⌘ or ⌥⌘ held alone for a moment shows the card keys, so quick shortcuts never flash them.
-/// A number with no card is swallowed so it can't reach the terminal.
-@MainActor
-enum CardNumberKeys {
-    private static var monitor: Any?
-    private static var pending: Task<Void, Never>?
-
-    static func install(store: ThreadStore) {
-        guard monitor == nil else { return }
-        monitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .flagsChanged]) { event in
-            let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask).subtracting(.capsLock)
-            let keys: NumberKeys? = flags == .command ? .command : flags == [.command, .option] ? .optionCommand : nil
-            let isFlags = event.type == .flagsChanged
-            // Panels, sheets and alerts (Choose Folder, Rename) keep their own ⌘ digits.
-            let inMainWindow = event.window?.sheetParent == nil && !(event.window is NSPanel) && NSApp.modalWindow == nil
-            let number = isFlags ? nil : event.charactersIgnoringModifiers.flatMap { Int($0) }
-            let swallow = MainActor.assumeIsolated {
-                hide(store)
-                guard let keys else { return false }
-                if isFlags {
-                    pending = Task {
-                        guard (try? await Task.sleep(for: .milliseconds(400))) != nil else { return }
-                        store.showsCardNumbers = true
-                    }
-                    return false
-                }
-                guard inMainWindow, let number, (1...9).contains(number), store.numbered(keys).count < number else { return false }
-                NSSound.beep()
-                return true
-            }
-            return swallow ? nil : event
-        }
-        NotificationCenter.default.addObserver(forName: NSApplication.didResignActiveNotification, object: nil, queue: .main) { _ in
-            MainActor.assumeIsolated { hide(store) }
-        }
-    }
-
-    private static func hide(_ store: ThreadStore) {
-        pending?.cancel()
-        if store.showsCardNumbers { store.showsCardNumbers = false }
-    }
-}
-
 private struct DropSpot: Equatable {
     var id: UUID
     var after: Bool
-}
-
-/// A card being dragged, as Shoji's own text payload, so text dragged in from elsewhere is ignored.
-extension UTType {
-    /// Declared in Info.plist; never offered to other apps.
-    static let shojiThread = UTType(exportedAs: "fi.yan.shoji.thread")
-}
-
-enum CardDrag {
-    static func item(for id: UUID) -> NSItemProvider {
-        let provider = NSItemProvider()
-        provider.registerDataRepresentation(forTypeIdentifier: UTType.shojiThread.identifier, visibility: .ownProcess) { completion in
-            completion(Data(id.uuidString.utf8), nil)
-            return nil
-        }
-        return provider
-    }
-
-    /// Reads the dragged card's thread and hands it over on the main actor. False when nothing could be read.
-    static func load(_ providers: [NSItemProvider], then action: @escaping @MainActor (UUID) -> Void) -> Bool {
-        guard let provider = providers.first else { return false }
-        _ = provider.loadDataRepresentation(forTypeIdentifier: UTType.shojiThread.identifier) { data, _ in
-            guard let data, let id = UUID(uuidString: String(decoding: data, as: UTF8.self)) else { return }
-            Task { @MainActor in action(id) }
-        }
-        return true
-    }
 }
 
 /// Dropping a card on another puts it before or after that card, by which half it lands on.

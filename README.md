@@ -123,7 +123,7 @@ The Xcode project is generated from `project.yml` and not committed. `-skipPacka
 
 ## Roadmap
 
-- **Now (v0.9):** agents in containers, a hover peek on every card, mini cards that glow when Hachi wants you, text that rolls on busy cards
+- **Now (v0.10):** moon and mountain cards with their own number keys, pane layouts on ⌃⌘1–4
 - **Next:** whatever the next wish is
 
 The live list is in [PLAN.md](PLAN.md#tasks).
