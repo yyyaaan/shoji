@@ -24,7 +24,8 @@ extension Shortcut {
     static let newThread = Shortcut(title: "New Thread", key: "n")
     static let closeThread = Shortcut(title: "Close Thread", key: "w", hint: "twice to close its pane too")
     static let reopenClosed = Shortcut(title: "Reopen Closed Pane or Thread", key: "t", modifiers: [.command, .shift], hint: "the latest first")
-    static let jumpToThread = Shortcut(title: "Jump to Thread 1–9", key: "1", keyLabel: "1–9", hint: "hold ⌘ to see them")
+    static let jumpToThread = Shortcut(title: "Jump to Thread", key: "1", keyLabel: "1–9", hint: "hold ⌘ to see")
+    static let jumpToMoonThread = Shortcut(title: "Jump to Moon Thread", key: "1", modifiers: [.command, .option], keyLabel: "1–9", hint: "hold ⌘ to see")
     static let nextNeedingYou = Shortcut(title: "Next Thread That Needs You", key: "j")
     static let openInVSCode = Shortcut(title: "Open in VS Code", key: "e", modifiers: [.command, .option, .shift])
     static let openInZed = Shortcut(title: "Open in Zed", key: "e", modifiers: [.command, .shift])
@@ -37,10 +38,10 @@ extension Shortcut {
     static let splitRight = Shortcut(title: "Split Pane Right", key: "d")
     static let splitDown = Shortcut(title: "Split Pane Down", key: "d", modifiers: [.command, .shift])
     static let toggleMaximize = Shortcut(title: "Maximize or Restore Pane", key: .return, modifiers: [.command, .shift])
-    static let singlePane = Shortcut(title: "Single Pane", key: "1", modifiers: [.command, .option])
-    static let twoColumns = Shortcut(title: "Two Columns", key: "2", modifiers: [.command, .option])
-    static let threePanes = Shortcut(title: "Three Panes", key: "3", modifiers: [.command, .option])
-    static let grid = Shortcut(title: "Grid of Four", key: "4", modifiers: [.command, .option])
+    static let singlePane = Shortcut(title: "Single Pane", key: "1", modifiers: [.command, .control])
+    static let twoColumns = Shortcut(title: "Two Columns", key: "2", modifiers: [.command, .control])
+    static let threePanes = Shortcut(title: "Three Panes", key: "3", modifiers: [.command, .control])
+    static let grid = Shortcut(title: "Grid of Four", key: "4", modifiers: [.command, .control])
     // ⌘= so no Shift is needed; shown as + like every zoom menu.
     static let zoomIn = Shortcut(title: "Bigger Text", key: "=", keyLabel: "+")
     static let zoomOut = Shortcut(title: "Smaller Text", key: "-", keyLabel: "−")
@@ -67,7 +68,7 @@ struct ShortcutSection: Identifiable {
 
     static let columns: [[ShortcutSection]] = [
         [
-            ShortcutSection(title: "Threads", symbol: "rectangle.stack", shortcuts: [.newThread, .jumpToThread, .showInYourPane, .recentThread, .recentThreadReversed, .nextNeedingYou, .quickTerminal, .openInVSCode, .openInZed, .closeThread, .reopenClosed]),
+            ShortcutSection(title: "Threads", symbol: "rectangle.stack", shortcuts: [.newThread, .jumpToThread, .jumpToMoonThread, .showInYourPane, .recentThread, .recentThreadReversed, .nextNeedingYou, .quickTerminal, .openInVSCode, .openInZed, .closeThread, .reopenClosed]),
             ShortcutSection(title: "Panes", symbol: "rectangle.split.2x1", shortcuts: [.nextPane, .previousPane, .splitRight, .splitDown, .toggleMaximize]),
         ],
         [
@@ -119,9 +120,19 @@ struct ShojiCommands: Commands {
         }
 
         CommandMenu("Threads") {
-            ForEach(Array(store.shelfOrder.prefix(9).enumerated()), id: \.element.id) { index, thread in
+            // A section, not ⌥-alternates: the two lists rarely match in length.
+            let unmarked = store.numbered(.command)
+            ForEach(Array(unmarked.enumerated()), id: \.element.id) { index, thread in
                 Button(store.name(of: thread)) { store.openThread(at: index) }
                     .keyboardShortcut(KeyEquivalent(Character("\(index + 1)")), modifiers: .command)
+            }
+            let moon = store.numbered(.optionCommand)
+            if !moon.isEmpty {
+                if !unmarked.isEmpty { Divider() }
+                ForEach(Array(moon.enumerated()), id: \.element.id) { index, thread in
+                    Button(store.name(of: thread), systemImage: CardMark.moon.symbol) { store.openThread(at: index, keys: .optionCommand) }
+                        .keyboardShortcut(KeyEquivalent(Character("\(index + 1)")), modifiers: [.command, .option])
+                }
             }
             Divider()
             button(.nextNeedingYou) { if !store.openNextNeedingYou() { NSSound.beep() } }

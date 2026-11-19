@@ -20,6 +20,8 @@ struct ShojiThread: Identifiable, Codable, Hashable, Sendable {
     var textSteps: Int?
     /// A narrow shelf card, status and name only; nil when full size.
     var isMini: Bool?
+    /// The user's card group besides the default (nil); `group` is the bars'.
+    var mark: CardMark?
 
     init(
         id: UUID = UUID(),
@@ -31,7 +33,8 @@ struct ShojiThread: Identifiable, Codable, Hashable, Sendable {
         resumeAgent: Agent? = nil,
         command: String? = nil,
         textSteps: Int? = nil,
-        isMini: Bool? = nil
+        isMini: Bool? = nil,
+        mark: CardMark? = nil
     ) {
         self.id = id
         self.title = title
@@ -43,9 +46,18 @@ struct ShojiThread: Identifiable, Codable, Hashable, Sendable {
         self.command = command
         self.textSteps = textSteps
         self.isMini = isMini
+        self.mark = mark
     }
 
     /// What an unnamed thread goes by.
     var folderName: String { (displayFolder as NSString).lastPathComponent }
     var displayFolder: String { (folder as NSString).abbreviatingWithTildeInPath }
+}
+
+/// Mountain cards have no number keys.
+enum CardMark: String, Codable, CaseIterable, Sendable {
+    case moon, mountain
+
+    var title: String { rawValue.capitalized }
+    var symbol: String { self == .moon ? "moon" : "mountain.2" }
 }

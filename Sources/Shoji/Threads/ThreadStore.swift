@@ -67,7 +67,7 @@ final class ThreadStore {
     var renameRequest: UUID?
     /// ⌃Tab in progress (⌃ still held).
     private(set) var recentSwitch: RecentSwitch?
-    /// ⌘ held on its own: the first nine cards show their ⌘1–9 number.
+    /// ⌘ (or ⌥⌘) held on its own: every card with a key shows it.
     var showsCardNumbers = false
     /// An unseen finished turn wants you too, not just its quiet tick.
     var hachiOnFinish = true
@@ -323,9 +323,21 @@ final class ThreadStore {
             .map { $0.value.sorted { $0.order < $1.order } }
     }
 
-    /// ⌘1–9 index into this.
     var shelfOrder: [ShojiThread] {
         shelf.flatMap { $0 }
+    }
+
+    func numbered(_ keys: NumberKeys) -> [ShojiThread] {
+        Array(shelfOrder.filter { $0.mark == keys.mark }.prefix(9))
+    }
+
+    /// Badges while ⌘ is held: "1" for ⌘1, "⌥1" for ⌥⌘1.
+    var cardNumbers: [UUID: String] {
+        guard showsCardNumbers else { return [:] }
+        let labels = [(NumberKeys.command, ""), (.optionCommand, "⌥")].flatMap { keys, prefix in
+            numbered(keys).enumerated().map { ($1.id, "\(prefix)\($0 + 1)") }
+        }
+        return Dictionary(uniqueKeysWithValues: labels)
     }
 
     private var shelfIds: [[UUID]] {
@@ -391,6 +403,11 @@ final class ThreadStore {
     func toggleMini(_ id: UUID) {
         guard let index = threads.firstIndex(where: { $0.id == id }) else { return }
         threads[index].isMini = threads[index].isMini == true ? nil : true
+    }
+
+    func setMark(_ id: UUID, to mark: CardMark?) {
+        guard let index = threads.firstIndex(where: { $0.id == id }) else { return }
+        threads[index].mark = mark
     }
 
     private func position(of id: UUID, in groups: [[UUID]]) -> (group: Int, index: Int)? {
@@ -611,8 +628,8 @@ final class ThreadStore {
 
     // MARK: Keyboard navigation
 
-    func openThread(at index: Int) {
-        let order = shelfOrder
+    func openThread(at index: Int, keys: NumberKeys = .command) {
+        let order = numbered(keys)
         guard order.indices.contains(index) else { return }
         open(order[index].id)
     }
@@ -696,4 +713,10 @@ final class ThreadStore {
             Logger(subsystem: "fi.yan.shoji", category: "threads").error("Couldn't save \(fileURL.path, privacy: .public): \(error)")
         }
     }
+}
+
+enum NumberKeys {
+    case command, optionCommand
+
+    var mark: CardMark? { self == .optionCommand ? .moon : nil }
 }
