@@ -5,8 +5,8 @@ The current state of Shoji: what's next, what to watch out for, and why things a
 ## Status
 
 - **Released:** v0.10.0: moon and mountain cards with ⌥⌘1–9 for the moon ones; pane layouts on ⌃⌘1–4.
-- **Since v0.10.0 (`code-health`, unreleased):** a review pass: four small fixes, shared UI types in their own files, sturdier tests.
-- **Next up:** the user's checks under Now.
+- **In progress (`code-health`, v0.10.1):** a review pass: four small fixes, shared UI types in their own files, sturdier tests.
+- **Next up:** the user's check of the review pass under Now, then merge.
 - **Blockers:** none.
 
 ## Tasks
@@ -90,7 +90,7 @@ A calm command center for the terminals the user already runs all day. Claude Co
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-Files live in `~/Library/Application Support/Shoji` (`Shoji-Debug` for Debug builds): `threads.json`, saved half a second after a change and on quit, and `hook.sock`. A `threads.json` Shoji can't read (corrupt or newer) is renamed `threads.unreadable-<time>.json`, never overwritten.
+Files live in `~/Library/Application Support/Shoji` (`Shoji-Debug` for Debug builds): `threads.json`, saved half a second after a change and on quit, and `hook.sock`. A `threads.json` Shoji can't read (corrupt or newer) is renamed `threads.unreadable-<time>.json` (a UUID when that name is taken), never overwritten.
 
 ### `threads.json`
 
@@ -105,7 +105,7 @@ Files live in `~/Library/Application Support/Shoji` (`Shoji-Debug` for Debug bui
 }
 ```
 
-- `title`, `textSteps`, `isMini` and `mark` (`moon` or `mountain`) are optional; `folder` follows the shell; `group` / `order` place the card. The array is in creation order, which decides who gets the number among same-named threads.
+- `title`, `textSteps`, `isMini` and `mark` (`moon` or `mountain`) are optional; `folder` follows the shell; `group` / `order` place the card. The array is in creation order, which decides who gets the number among same-named threads; a reopened thread counts as the newest.
 - `command` is what ran at the last save and `resumeId` its agent session, `resumeAgent` naming the CLI: a relaunch runs `claude --resume <id>` or `codex resume <id>` at the first prompt, or leaves `command` at the prompt for Return.
 - `layout.root` is the split tree, panes named by their thread's id; an id that is no thread's is an empty pane. `mode` and `openThreadIds` are written for older Shoji and read when `root` is missing. Unknown keys are ignored.
 - Runtime only: status, activity, agent, terminal views, which form is showing and the compact form's panes, the Hub, what ⇧⌘T can reopen.
@@ -118,7 +118,7 @@ Files live in `~/Library/Application Support/Shoji` (`Shoji-Debug` for Debug bui
 | Running | a command other than claude / codex (zsh `preexec`) |
 | Working | Claude or Codex `UserPromptSubmit` / `PostToolUse` (which also names the tool for the Hub); typing into a needs-you thread |
 | Needs you | Claude `Notification` (not `idle_prompt`); Codex `PermissionRequest`; bell while working |
-| Done | Claude or Codex `Stop`; Codex `Interrupt`. Unseen when it lands outside the focused pane or while Shoji is in the background |
+| Done | Claude or Codex `Stop`; Codex `Interrupt`. Unseen when it lands outside the focused pane or while Shoji is in the background; under the Hub the focused thread still counts as seen |
 | Exited(code) | a command failed (clears on focus), or the shell ended (Restart) |
 
 Shell reports from the zsh integration: `cwd;<path>` each prompt, `cmd;<line>` before a command, `done;<code>` after it. Hook transport: `shoji-hook` opens one connection per event to `hook.sock`, the thread id on the first line, then the CLI's JSON. In a container (`ContainerHooks`, copied from the Threads menu) the hook writes `hook;<agent>;<base64 JSON>` as a shell report to its agent's terminal instead; the thread is whichever terminal it lands in, the agent comes from the report, and the session id is dropped so nothing resumes on the Mac.
@@ -126,15 +126,16 @@ Shell reports from the zsh integration: `cwd;<path>` each prompt, `cmd;<line>` b
 ## Gotchas
 
 - **Login shell must be interactive too** (`$SHELL -l -i -c 'exec …'`), or PATH from `.zshrc` (nvm, where `codex` lives) is missing.
-- **zsh integration hooks in on the first prompt**, after `.zshrc`, with its precmd first so `$?` is the command's; a `.zshrc` that resets `precmd_functions` disables it. Typed `claude` / `codex` get hooks through its functions (aliases work); scripts calling the binary directly get none.
+- **zsh integration hooks in on the first prompt**, after `.zshrc`, with its precmd first so `$?` is the command's; a `.zshrc` that resets `precmd_functions` disables it. Typed `claude` / `codex` get hooks through its functions (aliases work); scripts calling the binary directly get none. The loader unsets `SHOJI_ZSH` and gives `ZDOTDIR` back, so a nested zsh doesn't report twice; the cost is that `exec zsh` leaves the thread without folder, command or agent status until Restart.
 - **Claude `Notification` with `idle_prompt`** fires about 60 s after a finished turn; it's ignored so Done doesn't turn into Needs you.
 - **No hook fires between approving a permission and the tool finishing**, so typing into a needs-you thread counts as the answer (→ Working).
 - **Resume ids come from `UserPromptSubmit` / `PostToolUse`**, not `SessionStart`, which also fires for sessions that can't be resumed.
 - **Codex hooks need the user's trust once** in `/hooks` (keyed by their hash; Debug and installed builds separately). Keep `CodexHooks` stable, never pass `--dangerously-bypass-hook-trust`; `codex debug prompt-input -c '…'` checks an override without a model call. `Stop` / `Interrupt` expect JSON when a hook prints; `shoji-hook` prints nothing.
-- **Darwin `accept()` inherits `O_NONBLOCK`** from the listener; `HookServer` clears it.
+- **Darwin `accept()` inherits `O_NONBLOCK`** from the listener; `HookServer` clears it. It reads one connection at a time, so a client that never closes holds the others for its 1 s timeout.
+- **Socket hooks don't say which CLI sent them;** the agent comes from the command line, else Claude is assumed (Tasks › Next). Container hooks name theirs.
 - **Hook socket paths are capped at 104 characters.** A support folder under a long path (a scratchpad, a demo home) silently leaves Shoji without hooks.
 - **A restarted terminal's old process still reports its exit**; `TerminalSessions` ignores events from a backend that's no longer the thread's.
-- **Focus requests must settle.** `SwiftTermBackend.focus()` reports `.focused` itself when the view already has focus; `TerminalHost` acts only when a request arrives, so a stale one can't pull typing back; clicks focus in `ShojiTerminalView.mouseDown`.
+- **Focus requests must settle.** `SwiftTermBackend.focus()` reports `.focused` itself when the view already has focus; `TerminalHost` acts only when a request arrives, so a stale one can't pull typing back; clicks focus in `ShojiTerminalView.mouseDown`. A restarted terminal is a new view and the old one takes first responder with it, so `TerminalSessions.restart` asks again (`ThreadStore.refocus`).
 - **Terminals keep their size and their host.** Never size one to zero (TUIs redraw badly); `TerminalContainer` keeps the last real size. `PaneGrid` places one `PaneView` per thread by frame, at the same place in both forms, so layout changes don't re-host terminals.
 - **A translucent terminal stacks with whatever is behind it.** SwiftTerm paints its own background at `backgroundOpacity`, so `PaneView` fills only the margin around it (an even-odd `Margin`). Never set the terminal's background to 0 and let SwiftUI draw it: the IME overlay and whole-screen reverse video use that colour.
 - **The Hub hides the panes, it doesn't remove them.** `PaneGrid` stays at opacity 0 underneath so terminals keep their host and size, and `MainView` takes first responder from the terminal. `focusRequest` and `showsHub` clear each other: asking for a pane's focus leaves the Hub, closing a thread from it doesn't. Esc is a key equivalent there, off while ⌘K is open.
@@ -151,6 +152,7 @@ Shell reports from the zsh integration: `cwd;<path>` each prompt, `cmd;<line>` b
 - **One Debug Shoji at a time:** a second instance takes over `hook.sock`, and both write `threads.json`.
 - **A blank icon in ⌘Tab or the Dock is a stale icon cache:** `touch` the app bundle and `lsregister -f` it, then relaunch.
 - **Icon Composer:** XcodeGen adds `AppIcon.icon` as one `wrapper.icon` file, compiled with `ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon`. Check renders with `ictool <file>.icon --export-image --platform macOS --rendition Default|Dark|ClearLight|TintedDark …`.
+- **Checks in the live app** go through an isolated launch with an invented home (`docs/images/README.md`, with `open -n -g` and the app's absolute path), never the user's threads. System Events (`AXPress`, reading focus) needs Accessibility for `osascript`; without it, leave the check under Now.
 - **Visual checks without the live app:** `screencapture` needs Screen Recording for the agent's terminal; without it, `ImageRenderer` in a throwaway test renders SwiftUI views (glass flat, terminals, `ScrollView`s and some backgrounds blank or a placeholder). A new test file needs `xcodegen generate` before it runs.
 - **AX `set value` on a SwiftUI text field reaches its binding only when editing ends;** move focus before pressing a button.
 - **Signing:** `package.sh` signs with the self-signed "Shoji Local" certificate (Keychain Access › Certificate Assistant, Code Signing) when it's in the keychain, so local builds keep one designated requirement and privacy grants survive updates; `find-identity` without `-v`, since it's untrusted. CI and anyone without it get ad-hoc signing, so privacy grants reset with every update (quarantine: README › Download). App Sandbox stays off (Shoji spawns shells).

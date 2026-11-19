@@ -87,7 +87,7 @@ scripts/package.sh --install     # the same app into /Applications, then removes
 
 - Swift 6 strict concurrency, no default actor isolation; `ThreadStore` and `TerminalSessions` are `@MainActor @Observable`. The thread model is `ShojiThread` (`Thread` would shadow Foundation's).
 - Tests use Swift Testing; the test host runs the app headless (no shells, no socket; keep `ShojiApp.isHeadless` in sync). Suites follow features; `Support.swift` has `store.send(_:to:)` and `numberedThreads(_:)`. Extend a scenario before adding a near-duplicate test.
-- To check UI by hand, launch the built app and use `screencapture -l <windowid>`; press controls with System Events `AXPress`, never keystrokes (they go to the user's frontmost app).
+- To check UI by hand, launch the built app and use `screencapture -l <windowid>`; press controls with System Events `AXPress`, never keystrokes (they go to the user's frontmost app). Launch it apart from the user's threads, with an invented home (`docs/images/README.md`); `AXPress` needs Accessibility for `osascript`.
 - **Sizes:** chrome metrics multiply by `@Environment(\.zoom)` (View › Interface Size). Terminal text is separate: `TextZoom` (⌘+ / ⌘−) plus a thread's `textSteps`.
 - **Shortcuts** go in the `Shortcut` catalog (`App/Shortcuts.swift`), which feeds both the menus and the ⌘/ sheet. ⌘K is the quick terminal on purpose.
 - Child processes get `SHOJI_THREAD_ID` and `SHOJI_SOCKET`; the zsh integration also reads `SHOJI_ZSH`, `SHOJI_USER_ZDOTDIR`, `SHOJI_CLAUDE_SETTINGS`, `SHOJI_CODEX_HOOKS`, `SHOJI_RESUME` and `SHOJI_PREFILL`. Inherited `SHOJI_*` variables are stripped first.
