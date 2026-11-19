@@ -45,6 +45,8 @@ final class TerminalSessions {
         guard let thread = store.thread(id) else { return }
         backends.removeValue(forKey: id)?.terminate()
         start(thread)
+        // The old view took the keyboard with it.
+        if store.focusedPaneId == id { store.refocus() }
     }
 
     private func start(_ thread: ShojiThread) {
@@ -112,8 +114,7 @@ final class TerminalSessions {
         } else {
             popup.backend.terminate()
         }
-        // Never pulls a hidden thread back on screen, or leaves the Hub.
-        if !store.showsHub, let id = store.focusedPaneId, store.layout.visiblePanes.contains(id) { store.focusPane(offset: 0) }
+        store.refocus()
     }
 
     private func handlePopup(_ event: TerminalEvent) {

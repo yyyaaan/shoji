@@ -18,6 +18,11 @@ struct PaneLayoutTests {
         #expect(layout.panes == [ids[2], ids[1]])
         layout.show(ids[3], replacing: nil)
         #expect(layout.panes == [ids[2], ids[3]])
+
+        // Any go-to ends a maximize, the maximized pane's own thread included.
+        layout.toggleMaximize(ids[3])
+        layout.show(ids[3], replacing: nil)
+        #expect(layout.maximizedPaneId == nil)
     }
 
     @Test func droppingACardTakesThatPaneOrTradesPlaces() {

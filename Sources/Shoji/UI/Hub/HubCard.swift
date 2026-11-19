@@ -48,7 +48,8 @@ struct HubCard: View {
         }
         .glassEffect(.regular.tint(tint), in: .rect(cornerRadius: 16 * zoom))
         .contextMenu { CardMenu(thread: thread) }
-        .task(id: thread.folder) { branch = GitBranch.of(thread.folder) }
+        // Again on each status change: a finished command or turn may have switched branches.
+        .task(id: [thread.folder, activity.since] as [AnyHashable]) { branch = GitBranch.of(thread.folder) }
         .onScrollVisibilityChange(threshold: 0.01) { isInView = $0 }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(store.name(of: thread))

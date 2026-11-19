@@ -64,7 +64,7 @@ struct ThreadLaunchTests {
     }
 
     /// Runs the bundled zsh integration with stand-in `claude` and `codex` executables that print their arguments.
-    @Test func zshIntegrationHandsAgentsTheirHooks() throws {
+    @Test func zshIntegrationReportsToShojiAndHandsAgentsTheirHooks() throws {
         let bin = FileManager.default.temporaryDirectory.appending(path: "shoji-bin-\(UUID().uuidString)", directoryHint: .isDirectory)
         try FileManager.default.createDirectory(at: bin, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: bin) }
@@ -78,7 +78,8 @@ struct ThreadLaunchTests {
 
         let process = Process()
         process.executableURL = URL(filePath: "/bin/zsh")
-        process.arguments = ["-f", "-c", #"source "$SHOJI_ZSH"; _shoji_init >/dev/null; codex resume abc; claude -r"#]
+        // A first prompt, a failing command and the next prompt, then the agents.
+        process.arguments = ["-f", "-c", #"cd /tmp; source "$SHOJI_ZSH"; _shoji_init; _shoji_preexec $'pnpm dev\t--host'; (exit 3); _shoji_precmd; print; codex resume abc; claude -r"#]
         process.environment = [
             "PATH": bin.path + ":/usr/bin:/bin", "SHOJI_ZSH": script,
             "SHOJI_CODEX_HOOKS": codexHooks, "SHOJI_CLAUDE_SETTINGS": #"{"hooks":{}}"#,
@@ -87,8 +88,10 @@ struct ThreadLaunchTests {
         process.standardOutput = output
         try process.run()
         process.waitUntilExit()
-        let lines = String(decoding: output.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self).split(separator: "\n").map(String.init)
-        #expect(lines == ["-c", codexHooks, "resume", "abc", "--settings", #"{"hooks":{}}"#, "-r"])
+        let lines = String(decoding: output.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self).split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        let reports = (lines.first ?? "").components(separatedBy: "\u{07}").compactMap { $0.components(separatedBy: "\u{1b}]1337;").last }
+        #expect(reports.compactMap(TerminalEvent.init(shojiReport:)) == [.directory("/tmp"), .commandStarted("pnpm dev --host"), .commandFinished(3), .directory("/tmp")])
+        #expect(lines.dropFirst().filter { !$0.isEmpty } == ["-c", codexHooks, "resume", "abc", "--settings", #"{"hooks":{}}"#, "-r"])
     }
 
     @Test func environmentCarriesThreadIdentityAndDropsHostNoise() {

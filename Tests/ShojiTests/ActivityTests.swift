@@ -119,9 +119,12 @@ struct ActivityTests {
     @Test func shellExitEndsTheThreadUntilRestart() {
         let store = makeStore()
         store.send(.commandStarted("claude"), to: first.id)
+        store.send(.needsYou(message: "Allow Bash"), to: first.id)
         store.send(.exited(code: 0), to: first.id)
         #expect(!store.activity(for: first.id).isAlive)
         #expect(store.activity(for: first.id).agent == nil)
+        // Its question died with it, so the card's count goes too.
+        #expect(store.activity(for: first.id).attention == 0 && store.activity(for: first.id).detail == nil)
         store.focus(first.id)
         #expect(store.activity(for: first.id).status == .exited(code: 0))
 

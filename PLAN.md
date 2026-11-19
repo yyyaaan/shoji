@@ -4,9 +4,9 @@ The current state of Shoji: what's next, what to watch out for, and why things a
 
 ## Status
 
-- **Released:** v0.9.0: agents in containers, a hover peek on every card, glowing mini cards, a marquee on busy cards.
-- **In progress (`card-groups`, v0.10.0):** moon and mountain cards with ⌥⌘1–9 for the moon ones; pane layouts move to ⌃⌘1–4.
-- **Next up:** the user's check under Now, then merge.
+- **Released:** v0.10.0: moon and mountain cards with ⌥⌘1–9 for the moon ones; pane layouts on ⌃⌘1–4.
+- **Since v0.10.0 (`code-health`, unreleased):** a review pass: four small fixes, shared UI types in their own files, sturdier tests.
+- **Next up:** the user's checks under Now.
 - **Blockers:** none.
 
 ## Tasks
@@ -14,6 +14,7 @@ The current state of Shoji: what's next, what to watch out for, and why things a
 Priorities follow the user's wishes. Keep items one line, small enough for one PR.
 
 ### Now (the user's checks)
+- [ ] Review pass: Restart in your own pane (after `exit`) takes the keyboard without a click; a dead shell's card loses its count badge; a Hub card's branch follows a `git switch` in its thread
 - [ ] Card groups: Moon / Mountain in a card's menu (shelf and Hub) mark it; ⌘1–9 skip marked cards and ⌥⌘1–9 reach the moon ones; holding ⌘ or ⌥⌘ badges both ("1", "⌥1"), mountain cards none; ⌥⌘ with a number past the last moon card beeps and types nothing into an agent; ⌃⌘1–4 arrange the panes
 - [ ] Cards: the hover peek on full cards; mini cards glowing orange or ivory while Hachi wants them; on busy cards, cut-off text rolling now and then, out of step, and none with Reduce Motion
 - [ ] Empty pane (v0.8.1) in real use: compact rows, maximized, after ⌘K closes and after a relaunch
@@ -23,7 +24,7 @@ Priorities follow the user's wishes. Keep items one line, small enough for one P
 - [ ] The terminal checklist below, at the next SwiftTerm bump
 
 ### Next
-No tasks pending; new wishes go here.
+- [ ] Codex started through an alias or an env prefix is taken for Claude (the socket hooks don't name their agent), so a relaunch runs `claude --resume` on its session: have the zsh functions export the agent and `shoji-hook` send it
 
 ### Later
 - [ ] Hub: a running command's listening ports (libproc on the shell's children) with Open in Browser
@@ -41,7 +42,7 @@ A calm command center for the terminals the user already runs all day. Claude Co
 ### The window
 - **One window, two forms, by width** (the Split View divider sets it): full above 720 pt, compact below 680, unchanged in between so a drag doesn't flicker; the window goes down to 480 pt (about 60 columns). Each form has its own panes.
 - **Full form:** no title bar; the shelf shares the top row with the window buttons, Hachi's corner below them (empty until something needs you; a click opens it), and a column at the top right: the lantern (Hub), the stones (a new thread in a folder) and the bamboo (⌘K). Panes fill the rest.
-- **Compact form** (made for Split View beside a full-screen editor or browser): no shelf; a slim strip with Hachi beside the window buttons; one column of one or two rows. Each time the window narrows it starts from the full layout's right edge: the bottom two panes of its right-hand column, else its last two panes (not saved). ⇧⌘D adds a second row; ⌘D and ⌥⌘2–4 are off.
+- **Compact form** (made for Split View beside a full-screen editor or browser): no shelf; a slim strip with Hachi beside the window buttons; one column of one or two rows. Each time the window narrows it starts from the full layout's right edge: the bottom two panes of its right-hand column, else its last two panes (not saved). ⇧⌘D adds a second row; ⌘D and ⌃⌘2–4 are off.
 - **Room light:** panes are `Palette.paneOpacity` (80%) opaque with no blur, so the backdrop tints them, cool on the left and warm on the right; text, caret, selections and coloured cells stay opaque. The quick terminal stays solid, and Reduce Transparency makes every pane solid.
 
 ### Shelf and cards
@@ -54,7 +55,7 @@ A calm command center for the terminals the user already runs all day. Claude Co
 
 ### Panes
 - A split tree: split right, left, down or up from the header's Split menu, its right-click menu, ⌘D / ⇧⌘D, or a card dropped on a pane's edge (the half it takes is previewed, only where that split is allowed); the middle of a pane swaps. A new split shows your most recent thread that isn't on screen, else a new shell in that folder. Drag a gap to resize, double-click it to even. Splits that would leave a pane under 320×160 are refused. Panes › ⌃⌘1–4 snaps to one, two columns, three (one tall left) or a grid, keeping your pane and filling from recent threads.
-- **Going to a thread** (card click, ⌘1–9 or ⌥⌘1–9, ⌃Tab, ⌘J, Hachi, a notification): on screen, it just takes focus and glows ivory briefly; otherwise it fills an empty pane (yours first), else opens in your pane (with none focused, the least recently used one that isn't waiting for you). Other panes never change behind your back. ⌥-click or Show in This Pane brings it to your pane; dropping a card, or picking it from a pane's dropdown, puts it in that pane, trading places if it's on screen.
+- **Going to a thread** (card click, ⌘1–9 or ⌥⌘1–9, ⌃Tab, ⌘J, Hachi, a notification): on screen, it just takes focus and glows ivory briefly; otherwise it fills an empty pane (yours first), else opens in your pane (with none focused, the least recently used one that isn't waiting for you). Other panes never change behind your back. Any go-to ends a maximize, the maximized pane's own thread included. ⌥-click or Show in This Pane brings it to your pane; dropping a card, or picking it from a pane's dropdown, puts it in that pane, trading places if it's on screen.
 - **Pane header:** status, name, folder (giving way to the name when narrow); on hover, or while one has keyboard focus, a chevron (the thread dropdown: the shelf's cards with status, then New Thread), Split and Maximize, whose space is kept so the name never moves. Double-click maximizes; Restart once the shell has ended. In the compact form the name itself is the dropdown.
 - Close Pane keeps the thread on the shelf; ⌘W closes the thread (asking while something runs) and leaves its pane **empty**: a centred picker of the threads not on screen (shelf order, bars as separators), New Thread, and Close Pane at the bottom. ↑ ↓ and Return pick; a go-to or a card dropped anywhere on it fills it; ⌘W there closes the pane. The last pane always stays. Empty panes are saved with the layout; the other form just loses the closed thread's pane. ⇧⌘T reopens the latest close this session, newest first: a pane goes back to its spot (the same tree if nothing changed since, else split beside its old neighbour); a thread gets its card place and pane back (the same tree, else the pane it left empty, else beside its old neighbour) and relaunches like after a quit, its agent resumed and a command left at the prompt. Its scrollback is gone. Closing an empty pane isn't reopened.
 - Files or text dropped on a pane paste into its terminal (files as escaped paths, like Terminal).
