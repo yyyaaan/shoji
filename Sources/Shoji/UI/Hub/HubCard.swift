@@ -2,8 +2,8 @@ import SwiftUI
 
 struct HubCard: View {
     let thread: ShojiThread
-    /// Its ⌘1–9 number, while ⌘ is held.
-    var number: Int?
+    /// "1" or "⌥1" while ⌘ is held.
+    var number: String?
 
     @Environment(ThreadStore.self) private var store
     @Environment(TerminalSessions.self) private var sessions: TerminalSessions?
@@ -36,9 +36,10 @@ struct HubCard: View {
         }
         .overlay(alignment: .topLeading) {
             if let number {
-                Text("\(number)")
+                Text(number)
                     .font(.system(size: 12 * zoom, weight: .bold, design: .rounded))
                     .foregroundStyle(Palette.terminalBackground)
+                    .padding(.horizontal, 4 * zoom)
                     .frame(minWidth: 20 * zoom, minHeight: 20 * zoom)
                     .background(Palette.text, in: .rect(cornerRadius: 6 * zoom))
                     .offset(x: -6 * zoom, y: -6 * zoom)
@@ -62,6 +63,12 @@ struct HubCard: View {
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .help(store.name(of: thread))
+            if let mark = thread.mark {
+                Image(systemName: mark.symbol)
+                    .font(.system(size: 11 * zoom, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.75))
+                    .accessibilityLabel("\(mark.title) card")
+            }
             // Idle is the quiet state: the Torii and "idle 12m" say it.
             if activity.status != .idle {
                 statusPill

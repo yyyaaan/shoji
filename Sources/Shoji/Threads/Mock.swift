@@ -3,12 +3,12 @@ import Foundation
 /// Preview data matching the design mockups.
 enum Mock {
     static let threads: [ShojiThread] = [
-        ShojiThread(title: "auth-refactor", folder: "~/code/gosta", group: 0, order: 0, command: "claude"),
+        ShojiThread(title: "auth-refactor", folder: "~/code/gosta", group: 0, order: 0, command: "claude", mark: .moon),
         ShojiThread(title: "extension popup", folder: "~/code/gosta-browser-extension", group: 0, order: 1, command: "claude"),
         ShojiThread(title: "helm cleanup", folder: "~/home-lab/k3s", group: 0, order: 2, command: "codex"),
         ShojiThread(folder: "~/lab/shoji", group: 0, order: 3),
-        ShojiThread(title: "api stack", folder: "~/code/gosta", group: 1, order: 0, command: "docker compose up"),
-        ShojiThread(title: "web dev", folder: "~/code/gosta", group: 1, order: 1, command: "pnpm dev"),
+        ShojiThread(title: "api stack", folder: "~/code/gosta", group: 1, order: 0, command: "docker compose up", mark: .mountain),
+        ShojiThread(title: "web dev", folder: "~/code/gosta", group: 1, order: 1, command: "pnpm dev", mark: .moon),
         ShojiThread(title: "extension watch", folder: "~/code/gosta-browser-extension", group: 1, order: 2),
     ]
 

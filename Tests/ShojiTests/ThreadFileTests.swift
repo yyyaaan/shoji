@@ -18,6 +18,7 @@ struct ThreadFileTests {
         store.layout.setRatio(0.3, at: [])
         store.stepTextSize(of: id, by: -1, global: 1)
         store.toggleMini(id)
+        store.setMark(id, to: .moon)
         store.apply(StatusEvent(threadId: id, signal: .directory("/tmp")))
         store.apply(StatusEvent(threadId: id, signal: .commandStarted("claude --model opus")))
         store.apply(StatusEvent(threadId: id, signal: .working(sessionId: "s1")))
@@ -31,6 +32,7 @@ struct ThreadFileTests {
         #expect(saved.threads.first?.command == "claude --model opus")
         #expect(saved.threads.first?.textSteps == -1)
         #expect(saved.threads.first?.isMini == true)
+        #expect(saved.threads.first?.mark == .moon)
         #expect(saved.layout == store.layout)
     }
 
@@ -58,6 +60,7 @@ struct ThreadFileTests {
         #expect(file.threads.map(\.id) == [id])
         #expect(file.threads.first?.resumeAgent == nil)
         #expect(file.threads.first?.isMini == nil)
+        #expect(file.threads.first?.mark == nil)
         #expect(file.layout.panes == [id])
 
         let (a, b, c) = (UUID(), UUID(), UUID())

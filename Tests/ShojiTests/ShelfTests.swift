@@ -132,6 +132,33 @@ struct ShelfTests {
         #expect(titles() == [["first", "third", "web"]])
     }
 
+    @Test func marksSplitTheNumberKeysAndFollowTheCard() {
+        let (threads, ids) = numberedThreads(5)
+        let store = ThreadStore(threads: threads, layout: PaneLayout(.single, [ids[0]]))
+        store.setMark(ids[1], to: .moon)
+        store.setMark(ids[3], to: .moon)
+        store.setMark(ids[4], to: .mountain)
+        #expect(store.numbered(.command).map(\.id) == [ids[0], ids[2]])
+        #expect(store.numbered(.optionCommand).map(\.id) == [ids[1], ids[3]])
+        #expect(store.cardNumbers.isEmpty)
+        store.showsCardNumbers = true
+        #expect(store.cardNumbers == [ids[0]: "1", ids[2]: "2", ids[1]: "⌥1", ids[3]: "⌥2"])
+
+        store.openThread(at: 1, keys: .optionCommand)
+        #expect(store.focusRequest == ids[3])
+        store.openThread(at: 1)
+        #expect(store.focusRequest == ids[2])
+        store.openThread(at: 2, keys: .optionCommand)
+        #expect(store.focusRequest == ids[2])
+
+        store.move(ids[3], by: -1)
+        store.place(ids[1], nextTo: ids[4], after: true)
+        store.toggleBarBefore(ids[3])
+        #expect(store.numbered(.optionCommand).map(\.id) == [ids[3], ids[1]])
+        store.setMark(ids[4], to: nil)
+        #expect(store.numbered(.command).map(\.id) == [ids[0], ids[2], ids[4]])
+    }
+
     @Test func droppingACardPlacesItBesideTheTarget() {
         let store = ThreadStore(threads: [first, second, third])
         let titles = { store.shelf.map { $0.map(store.name) } }

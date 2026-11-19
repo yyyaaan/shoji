@@ -12,8 +12,8 @@ struct ThreadCard: View {
     var isOnScreen = false
     /// `ThreadStore.wantsYou`: shows Hachi.
     var wantsYou = false
-    /// Its ⌘1–9 number, while ⌘ is held.
-    var number: Int?
+    /// "1" or "⌥1" while ⌘ is held.
+    var number: String?
 
     @Environment(\.zoom) private var zoom
     @Environment(\.colorSchemeContrast) private var contrast
@@ -52,9 +52,10 @@ struct ThreadCard: View {
         }
         .overlay(alignment: .topLeading) {
             if let number {
-                Text("\(number)")
+                Text(number)
                     .font(.system(size: 12 * zoom, weight: .bold, design: .rounded))
                     .foregroundStyle(Palette.terminalBackground)
+                    .padding(.horizontal, 4 * zoom)
                     .frame(minWidth: 20 * zoom, minHeight: 20 * zoom)
                     .background(Palette.text, in: .rect(cornerRadius: 6 * zoom))
                     .offset(x: -6 * zoom, y: -6 * zoom)
@@ -84,7 +85,7 @@ struct ThreadCard: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel([name, tag?.capitalized, activity.status.label, finishedUnseen ? "not seen yet" : nil, subtitle, subtitle == thread.displayFolder ? nil : thread.displayFolder, isOnScreen ? "in a pane" : nil].compactMap(\.self).joined(separator: ", "))
+        .accessibilityLabel([name, thread.mark.map { "\($0.title) card" }, tag?.capitalized, activity.status.label, finishedUnseen ? "not seen yet" : nil, subtitle, subtitle == thread.displayFolder ? nil : thread.displayFolder, isOnScreen ? "in a pane" : nil].compactMap(\.self).joined(separator: ", "))
         .onHover { isHovering = $0 }
         .task(id: isHovering) {
             showsPeek = false
@@ -130,9 +131,17 @@ struct ThreadCard: View {
                     Spacer(minLength: 0)
                     trailing
                 }
-                Text(name)
-                    .font(.system(size: 15 * zoom, weight: .semibold))
-                    .lineLimit(1)
+                HStack(spacing: 6 * zoom) {
+                    Text(name)
+                        .font(.system(size: 15 * zoom, weight: .semibold))
+                        .lineLimit(1)
+                    Spacer(minLength: 0)
+                    if let mark = thread.mark {
+                        Image(systemName: mark.symbol)
+                            .font(.system(size: 11 * zoom, weight: .medium))
+                            .foregroundStyle(.white.opacity(0.75))
+                    }
+                }
                 Marquee(text: subtitle, isOn: isBusy, truncation: .middle)
                     .font(.system(size: 11 * zoom, weight: .medium, design: .monospaced))
                     .foregroundStyle(needsYou ? Palette.needsYouText : .white.opacity(0.75))

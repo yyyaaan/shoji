@@ -9,7 +9,7 @@ struct HubView: View {
 
     var body: some View {
         let groups = store.shelf
-        let numbers = store.showsCardNumbers ? Dictionary(uniqueKeysWithValues: store.shelfOrder.prefix(9).enumerated().map { ($1.id, $0 + 1) }) : [:]
+        let numbers = store.cardNumbers
         let spacing = 10 * zoom
         let barGap = 14 * zoom
         let room = max(width - 36, 0)
